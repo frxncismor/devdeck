@@ -15,3 +15,16 @@ Decisions already justified in `plan.md`. This lists what should be verified at 
 | JSON memory | ~32 B/container + jumps every 1024 children | Measure with a generated 100–500 MB fixture |
 | i18n library | Own ~80-line layer with runes + typed JSON keys instead of `svelte-i18n` | Confirm the recursive key type compiles in `svelte-check` with the Svelte 5 toolchain; if it is too slow on big catalogues, generate `keys.ts` from `en` with a script |
 | Byte units in `Intl` | `Intl.NumberFormat` has no KiB unit; use binary scaling with `KB/MB/GB` labels, number part via `Intl` | Unit tests of `formatBytes` for `en` and `es` |
+
+## Resolved decisions (open questions answered by Paco)
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | gitleaks on macOS | Use `gitleaks` 8.30.1 from the `PATH` (e.g. Homebrew); no downloaded asset or hash for macOS. `setup:gitleaks` prints instructions and exits non-zero if it is missing. |
+| 2 | Deleting regenerable folders | Permanent delete (no trash), always behind an explicit confirmation, and only for items that pass the backend allow-list. |
+| 3 | "Forgotten" worktree criterion | More than 30 days without a commit, or branch already merged into the base branch; the threshold is configurable. |
+| 4 | Base branch | `main` by default, configurable. |
+| 5 | Root folders | A single root folder to scan for projects. |
+| 6 | Default language | English; no automatic detection of the OS language. |
+| 7 | i18n library | Own minimal i18n layer (no `svelte-i18n`). |
+| 8 | Name of module 4 | "Reclaim" (UI: en "Reclaim", es "Recuperar"); code identifiers use `reclaim` (`reclaim/`, `commands/reclaim.rs`, `modules/reclaim/`, `locales/{en,es}/reclaim.json`, `reclaim_*` commands). |

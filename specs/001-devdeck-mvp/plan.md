@@ -20,17 +20,17 @@ crates/devdeck-core/src/
   worktrees/{mod,git,scan,open}.rs
   ports/{mod,listing}.rs
   json_viewer/{mod,indexer,reader,search,format}.rs
-  cleanup/{mod,sizes,processes,folders,forgotten,summary}.rs
+  reclaim/{mod,sizes,processes,folders,forgotten,summary}.rs
 src-tauri/src/
   main.rs  lib.rs            # run(); command registration
   error.rs  state.rs
-  commands/{mod,config,project,worktrees,ports,json_viewer,cleanup}.rs
+  commands/{mod,config,project,worktrees,ports,json_viewer,reclaim}.rs
 src-tauri/{tauri.conf.json,capabilities/default.json,icons/}
 src/                          # Svelte
   main.ts  App.svelte  lib/{api.ts,scope.svelte.ts,types.ts,format.ts}
   lib/i18n/{index.ts,i18n.svelte.ts,keys.ts,i18n.test.ts}
-  lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,cleanup}.json   # one file per module and language
-  modules/{worktrees,ports,json-viewer,cleanup}/  # one folder per module
+  lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,reclaim}.json   # one file per module and language
+  modules/{worktrees,ports,json-viewer,reclaim}/  # one folder per module
   components/{Sidebar,ScopeSelector,LanguageSelector,ConfirmDialog,VirtualList,GroupedTable}.svelte
 .githooks/pre-commit  .gitleaks.toml  scripts/{setup-gitleaks.mts,setup-gitleaks.test.mts}
 .github/workflows/{ci.yml,secret-scan.yml,release.yml}
@@ -76,12 +76,12 @@ fill their own two files.
 layer is ~80 lines, uses Svelte 5 runes (so components re-render on language change with no store subscriptions), and gives
 compile-time-checked keys, which `svelte-i18n` does not by default.
 
-- **Resources**: `src/lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,cleanup}.json`. One file per module and per
+- **Resources**: `src/lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,reclaim}.json`. One file per module and per
   language, so phase-2 agents never edit the same file. `common.json` (shell, scope/language selectors, buttons, confirm
   dialog, generic errors, "No project") is owned by 1A; module agents put module-specific copy in their own file and only
   reuse `common.*` keys. Changes to `common.json` after 1A go through the integration phase.
 - **Closed index**: `src/lib/i18n/index.ts` statically imports the 10 files and builds
-  `messages = { en: { common, worktrees, ports, jsonViewer, cleanup }, es: { ... } }`. The namespace list is fixed in 1A; adding a
+  `messages = { en: { common, worktrees, ports, jsonViewer, reclaim }, es: { ... } }`. The namespace list is fixed in 1A; adding a
   module namespace later is an explicit edit of this one file.
 - **Typed keys**: `keys.ts` derives `type MessageKey` from the `en` catalogue with a recursive template-literal type over the
   nested JSON (`"worktrees.actions.remove"`, `"common.noProject"`). `t(key: MessageKey, params?: Record<string, string|number>)`
@@ -132,7 +132,7 @@ under 64-bit ⇒ `None`. macOS/Linux: best effort.
 7. Path `$.a.b[3]`: rebuilt by walking up through `parent` + key/index.
 8. File modified after indexing: `mtime+len` are stored; if they change, error code `json_file_changed` ("file changed, reopen").
 
-## Hidden / Cleanup (reuses contracts)
+## Reclaim (reuses contracts)
 - **Processes**: `process_info::snapshot()` filtered by the dev name list; age from `start_time`; attribution by cwd via `scope::attribute`; orphan = cwd with the prefix of a worktree path that no longer exists (a `known_worktrees` record is kept in the store, refreshed on every scan, to detect deleted ones).
 - **Forgotten worktrees**: `worktrees::list` + size (cancelable walkdir, not following symlinks/junctions: `file_type().is_symlink()` and, on Windows, the `REPARSE_POINT` attribute); age = last commit date; merged = `git merge-base --is-ancestor <branch> <base>` (cheaper and more deterministic than `branch --merged`); no changes = empty status; live processes = snapshot with cwd under the worktree.
 - **Folders**: for each worktree/repo, look for allow-listed names (`node_modules`, `target`, `.venv`, `dist`) without descending into them or `.git`. Windows global caches: npm `%LOCALAPPDATA%\npm-cache`, pnpm `%LOCALAPPDATA%\pnpm\store` (or `pnpm store path`), cargo `%USERPROFILE%\.cargo\registry` and `.cargo\git`. Last use = max mtime (folder + first level).

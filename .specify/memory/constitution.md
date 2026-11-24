@@ -8,7 +8,7 @@ read-only views plus confirmed actions, no automation, no daemons, no sync. No f
 abstractions.
 
 ### II. Logic in Rust, tested
-All logic (git, ports, processes, JSON, cleanup, project attribution) lives in the `devdeck-core` crate, with no
+All logic (git, ports, processes, JSON, reclaim, project attribution) lives in the `devdeck-core` crate, with no
 dependency on Tauri. It is covered by unit tests that use no network and no UI (temporary git repos, generated JSON,
 a simulated system layer behind traits). A function without a test is not done.
 

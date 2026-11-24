@@ -1,16 +1,16 @@
 # Feature Specification: DevDeck MVP
 
 **Feature Branch**: `001-devdeck-mvp`  |  **Created**: 2026-11-23  |  **Status**: Draft
-**Input**: `runs/11231900/peticion.md` (Paco's request + additions: "Hidden" module, Global/project scope selector, gitleaks security, English-only project with bilingual UI).
+**Input**: `runs/11231900/peticion.md` (Paco's request + additions: "Reclaim" module, Global/project scope selector, gitleaks security, English-only project with bilingual UI).
 
 DevDeck is a desktop app (Tauri 2 + Rust, Svelte + TS) with a sidebar of 4 modules: **Worktrees**, **Ports**,
-**JSON Viewer** and **Hidden / Cleanup**, plus a cross-cutting **scope selector (Global / project)** and a
+**JSON Viewer** and **Reclaim**, plus a cross-cutting **scope selector (Global / project)** and a
 **language selector (English / Spanish)**. Guaranteed platform: Windows. Simple scope, not robust.
 
 ## Concepts
 
 - **Project**: a main repo + all its worktrees. Identified by the canonical path of the main repo.
-- **Scope**: `Global` or `Project(id)`. Filters the Worktrees, Ports and Hidden views.
+- **Scope**: `Global` or `Project(id)`. Filters the Worktrees, Ports and Reclaim views.
 - **No project**: the Global group for anything that belongs to no project (global caches, processes without a repo).
 - **Language**: `en` (default) or `es`. Controls every user-visible string and the date/number/size formatting.
 
@@ -60,7 +60,7 @@ As a user (or a recruiter reviewing the project) I want the UI in English or Spa
 4. **When** I select a node, **then** I can copy its path (`$.a.b[3]`), copy/export its formatted subtree, or save the formatted file.
 5. **Given** invalid JSON, **then** the error is shown with its offset without hanging the app.
 
-### US7 — Hidden / Cleanup (P2)
+### US7 — Reclaim (P2)
 1. Summary on top: recoverable RAM and disk (respecting the scope).
 2. **Forgotten worktrees**: disk size, last-commit age, branch merged into base / no changes, live processes inside; remove action with confirmation.
 3. **Background/orphaned dev processes**: RAM, CPU, age, project/worktree; those whose cwd is in an already-deleted worktree are flagged "orphaned"; terminate action with confirmation.
@@ -73,11 +73,11 @@ Green CI on 3 OSes, automatic release on `v*` tag with .msi and .exe, README wit
 ## Requirements
 
 ### Shell and scope
-- **FR-001**: Sidebar with 4 modules (Worktrees, Ports, JSON Viewer, Hidden), an always-visible scope selector and an always-visible language selector.
+- **FR-001**: Sidebar with 4 modules (Worktrees, Ports, JSON Viewer, Reclaim; Spanish label of the last one: "Recuperar"), an always-visible scope selector and an always-visible language selector.
 - **FR-002**: Persisted configuration (root folder, last scope, branch base, language) in the app store.
 - **FR-003**: `Project` model (id, name, main repo, worktrees) built from the root scan.
 - **FR-004**: Attribution function `path → project` by longest path prefix, normalized, case-insensitive on Windows; no match ⇒ "No project".
-- **FR-005**: Worktrees, Ports and Hidden commands accept a scope and return already-filtered data.
+- **FR-005**: Worktrees, Ports and Reclaim commands accept a scope and return already-filtered data.
 - **FR-006**: In Global the response is grouped by project with RAM and disk totals per group and a grand total; "No project" is just another group.
 - **FR-007**: In project scope only items attributed to that project are returned.
 - **FR-008**: The selected scope is a global frontend store (persisted); changing it reloads the visible module.
@@ -92,7 +92,7 @@ Green CI on 3 OSes, automatic release on `v*` tag with .msi and .exe, README wit
 - **FR-015**: Open in VS Code action (`code`).
 - **FR-016**: Open terminal action (Windows Terminal `wt -d`, fallback `pwsh`/`cmd`).
 - **FR-017**: Remove worktree action with confirmation, rejected for the main worktree; if dirty it requires reinforced confirmation (`--force` only then).
-- **FR-018**: Listing worktrees is a shared contract (`worktrees::list`) reused by Ports and Hidden.
+- **FR-018**: Listing worktrees is a shared contract (`worktrees::list`) reused by Ports and Reclaim.
 
 ### Ports
 - **FR-020**: List listening TCP ports (UDP optional, off by default) with PID.
@@ -112,7 +112,7 @@ Green CI on 3 OSes, automatic release on `v*` tag with .msi and .exe, README wit
 - **FR-036**: Format: pretty-print the subtree (with size cap) to copy/save, and save the whole formatted file in streaming mode.
 - **FR-037**: Invalid JSON ⇒ error with position; no panic.
 
-### Hidden / Cleanup
+### Reclaim
 - **FR-040**: Summary with recoverable RAM and disk (in scope).
 - **FR-041**: Forgotten worktrees: size, last-commit age, branch merged into base or no changes, live processes inside; "forgotten" criterion configurable (default > 30 days or merged).
 - **FR-042**: Remove a forgotten worktree with confirmation (reuses FR-017).

@@ -1,0 +1,34 @@
+#!/bin/sh
+# pre-commit: scans the staged changes with gitleaks before every commit.
+# Per-clone activation: `pnpm setup:hooks` (git config core.hooksPath .githooks).
+# Fails closed: without the pinned gitleaks the commit is blocked with instructions.
+# CI repeats the scan over each PR/push commit range; this hook does not replace it.
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+native=gitleaks
+if [ "${OS:-}" = "Windows_NT" ]; then
+  native=gitleaks.exe
+fi
+gitleaks_tool="$repo_root/.tools/gitleaks/8.30.1/$native"
+if [ -L "$gitleaks_tool" ]; then
+  echo "pre-commit: invalid local tool; run pnpm setup:gitleaks." >&2
+  exit 1
+fi
+if [ -f "$gitleaks_tool" ]; then
+  :
+elif command -v gitleaks >/dev/null 2>&1; then
+  gitleaks_tool=$(command -v gitleaks)
+else
+  echo "pre-commit: gitleaks 8.30.1 is missing; run pnpm setup:gitleaks (macOS: install it on PATH)." >&2
+  exit 1
+fi
+gitleaks_version=$("$gitleaks_tool" version 2>/dev/null) || {
+  echo "pre-commit: could not verify gitleaks; run pnpm setup:gitleaks." >&2
+  exit 1
+}
+if [ "$gitleaks_version" != "8.30.1" ]; then
+  echo "pre-commit: invalid gitleaks version (expected 8.30.1); run pnpm setup:gitleaks." >&2
+  exit 1
+fi
+exec "$gitleaks_tool" git --pre-commit --staged --redact --exit-code 1 --config "$repo_root/.gitleaks.toml" "$repo_root"

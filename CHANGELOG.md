@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Docs:** real screenshots (Worktrees, Ports, Reclaim in English; Worktrees and Reclaim in Spanish) and a demo GIF in the README, captured from the redesigned UI with demo data.
+
+### Changed
+
+- **UI redesign:** new design system with dark and light themes, a command palette (Ctrl K), a custom title bar, a collapsible sidebar, and restyled Worktrees, Ports, JSON Viewer and Reclaim modules.
+
 ## [0.1.0] - 2026-11-23
 
 ### Added

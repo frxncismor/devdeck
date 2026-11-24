@@ -191,8 +191,8 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 | SC | Tasks | Status |
 |---|---|---|
 | SC-001 | T031, T080, T084 | Met: 19 worktrees in 0.6–0.7 s |
-| SC-002 | T050, T055, T084 | Partial: measured up to 84 MB; the 500 MB test is `#[ignore]` (see `implementacion` report) |
-| SC-003 | T053, T055, T084 | Partial: as SC-002 |
+| SC-002 | T050, T055, T084 | Met (release build, Windows): 524 MB dense fixture, 18 M containers, indexed in 2.3 s, RSS growth 1.25 GB incl. mmap pages, navigation 156 µs |
+| SC-003 | T053, T055, T084 | Met: first 100 search hits over 524 MB in 1 ms |
 | SC-004 | T005, T080, T084 | Met |
 | SC-005 | T014, T086, T091, T096 | Pending: first GitHub CI run and test tag |
 | SC-006 | T007, T034, T045, T063, T068, T085 | Backend validation tested; front confirmation checked manually |

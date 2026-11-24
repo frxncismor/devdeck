@@ -15,18 +15,31 @@ pub fn is_link_or_reparse(path: &Path) -> bool {
 }
 
 fn meta_is_link(md: &std::fs::Metadata) -> bool {
-    if md.file_type().is_symlink() {
-        return true;
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::fs::MetadataExt;
-        const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
-        if md.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
-            return true;
-        }
-    }
+    md.file_type().is_symlink() || is_reparse_point(md)
+}
+
+#[cfg(windows)]
+fn is_reparse_point(md: &std::fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+    md.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+}
+
+#[cfg(not(windows))]
+fn is_reparse_point(_md: &std::fs::Metadata) -> bool {
     false
+}
+
+/// The canonical form of an existing `path` (long names instead of 8.3 short names, resolved
+/// `..`, real case), without the Windows `\\?\` prefix. Returns `None` if it cannot be resolved.
+pub fn real_path(path: &Path) -> Option<std::path::PathBuf> {
+    let c = std::fs::canonicalize(path).ok()?;
+    let plain = c
+        .to_str()
+        .and_then(|s| s.strip_prefix(r"\\?\"))
+        .filter(|rest| !rest.starts_with(r"UNC\"))
+        .map(std::path::PathBuf::from);
+    Some(plain.unwrap_or(c))
 }
 
 /// Total size in bytes of the regular files under `path`, without following or counting links

@@ -196,7 +196,9 @@ mod tests {
 
     fn repo() -> Repo {
         let t = tempfile::tempdir().unwrap();
-        let base = t.path().to_path_buf();
+        // Real (long-name) path: git reports worktrees that way, so tests compare like with like
+        // even when TEMP is an 8.3 short path (as on GitHub's Windows runners).
+        let base = crate::fsutil::real_path(t.path()).unwrap();
         let repo = base.join("app");
         fs::create_dir_all(&repo).unwrap();
         g(&repo, &["init", "-b", "main"]);

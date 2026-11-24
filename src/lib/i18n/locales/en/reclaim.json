@@ -1,1 +1,147 @@
-{}
+{
+  "title": "Reclaim",
+  "intro": "See what you can recover: RAM held by dev processes and disk used by forgotten worktrees and regenerable folders. Nothing is changed until you confirm an action.",
+  "summary": {
+    "title": "Recoverable",
+    "ram": "RAM",
+    "disk": "Disk",
+    "nothing": "Nothing to reclaim right now.",
+    "byProject": "By project",
+    "columns": {
+      "project": "Project",
+      "ram": "RAM",
+      "disk": "Disk",
+      "details": "Details"
+    },
+    "details": "{processes} processes · {worktrees} worktrees · {folders} folders",
+    "sizing": "Disk figures are still being measured."
+  },
+  "tabs": {
+    "label": "Reclaim sections",
+    "worktrees": "Forgotten worktrees",
+    "processes": "Dev processes",
+    "folders": "Regenerable folders"
+  },
+  "common": {
+    "refresh": "Refresh",
+    "size": "Size",
+    "unknown": "Unknown",
+    "none": "—"
+  },
+  "worktrees": {
+    "description": "Worktrees with no commit for {days} days or whose branch is already merged into the base branch. The main worktree is never listed.",
+    "empty": "No forgotten worktrees found.",
+    "noRoot": "Choose the repositories folder in the Worktrees tab first.",
+    "columns": {
+      "branch": "Branch",
+      "age": "Last commit",
+      "size": "Size",
+      "state": "State",
+      "actions": "Actions"
+    },
+    "age_one": "{count} day ago",
+    "age_other": "{count} days ago",
+    "noCommits": "No commits",
+    "processes_one": "{count} process inside",
+    "processes_other": "{count} processes inside",
+    "missing": "Missing folder",
+    "dirty_one": "{count} change",
+    "dirty_other": "{count} changes"
+  },
+  "processes": {
+    "description": "Development processes that may be holding memory. Processes whose working folder no longer exists are marked as orphans.",
+    "empty": "No dev processes found.",
+    "columns": {
+      "process": "Process",
+      "ram": "RAM",
+      "cpu": "CPU",
+      "age": "Running for",
+      "folder": "Folder",
+      "actions": "Actions"
+    },
+    "orphan": "Orphan",
+    "unknownFolder": "Unknown folder"
+  },
+  "folders": {
+    "description": "Folders that can be regenerated (node_modules, target, .venv, dist and package-manager caches). Deleting them is permanent.",
+    "empty": "No regenerable folders found.",
+    "noRoot": "Only the global caches are searched until you choose a repositories folder in the Worktrees tab.",
+    "scanning": "Searching and measuring folders…",
+    "found_one": "{count} folder found",
+    "found_other": "{count} folders found",
+    "measured": "Measured {done} of {total}",
+    "cancel": "Cancel",
+    "cancelled": "The search was cancelled. Showing the previous results.",
+    "columns": {
+      "path": "Folder",
+      "kind": "Type",
+      "size": "Size",
+      "lastUsed": "Last used",
+      "actions": "Actions"
+    }
+  },
+  "kind": {
+    "node": "Node.js",
+    "esbuild": "esbuild",
+    "vite": "Vite",
+    "cargo": "Cargo",
+    "rustc": "rustc",
+    "rustAnalyzer": "rust-analyzer",
+    "chromium": "Headless Chromium",
+    "playwright": "Playwright",
+    "docker": "Docker",
+    "wsl": "WSL"
+  },
+  "folderKind": {
+    "node_modules": "node_modules",
+    "target": "Cargo target",
+    "venv": "Python venv",
+    "dist": "dist",
+    "npmCache": "npm cache",
+    "pnpmStore": "pnpm store",
+    "cargoRegistry": "Cargo registry",
+    "cargoGit": "Cargo git cache"
+  },
+  "reason": {
+    "stale": "Inactive",
+    "merged": "Merged",
+    "clean": "No changes",
+    "live_processes": "Processes running"
+  },
+  "actions": {
+    "removeWorktree": "Remove",
+    "terminate": "Terminate",
+    "deleteFolder": "Delete"
+  },
+  "removeWorktree": {
+    "title": "Remove worktree",
+    "message": "Remove the worktree at {path} ({size})? The folder will be deleted; the branch is kept.",
+    "liveWarning": "{count} process(es) are running inside it and may be interrupted.",
+    "confirm": "Remove",
+    "forceTitle": "Discard uncommitted changes?",
+    "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
+    "forceConfirm": "Discard and remove"
+  },
+  "terminate": {
+    "title": "Terminate process",
+    "message": "Terminate {name} (PID {pid}, {ram} of RAM)? Unsaved work in it will be lost.",
+    "confirm": "Terminate"
+  },
+  "deleteFolder": {
+    "title": "Delete folder permanently",
+    "message": "Permanently delete {path} ({size})? It is not sent to the Recycle Bin. It can be regenerated, but this cannot be undone.",
+    "confirm": "Delete permanently",
+    "done": "Freed {size}."
+  },
+  "errors": {
+    "reason": {
+      "link": "It is a link or junction, which is never deleted.",
+      "not_a_directory": "It is not a folder.",
+      "drive_root": "A drive root can never be deleted.",
+      "home": "The home folder (or a folder containing it) can never be deleted.",
+      "root": "The repositories root folder itself can never be deleted.",
+      "outside_root": "It is outside the repositories folder and is not a known cache.",
+      "not_allowlisted": "It is not a regenerable folder (node_modules, target, .venv, dist or a known cache)."
+    }
+  }
+}

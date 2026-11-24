@@ -1,0 +1,12 @@
+# gitleaks configuration for devdeck.
+# Used by .githooks/pre-commit (staged changes) and by the CI commit-range scan
+# (.github/workflows/secret-scan.yml).
+#
+# Rules: the gitleaks default ruleset, unmodified (no custom or disabled rules).
+# No allowlist exceptions. Any future exception needs evidence and a narrowly
+# scoped justification.
+
+title = "devdeck gitleaks config"
+
+[extend]
+useDefault = true

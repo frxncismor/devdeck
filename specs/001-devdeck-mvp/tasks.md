@@ -13,7 +13,7 @@ after the original numbering to avoid renumbering; IDs are stable references.
 | 2A | Worktrees (T030–T040) | `worktrees` | `crates/devdeck-core/src/worktrees/**`, `src-tauri/src/commands/worktrees.rs`, `src/modules/worktrees/**`, `src/lib/i18n/locales/{en,es}/worktrees.json` | 1A |
 | 2B | Ports (T041–T048) | `ports` | `crates/devdeck-core/src/ports/**`, `commands/ports.rs`, `src/modules/ports/**`, `src/lib/i18n/locales/{en,es}/ports.json` | 1A (`process_info` contract, `worktrees::list` stub and `scope`) |
 | 2C | JSON Viewer (T049–T060a) | `json` | `crates/devdeck-core/src/json_viewer/**`, `commands/json_viewer.rs`, `src/modules/json-viewer/**`, `src/lib/i18n/locales/{en,es}/json-viewer.json` | 1A |
-| 2D | Hidden / Cleanup (T061–T070) | `cleanup` | `crates/devdeck-core/src/cleanup/**`, `commands/cleanup.rs`, `src/modules/cleanup/**`, `src/lib/i18n/locales/{en,es}/cleanup.json` | 1A (contracts); integrates with 2A/2B at the end of the phase |
+| 2D | Reclaim (T061–T070) | `reclaim` | `crates/devdeck-core/src/reclaim/**`, `commands/reclaim.rs`, `src/modules/reclaim/**`, `src/lib/i18n/locales/{en,es}/reclaim.json` | 1A (contracts); integrates with 2A/2B at the end of the phase |
 | 3 | Integration and polish (T080–T087) | `integration` | anything (sequential), including `locales/*/common.json` | 2A–2D |
 | 4 | Deliverables (T090–T098) | `deliverables` + `docs` | `.github/workflows/release.yml`, `assets/`, `src-tauri/icons/`, `CHANGELOG.md`, `README.md`, `docs/img/` | 3 |
 
@@ -36,10 +36,10 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [ ] T008 `worktrees::list(repo) -> Vec<Worktree>` contract (signature + types + `NotImplemented` stub) — `crates/devdeck-core/src/worktrees/mod.rs`
 - [ ] T009 `fsutil.rs`: `is_link_or_reparse(path)`, `dir_size(path, cancel, progress)` not following links, with tests — `crates/devdeck-core/src/fsutil.rs`
 - [ ] T010 [US5] `AppState`, config with the store plugin (including `language`), commands `get_config/set_config/list_projects` — `src-tauri/src/state.rs`, `src-tauri/src/commands/{mod,config,project}.rs`
-- [ ] T011 One commands file per module with every command from `contracts/commands.md` as `NotImplemented` stubs and a complete `generate_handler!` — `src-tauri/src/commands/{worktrees,ports,json_viewer,cleanup}.rs`
+- [ ] T011 One commands file per module with every command from `contracts/commands.md` as `NotImplemented` stubs and a complete `generate_handler!` — `src-tauri/src/commands/{worktrees,ports,json_viewer,reclaim}.rs`
 - [ ] T012 [US2] Front: `api.ts`, `types.ts`, persisted scope store `scope.svelte.ts`, `ScopeSelector.svelte`, `GroupedTable.svelte` (renders `common.noProject` for a null project), `ConfirmDialog.svelte`, `VirtualList.svelte`; all their text through `t()` — `src/lib/*`, `src/components/*`
 - [ ] T012a [US5] i18n core: `src/lib/i18n/{index.ts,keys.ts,i18n.svelte.ts}` — closed index importing the 10 locale files, `MessageKey` type derived from `en`, `locale` rune, `setLocale` (persists via `set_config`, sets `<html lang>`), `t(key, params?)` with `{name}` interpolation, `_one/_other` plurals and fallback to `en` — `src/lib/i18n/*`
-- [ ] T012b [US5] Locale resources: `locales/{en,es}/common.json` filled (sidebar, scope selector, language selector, confirm dialog, generic buttons, `noProject`, `errors.<code>` for every code from T004, `errors.unknown`) and the other 8 files (`worktrees|ports|json-viewer|cleanup` × `en|es`) created as `{}` — `src/lib/i18n/locales/{en,es}/*.json`
+- [ ] T012b [US5] Locale resources: `locales/{en,es}/common.json` filled (sidebar, scope selector, language selector, confirm dialog, generic buttons, `noProject`, `errors.<code>` for every code from T004, `errors.unknown`) and the other 8 files (`worktrees|ports|json-viewer|reclaim` × `en|es`) created as `{}` — `src/lib/i18n/locales/{en,es}/*.json`
 - [ ] T012c [US5] `LanguageSelector.svelte` in the shell (English / Español, applied immediately, persisted) and `src/lib/format.ts` locale-aware helpers (`formatBytes`, `formatNumber`, `formatPercent`, `formatDate`, `formatDateTime`, `formatRelativeAge` via `Intl`) with unit tests for `en` and `es` — `src/components/LanguageSelector.svelte`, `src/lib/format.ts`, `src/lib/format.test.ts`
 - [ ] T012d [US5] Parity test: same keys and same `{placeholders}` in `en` and `es` per namespace, and every `t("...")` literal used in `src/**` exists in `en` — `src/lib/i18n/i18n.test.ts`
 - [ ] T013 Front: layout with `Sidebar.svelte` (+ scope and language selectors) and 4 empty modules (one `index.svelte` per folder, already imported in `App.svelte`) — `src/App.svelte`, `src/modules/*/index.svelte`
@@ -95,22 +95,22 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [ ] T060 [US6] Front tests of tree flattening — `src/modules/json-viewer/tree.test.ts`
 - [ ] T060a [US5] JSON Viewer copy: keys in both languages — `src/lib/i18n/locales/{en,es}/json-viewer.json`
 
-## Phase 2D — Hidden / Cleanup (US7) [P]
-- [ ] T061 [P] [US7] Dev processes: name list, `kind`, age, attribution, orphan flag (`known_worktrees`) + tests with a simulated `ProcSource` — `crates/devdeck-core/src/cleanup/processes.rs`
-- [ ] T062 [P] [US7] Regenerable folders: allow-list search without descending into them, Windows global caches, last use, sizes with `fsutil::dir_size` — `crates/devdeck-core/src/cleanup/folders.rs`
-- [ ] T063 [P] [US7] `validate_deletable` + `delete_folder` (canonicalize, allow-list, rejects links) and rejection tests — `crates/devdeck-core/src/cleanup/folders.rs`
-- [ ] T064 [US7] Forgotten worktrees: `worktrees::list` + size + age + `merge-base --is-ancestor` + no changes + live processes, tests with temporary repos — `crates/devdeck-core/src/cleanup/forgotten.rs`
-- [ ] T065 [US7] Recoverable summary (RAM/disk) and grouping by project with `scope::group_by_project` + tests — `crates/devdeck-core/src/cleanup/summary.rs`
-- [ ] T066 [US7] `cleanup_*` commands with cancelable jobs and progress — `src-tauri/src/commands/cleanup.rs`
-- [ ] T067 [US7][US5] UI: top summary, Worktrees/Processes/Folders tabs, Global/project grouped view with totals; all text via `t()` — `src/modules/cleanup/index.svelte`, `src/modules/cleanup/*.svelte`
-- [ ] T068 [US7][US5] UI: actions with confirmation (remove worktree, terminate process, delete folder showing size); all text via `t()` — `src/modules/cleanup/*.svelte`
-- [ ] T069 [US7] Front tests of summary/formatting — `src/modules/cleanup/*.test.ts`
-- [ ] T070 [US5] Hidden/Cleanup copy: keys in both languages — `src/lib/i18n/locales/{en,es}/cleanup.json`
+## Phase 2D — Reclaim (US7) [P]
+- [ ] T061 [P] [US7] Dev processes: name list, `kind`, age, attribution, orphan flag (`known_worktrees`) + tests with a simulated `ProcSource` — `crates/devdeck-core/src/reclaim/processes.rs`
+- [ ] T062 [P] [US7] Regenerable folders: allow-list search without descending into them, Windows global caches, last use, sizes with `fsutil::dir_size` — `crates/devdeck-core/src/reclaim/folders.rs`
+- [ ] T063 [P] [US7] `validate_deletable` + `delete_folder` (canonicalize, allow-list, rejects links) and rejection tests — `crates/devdeck-core/src/reclaim/folders.rs`
+- [ ] T064 [US7] Forgotten worktrees: `worktrees::list` + size + age + `merge-base --is-ancestor` + no changes + live processes, tests with temporary repos — `crates/devdeck-core/src/reclaim/forgotten.rs`
+- [ ] T065 [US7] Recoverable summary (RAM/disk) and grouping by project with `scope::group_by_project` + tests — `crates/devdeck-core/src/reclaim/summary.rs`
+- [ ] T066 [US7] `reclaim_*` commands with cancelable jobs and progress — `src-tauri/src/commands/reclaim.rs`
+- [ ] T067 [US7][US5] UI: top summary, Worktrees/Processes/Folders tabs, Global/project grouped view with totals; all text via `t()` — `src/modules/reclaim/index.svelte`, `src/modules/reclaim/*.svelte`
+- [ ] T068 [US7][US5] UI: actions with confirmation (remove worktree, terminate process, delete folder showing size); all text via `t()` — `src/modules/reclaim/*.svelte`
+- [ ] T069 [US7] Front tests of summary/formatting — `src/modules/reclaim/*.test.ts`
+- [ ] T070 [US5] Reclaim copy: keys in both languages — `src/lib/i18n/locales/{en,es}/reclaim.json`
 
 ## Phase 3 — Integration and polish
 - [ ] T080 [US2] Check that the 3 scope-aware modules use the store and reload on change; fix divergences — `src/modules/*`
 - [ ] T081 [US3] Real ports↔worktrees cross-reference with the configured root's `Project` (if it did not fit in 2B) — `crates/devdeck-core/src/ports/mod.rs`
-- [ ] T082 [US7] Hidden reuses the real `worktrees::list` and `process_info` from 2A/2B (remove stubs) — `crates/devdeck-core/src/cleanup/*`
+- [ ] T082 [US7] Reclaim reuses the real `worktrees::list` and `process_info` from 2A/2B (remove stubs) — `crates/devdeck-core/src/reclaim/*`
 - [ ] T083 Review errors and empty/loading states in the 4 modules (every error code has an `errors.*` translation) — `src/modules/*`
 - [ ] T084 Performance pass (SC-001..SC-004) with real data — report
 - [ ] T085 Security review: minimal capabilities, validated paths, no secrets — `src-tauri/capabilities/default.json`

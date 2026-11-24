@@ -22,7 +22,7 @@ Convention: `Result<T, Error>`; `scope: Scope` where indicated (filtered in Rust
 | Command | Input | Output |
 |---|---|---|
 | `ports_list` | `scope, includeUdp, query?` | `Grouped<ListeningPort>` |
-| `process_kill` | `pid, expectedName` | `()` (shared with Hidden) |
+| `process_kill` | `pid, expectedName` | `()` (shared with Reclaim) |
 
 ## json_viewer
 | Command | Input | Output / events |
@@ -38,15 +38,15 @@ Convention: `Result<T, Error>`; `scope: Scope` where indicated (filtered in Rust
 | `json_format_node` | `sessionId, nodeId, maxBytes` | `string` |
 | `json_save_formatted` | `sessionId, nodeId?, destPath` | `{jobId}`; progress by event |
 
-## cleanup
+## reclaim
 | Command | Input | Output |
 |---|---|---|
-| `cleanup_summary` | `scope` | `CleanupSummary` |
-| `cleanup_forgotten_worktrees` | `scope` | `Grouped<ForgottenWorktree>` |
-| `cleanup_dev_processes` | `scope` | `Grouped<DevProcess>` |
-| `cleanup_folders` | `scope` | `{jobId}`; quick list + sizes via `job://progress`; final result `Grouped<HeavyFolder>` |
-| `cleanup_delete_folder` | `path` | `{freedBytes}` (validates the allow-list) |
-| `cleanup_cancel` | `jobId` | `()` |
+| `reclaim_summary` | `scope` | `ReclaimSummary` |
+| `reclaim_forgotten_worktrees` | `scope` | `Grouped<ForgottenWorktree>` |
+| `reclaim_dev_processes` | `scope` | `Grouped<DevProcess>` |
+| `reclaim_folders` | `scope` | `{jobId}`; quick list + sizes via `job://progress`; final result `Grouped<HeavyFolder>` |
+| `reclaim_delete_folder` | `path` | `{freedBytes}` (validates the allow-list) |
+| `reclaim_cancel` | `jobId` | `()` |
 
 Remove worktree = `worktree_remove`; terminate process = `process_kill`.
 

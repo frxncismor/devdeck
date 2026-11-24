@@ -152,7 +152,7 @@ Green CI on 3 OSes, automatic release on `v*` tag with .msi and .exe, README wit
 - **SC-003**: Search over 500 MB delivers the first batch in < 2 s.
 - **SC-004**: Scope change refreshes the module in < 1 s (sizes arrive via progress).
 - **SC-005**: CI green on the 3 platforms; a `v*` tag produces a draft with installers.
-- **SC-006**: No destructive action runs without confirmation (backend contract test).
+- **SC-006**: No destructive action runs without confirmation. The confirmation dialog lives in the front (manual check in Phase 3); the backend independently validates every destructive command (main worktree, dirty worktree without `force`, allow-list for deletion, protected PIDs, name/start-time revalidation) and that is covered by contract tests.
 - **SC-007**: After integration, in devdeck `git config core.hooksPath` returns `.githooks`; a staged test secret blocks the commit and the CI job fails on a commit with that secret.
 - **SC-008**: The i18n parity test passes: `en` and `es` have exactly the same keys and placeholders in every namespace; switching language changes all visible text with no restart and no leftover literals (manual check in Phase 3).
 - **SC-009**: Date/number/size formatting follows the active language (unit tests of `format.ts` for `en` and `es`).

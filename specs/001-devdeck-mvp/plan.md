@@ -9,25 +9,25 @@ commands. Svelte 5 + TS + Vite frontend (no SvelteKit) with a scope store and a 
 CLI, ports with `listeners`/`sysinfo`, JSON with a streaming index + offset reads.
 
 ## Technical context
-Stable Rust (MSRV = Tauri 2's), Tauri 2, Svelte 5 + TS + Vite 6, pnpm. Storage: `store` plugin (config).
+Stable Rust (MSRV = Tauri 2's), Tauri 2, Svelte 5 + TS ~6 + Vite 8, pnpm. Storage: `store` plugin (config), used from Rust only.
 Tests: `cargo test` (core), `vitest` (front). Target: Windows 10/11 (guaranteed), macOS/Linux compile.
 
 ## Structure
 ```
 Cargo.toml                    # workspace: crates/devdeck-core, src-tauri
 crates/devdeck-core/src/
-  lib.rs  error.rs  scope.rs  project.rs  process_info.rs  fsutil.rs
+  lib.rs  error.rs  scope.rs  project.rs  process_info.rs  fsutil.rs  config.rs
   worktrees/{mod,git,scan,open}.rs
   ports/{mod,listing}.rs
   json_viewer/{mod,indexer,reader,search,format}.rs
-  reclaim/{mod,sizes,processes,folders,forgotten,summary}.rs
+  reclaim/{mod,processes,folders,forgotten,summary}.rs   # sizes live in fsutil.rs
 src-tauri/src/
-  main.rs  lib.rs            # run(); command registration
-  error.rs  state.rs
+  main.rs  lib.rs            # run(); plugins; generate_handler! (the command registry)
+  state.rs                   # errors come from devdeck-core::error
   commands/{mod,config,project,worktrees,ports,json_viewer,reclaim}.rs
 src-tauri/{tauri.conf.json,capabilities/default.json,icons/}
 src/                          # Svelte
-  main.ts  App.svelte  lib/{api.ts,scope.svelte.ts,types.ts,format.ts}
+  main.ts  App.svelte  lib/{api.ts,scope.svelte.ts,config.svelte.ts,errors.ts,types.ts,format.ts}
   lib/i18n/{index.ts,i18n.svelte.ts,keys.ts,i18n.test.ts}
   lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,reclaim}.json   # one file per module and language
   modules/{worktrees,ports,json-viewer,reclaim}/  # one folder per module
@@ -36,7 +36,7 @@ src/                          # Svelte
 .github/workflows/{ci.yml,secret-scan.yml,release.yml}
 ```
 **Conflict-free extension points**: each module has its own file in `commands/`, its own folder in `src/modules/` and
-its own pair of locale files. Phase 1A leaves `commands/mod.rs` with a complete `generate_handler![ ... ]` list holding
+its own pair of locale files. Phase 1A leaves `src-tauri/src/lib.rs` with a complete `generate_handler![ ... ]` list holding
 every command name as a stub (`NotImplemented`), so phase-2 agents only replace the body in their own file and never touch
 the registry. Likewise on the front: `App.svelte` already imports the 4 modules (each `index.svelte` is owned by its
 module), and `src/lib/i18n/index.ts` already imports all 10 locale JSON files (created as `{}` in 1A); phase-2 agents only
@@ -111,13 +111,15 @@ compile-time-checked keys, which `svelte-i18n` does not by default.
 `git` invoked with `std::process::Command` behind a `GitRunner` trait (mockable). Scan: walk the root to depth N, a repo = a
 directory with `.git` (dir, or file ⇒ linked worktree, resolved to the main one with `git rev-parse --git-common-dir`). Per
 worktree 3 git calls in a bounded pool (4 threads). Open: `code <path>` and `wt -d <path>` (fallback `pwsh -NoExit
--WorkingDirectory`, then `cmd /K cd /d`) with `opener`/`std::process`; no shell. Remove: `git worktree remove [--force] <path>`
-from the main repo; the backend rejects the main worktree.
+-WorkingDirectory`, then `cmd /K cd /d`) with `std::process::Command`; no shell, no `opener` plugin; only paths of known
+projects are accepted. Remove: `git worktree remove [--force] <path>` run from the main repo; the backend rejects the main
+worktree; if the worktree folder no longer exists, `git worktree prune` runs from the main repo instead.
 
 ## Ports
 `listeners::get_all()` → `{pid, name, path, socket}`; enriched with `sysinfo` (path, cwd). The `process_info` module (phase 1,
-contract) exposes `snapshot() -> Vec<ProcInfo{pid,name,exe,cwd,ram,cpu,start_time,parent}>` and `kill(pid, expected_name)`
-(revalidates the name before killing, avoids PID reuse). Limits: elevated/protected processes ⇒ `cwd=None`, `exe=None`; 32-bit
+contract) exposes `snapshot() -> Vec<ProcInfo{pid,name,exe,cwd,ram,cpu,start_time,parent}>` and `kill(pid, expected_name, expected_start_time?)`
+(revalidates name and, when known, start time before killing, to avoid PID reuse; refuses DevDeck itself, its parent and
+system PIDs 0/4 with `not_allowed`). Limits: elevated/protected processes ⇒ `cwd=None`, `exe=None`; 32-bit
 under 64-bit ⇒ `None`. macOS/Linux: best effort.
 
 ## JSON Viewer
@@ -126,14 +128,15 @@ under 64-bit ⇒ `None`. macOS/Linux: best effort.
    Leaf children are not indexed: `json_children` re-scans the container from its offset and returns the `[offset,limit)` range;
    for containers with millions of children every 1024th child is stored as a jump point (sparse index) so pagination is O(1024).
 3. Memory: ~32 B per container + 8 B per jump point. 500 MB with 5 M containers ≈ 160 MB; practical limit ~1–2 GB file / ~20 M containers.
-4. Progress: event `json://progress {bytes_done, total}` about every 1 %; cancellation with `AtomicBool`; indexing in `spawn_blocking`.
+4. Progress: shared event `job://progress {jobId, done, total}` (end: `job://done`) about every 1 %; cancellation with `AtomicBool`; indexing in `spawn_blocking`.
 5. Search: background scan of the mmap (memchr for substrings, optional case-insensitivity); computes each hit's path with a stack; sends batches via the `json://search-batch` event (max 500 per batch, configurable total cap 10 000).
 6. Format: subtree ≤ 5 MB pretty-printed in memory (reusing the tokenizer, no parse to `Value`); "save formatted" writes in streaming mode with `BufWriter` and depth-based indentation.
 7. Path `$.a.b[3]`: rebuilt by walking up through `parent` + key/index.
 8. File modified after indexing: `mtime+len` are stored; if they change, error code `json_file_changed` ("file changed, reopen").
 
 ## Reclaim (reuses contracts)
-- **Processes**: `process_info::snapshot()` filtered by the dev name list; age from `start_time`; attribution by cwd via `scope::attribute`; orphan = cwd with the prefix of a worktree path that no longer exists (a `known_worktrees` record is kept in the store, refreshed on every scan, to detect deleted ones).
+- **Processes**: `process_info::snapshot()` filtered by the dev name list; age from `start_time`; attribution by cwd via `scope::attribute`; orphan = cwd under a worktree that `git worktree list` reports as `prunable` (folder gone). Simplification: there is no
+  `known_worktrees` record, so a worktree already pruned from git is no longer recognised and its processes fall into "No project".
 - **Forgotten worktrees**: `worktrees::list` + size (cancelable walkdir, not following symlinks/junctions: `file_type().is_symlink()` and, on Windows, the `REPARSE_POINT` attribute); age = last commit date; merged = `git merge-base --is-ancestor <branch> <base>` (cheaper and more deterministic than `branch --merged`); no changes = empty status; live processes = snapshot with cwd under the worktree.
 - **Folders**: for each worktree/repo, look for allow-listed names (`node_modules`, `target`, `.venv`, `dist`) without descending into them or `.git`. Windows global caches: npm `%LOCALAPPDATA%\npm-cache`, pnpm `%LOCALAPPDATA%\pnpm\store` (or `pnpm store path`), cargo `%USERPROFILE%\.cargo\registry` and `.cargo\git`. Last use = max mtime (folder + first level).
 - **Summary**: recoverable RAM = RAM of orphaned processes + dev processes with no port/cwd in a live worktree; recoverable disk = regenerable folders + forgotten worktrees + caches. Computed in Rust.
@@ -141,9 +144,9 @@ under 64-bit ⇒ `None`. macOS/Linux: best effort.
 
 ## Commands, state, events, plugins
 See [contracts/commands.md](contracts/commands.md). State: `AppState { config: Mutex<Config>, json: Mutex<Option<JsonSession>>, jobs: Mutex<HashMap<JobId, Arc<AtomicBool>>> }`.
-Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `opener`, `store`, `clipboard-manager`.
-Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`, `store:default`,
-`clipboard-manager:allow-write-text`, `opener:allow-open-path` limited; no generic `shell`: `code`/`wt` launches happen in Rust.
+Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `store` (Rust only), `clipboard-manager`.
+Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`,
+`clipboard-manager:allow-write-text`; no `shell`, `opener` or `store` permission: `code`/`wt` launches and config storage happen in Rust.
 
 ## Security (gitleaks 8.30.1)
 - `.githooks/pre-commit` adapted from `grim-dawn-builds` (POSIX sh, fail closed, exact version, rejects symlink, `--staged --redact`).
@@ -156,7 +159,8 @@ Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:a
 ## CI and release
 `ci.yml`: matrix `windows-latest, macos-latest, ubuntu-latest`; steps: checkout, pnpm + node, rust toolchain (rustfmt, clippy), cache (`Swatinem/rust-cache`), Linux deps (`libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev`),
 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, `pnpm install --frozen-lockfile`,
-`pnpm lint`, `pnpm check` (svelte-check), `pnpm test` (includes the i18n parity test), `pnpm test:scripts`. Separate `secret-scan` job.
+`pnpm lint`, `pnpm check` (svelte-check), `pnpm test` (includes the i18n parity test), `pnpm test:scripts`; `permissions: contents: read`.
+Separate `secret-scan` job. Actions are pinned by tag, not SHA (accepted for the MVP).
 `release.yml`: `on: push: tags: ['v*']`, Windows job with `tauri-apps/tauri-action@v0` (`releaseDraft: true`, bundles `msi` and `nsis`); macOS/Linux optional and disabled.
 Icon: `pnpm tauri icon assets/icon.svg` (own SVG in `assets/`). CHANGELOG Keep a Changelog. README (English): manual screenshots in `docs/img/` (both languages shown) and a GIF recorded with ScreenToGif; how to regenerate them is documented.
 

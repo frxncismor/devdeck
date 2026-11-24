@@ -31,3 +31,19 @@ export function autoRefreshMs(secs?: number | null): number | null {
 export function rowKey(p: ListeningPort): string {
   return `${p.protocol}:${p.port}:${p.pid}`;
 }
+
+export type ProtocolFilter = "all" | "tcp" | "udp";
+
+/** Front-end protocol filter over the (already scoped and searched) rows. */
+export function filterProtocol(
+  rows: ListeningPort[],
+  filter: ProtocolFilter,
+): ListeningPort[] {
+  return filter === "all" ? rows : rows.filter((p) => p.protocol === filter);
+}
+
+/** Auto refresh period: 5 s by default; the config value wins (0 or invalid = off). */
+export const DEFAULT_REFRESH_MS = 5000;
+export function effectiveRefreshMs(secs?: number | null): number | null {
+  return secs == null ? DEFAULT_REFRESH_MS : autoRefreshMs(secs);
+}

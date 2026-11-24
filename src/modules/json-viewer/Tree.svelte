@@ -64,8 +64,8 @@
     if (n.kind === "object" || n.kind === "array") {
       if (count === 0) return t("jsonViewer.tree.empty");
       return n.kind === "object"
-        ? t("jsonViewer.tree.keys", { count: formatNumber(count) })
-        : t("jsonViewer.tree.items", { count: formatNumber(count) });
+        ? `{ ${t("jsonViewer.tree.keys", { count, n: formatNumber(count) })} }`
+        : `[ ${t("jsonViewer.tree.items", { count, n: formatNumber(count) })} ]`;
     }
     return n.preview ?? "";
   }

@@ -18,7 +18,7 @@
     "filter": "Filtrar proyectos…",
     "noMatch": "Ningún proyecto coincide",
     "projects_one": "{count} proyecto",
-    "projects_other": "Todos los {count} proyectos"
+    "projects_other": "Los {count} proyectos"
   },
   "language": {
     "label": "Idioma",

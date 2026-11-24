@@ -29,7 +29,7 @@ Lists listening TCP ports (UDP optional) with PID, process name and executable p
 
 Opens JSON files of several hundred MB without loading them into the webview. The file is indexed in one streaming pass in the background (with progress and cancellation); the tree is virtualized and children are fetched on demand. Search keys and values, copy a node's path (`$.a.b[3]`), copy or save a formatted subtree, or save the whole file formatted. Invalid JSON is reported with its offset.
 
-<!-- TODO(screenshots): ![JSON Viewer](docs/img/json-viewer-en.png) -->
+![JSON Viewer](docs/img/json-viewer-en.png)
 
 ### Reclaim
 

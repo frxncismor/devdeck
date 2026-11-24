@@ -30,3 +30,17 @@ Decisions already justified in `plan.md`. This lists what should be verified at 
 | 8 | Name of module 4 | "Reclaim" (UI: en "Reclaim", es "Recuperar"); code identifiers use `reclaim` (`reclaim/`, `commands/reclaim.rs`, `modules/reclaim/`, `locales/{en,es}/reclaim.json`, `reclaim_*` commands). |
 
 GitHub Actions are pinned by tag, not by commit SHA (accepted for the MVP); the CI workflow runs with `permissions: contents: read`.
+
+## UI redesign decisions (T100–T103)
+
+| Topic | Decision | Why / rejected |
+|---|---|---|
+| Scope | One app-wide scope (as in FR-001 / the scope contract), not "persisted per module" as the handoff suggests | Keeps the spec and the single `scope.svelte.ts` store; per-module scope would change UX and the config contract |
+| Theme storage | `localStorage` key `devdeck.theme`, applied in `main.ts` before the config loads | Rust config would need a contract change and would flash the wrong theme; inline `<script>` blocked by the CSP |
+| Title bar | Own title bar (`decorations: false`) with the minimum window capabilities | Native decorations cannot follow the dark/light tokens |
+| Fonts | Inter + JetBrains Mono bundled via `@fontsource*` (latin woff2) | Google Fonts: network at runtime and CSP changes |
+| Icons | `@lucide/svelte` (stroke 1.75) | Hand-written SVGs: more code; the handoff is drawn with Lucide |
+| JSON recent files | Last opened paths kept in `localStorage` (`devdeck.json.recent`), flat list | Backend has no history; no contract change |
+| Ports | Flat table with an owner chip, not grouped by project | A port has no RAM/disk total; grouping added noise |
+| Top bar height | 60 px (canvas and spec) | Handoff token `--topbar-h: 56` contradicts the artboards |
+| Design gaps (left out) | Live counts in sidebar nav, "N repos · scanned X ago" in the root card, version label, Settings entry, RAM/disk per project in the scope menu, palette search of worktrees/ports/files, JSON byte range and clickable breadcrumb, "Go to index" pager, tree reveal of a search hit, Reclaim folder type chips; "Scanned X ago" shown as a time | The backend does not provide the data or the API is sequential; adding it would change contracts (out of scope of a restyle) |

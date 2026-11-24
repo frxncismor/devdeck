@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "description": "DevDeck — a Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see which worktree owns each listening port, browse multi-hundred-MB JSON files, and reclaim disk and RAM from forgotten worktrees, orphaned dev processes and regenerable build folders.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frxncismor/devdeck.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

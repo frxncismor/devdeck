@@ -7,3 +7,4 @@ specs
 .specify
 pnpm-lock.yaml
 .tools
+docs/design

@@ -10,7 +10,16 @@
     "beforeBuildCommand": "pnpm build"
   },
   "app": {
-    "windows": [{ "title": "DevDeck", "width": 1200, "height": 780, "minWidth": 900, "minHeight": 560 }],
+    "windows": [
+      {
+        "title": "DevDeck",
+        "decorations": false,
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 600
+      }
+    ],
     "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" }
   },
   "bundle": {

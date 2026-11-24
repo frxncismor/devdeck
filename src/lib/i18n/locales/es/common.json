@@ -7,11 +7,18 @@
     "worktrees": "Worktrees",
     "ports": "Puertos",
     "jsonViewer": "Visor JSON",
-    "reclaim": "Recuperar"
+    "reclaim": "Recuperar",
+    "sidebar": "Barra lateral",
+    "collapse": "Contraer barra lateral",
+    "expand": "Expandir barra lateral"
   },
   "scope": {
     "label": "Ámbito",
-    "global": "Global"
+    "global": "Global",
+    "filter": "Filtrar proyectos…",
+    "noMatch": "Ningún proyecto coincide",
+    "projects_one": "{count} proyecto",
+    "projects_other": "Todos los {count} proyectos"
   },
   "language": {
     "label": "Idioma",
@@ -33,7 +40,8 @@
   },
   "table": {
     "items_one": "{count} elemento",
-    "items_other": "{count} elementos"
+    "items_other": "{count} elementos",
+    "total": "Total"
   },
   "errors": {
     "unknown": "Algo salió mal",
@@ -81,5 +89,30 @@
       "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
       "forceConfirm": "Descartar y eliminar"
     }
+  },
+  "theme": {
+    "toLight": "Cambiar a tema claro",
+    "toDark": "Cambiar a tema oscuro"
+  },
+  "titlebar": {
+    "search": "Buscar…",
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "restore": "Restaurar",
+    "close": "Cerrar"
+  },
+  "palette": {
+    "title": "Paleta de comandos",
+    "placeholder": "Ir a un módulo o cambiar de ámbito…",
+    "empty": "Sin resultados",
+    "goTo": "Ir a {name}",
+    "scopeTo": "Ámbito: {name}"
+  },
+  "toast": {
+    "dismiss": "Cerrar"
+  },
+  "units": {
+    "ram": "RAM",
+    "disk": "Disco"
   }
 }

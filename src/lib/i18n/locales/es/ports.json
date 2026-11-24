@@ -1,1 +1,37 @@
-{}
+{
+  "title": "Puertos",
+  "filter": {
+    "search": "Buscar",
+    "searchPlaceholder": "Puerto, PID, nombre, ruta o proyecto",
+    "includeUdp": "Incluir UDP"
+  },
+  "autoRefresh": {
+    "label": "Actualización automática cada {secs} s",
+    "off": "Actualización automática desactivada"
+  },
+  "columns": {
+    "port": "Puerto",
+    "protocol": "Protocolo",
+    "pid": "PID",
+    "process": "Proceso",
+    "worktree": "Worktree",
+    "path": "Carpeta de trabajo",
+    "actions": "Acciones"
+  },
+  "unknownPath": "Desconocida",
+  "unknownPathHint": "La carpeta no se puede leer (proceso protegido o elevado).",
+  "worktreeNone": "—",
+  "empty": {
+    "none": "No se encontraron puertos en escucha.",
+    "noResults": "Ningún puerto coincide con la búsqueda."
+  },
+  "actions": {
+    "kill": "Terminar proceso"
+  },
+  "kill": {
+    "title": "Terminar proceso",
+    "message": "¿Terminar {name} (PID {pid}), que escucha en el puerto {port}? Se perderá el trabajo sin guardar de ese proceso.",
+    "confirm": "Terminar"
+  },
+  "platformNote": "La detección de puertos está plenamente soportada en Windows. En macOS y Linux es de mejor esfuerzo: los procesos de otros usuarios pueden no ser visibles."
+}

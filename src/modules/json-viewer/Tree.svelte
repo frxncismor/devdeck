@@ -18,7 +18,18 @@
     /** `depth` is the nesting level of the node (root = 0). */
     onselect: (node: JsonNode, depth: number) => void;
   }
-  let { session, root, selectedId, height = 480, onselect }: Props = $props();
+  let {
+    session,
+    root,
+    selectedId,
+    height: fallbackHeight = 480,
+    onselect,
+  }: Props = $props();
+
+  // The list fills the space between the error line and the footer: measured, not guessed, so
+  // the footer never overlaps the last row.
+  let viewport = $state(0);
+  const height = $derived(viewport > 0 ? viewport : fallbackHeight);
 
   const ROW_HEIGHT = 26;
 
@@ -79,8 +90,15 @@
   {#if error}
     <p class="error" role="alert">{error}</p>
   {/if}
-  <div role="tree" aria-label={t("jsonViewer.tree.label")} class="tree">
-    <VirtualList items={rows} rowHeight={ROW_HEIGHT} {height} row={rowView} />
+  <div
+    role="tree"
+    aria-label={t("jsonViewer.tree.label")}
+    class="tree"
+    bind:clientHeight={viewport}
+  >
+    <div class="fill">
+      <VirtualList items={rows} rowHeight={ROW_HEIGHT} {height} row={rowView} />
+    </div>
   </div>
   <p class="foot subtle">
     {t("jsonViewer.tree.virtualized", {
@@ -178,9 +196,15 @@
     flex: 1;
   }
   .tree {
+    position: relative;
     flex: 1;
     min-height: 0;
-    padding: 4px 0;
+  }
+  /* Absolute so the list's fixed height never feeds back into the measured viewport. */
+  .fill {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
   }
   .row {
     display: flex;
@@ -280,6 +304,7 @@
     color: var(--text-subtle);
   }
   .foot {
+    flex: none;
     margin: 0;
     padding: 0 12px;
     height: 24px;

@@ -29,6 +29,7 @@
     type SearchHit,
     type SessionInfo,
   } from "./jsonApi";
+  import { depthOfPath, describeValue } from "./selection";
   import { loadRecent, parsePath, pushRecent, removeRecent } from "./recent";
 
   let session = $state<SessionInfo | null>(null);
@@ -55,6 +56,8 @@
   let dragging = $state(false);
   let recent = $state(loadRecent());
   let pathSeq = 0;
+  /** Enough to read the type and count the children of small containers. */
+  const HIT_VALUE_BYTES = 64 * 1024;
 
   const crumbs = $derived(selectedPath ? parsePath(selectedPath) : []);
   const eta = $derived.by(() => {
@@ -152,8 +155,26 @@
     if (indexJob) void jsonApi.cancel(indexJob);
   }
 
+  /** A search hit carries no node data: depth comes from its path, type/children from its value. */
   function onhit(h: SearchHit) {
-    select(h.nodeId, null, null);
+    select(h.nodeId, null, depthOfPath(h.path));
+    const seq = pathSeq;
+    const s = session;
+    if (!s) return;
+    jsonApi
+      .value(s.sessionId, h.nodeId, HIT_VALUE_BYTES)
+      .then((text) => {
+        if (seq !== pathSeq) return;
+        const d = describeValue(text);
+        if (!d) return;
+        selectedNode = {
+          id: h.nodeId,
+          kind: d.kind,
+          childCount: d.childCount,
+          hasChildren: (d.childCount ?? 0) > 0,
+        };
+      })
+      .catch(() => undefined);
   }
 
   function onkeydown(e: KeyboardEvent) {

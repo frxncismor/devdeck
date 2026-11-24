@@ -1,9 +1,9 @@
 {
-  "title": "Puertos",
   "filter": {
     "search": "Buscar",
     "searchPlaceholder": "Puerto, PID, nombre, ruta o proyecto",
-    "includeUdp": "Incluir UDP"
+    "all": "Todos",
+    "clear": "Borrar búsqueda"
   },
   "autoRefresh": {
     "label": "Actualización automática cada {secs} s",
@@ -13,12 +13,11 @@
     "port": "Puerto",
     "protocol": "Protocolo",
     "pid": "PID",
-    "worktree": "Worktree",
-    "path": "Carpeta de trabajo"
+    "path": "Carpeta de trabajo",
+    "owner": "Propietario"
   },
   "unknownPath": "Desconocida",
   "unknownPathHint": "La carpeta no se puede leer (proceso protegido o elevado).",
-  "worktreeNone": "—",
   "empty": {
     "none": "No se encontraron puertos en escucha.",
     "noResults": "Ningún puerto coincide con la búsqueda."
@@ -31,5 +30,16 @@
     "message": "¿Terminar {name} (PID {pid}), que escucha en el puerto {port}? Se perderá el trabajo sin guardar de ese proceso.",
     "confirm": "Terminar"
   },
-  "platformNote": "La detección de puertos está plenamente soportada en Windows. En macOS y Linux es de mejor esfuerzo: los procesos de otros usuarios pueden no ser visibles."
+  "platformNote": "La detección de puertos está plenamente soportada en Windows. En macOS y Linux es de mejor esfuerzo: los procesos de otros usuarios pueden no ser visibles.",
+  "count_one": "{count} puerto",
+  "count_other": "{count} puertos",
+  "elevated": {
+    "title": "Algunos procesos están ocultos o no se pueden leer",
+    "message": "Los procesos elevados o protegidos pueden no mostrar su carpeta ni su propietario; aparecen como desconocidos."
+  },
+  "retry": "Reintentar",
+  "toast": {
+    "killed": "Proceso terminado: {name}",
+    "killedDetail": "PID {pid}, puerto {port}"
+  }
 }

@@ -1,5 +1,4 @@
 {
-  "title": "Worktrees",
   "root": {
     "label": "Carpeta raíz de repositorios",
     "none": "No hay carpeta raíz seleccionada",
@@ -10,7 +9,9 @@
   "empty": {
     "noRoot": "Elige la carpeta que contiene tus repositorios para ver sus worktrees.",
     "noResults": "Ningún worktree coincide con los filtros.",
-    "noWorktrees": "No se encontraron repositorios git bajo la carpeta raíz."
+    "noWorktrees": "No se encontraron repositorios git bajo la carpeta raíz.",
+    "noRootTitle": "Elige la carpeta de tus repositorios",
+    "noWorktreesTitle": "No se encontraron repositorios"
   },
   "filter": {
     "search": "Buscar",
@@ -32,9 +33,27 @@
   "actions": {
     "openVscode": "Abrir en VS Code",
     "openTerminal": "Abrir terminal",
-    "remove": "Eliminar"
+    "remove": "Eliminar",
+    "removeMain": "El worktree principal no se puede eliminar"
   },
   "remove": {
     "message": "¿Eliminar el worktree en {path}? Se borrará la carpeta; la rama se conserva."
+  },
+  "scannedJustNow": "Escaneado ahora mismo",
+  "scannedAgo": "Escaneado {age}",
+  "scanning": "Escaneando repositorios…",
+  "rescan": "Reescanear",
+  "retry": "Reintentar",
+  "stats": {
+    "worktrees": "Worktrees",
+    "modified": "Con cambios",
+    "ahead": "Por delante del upstream",
+    "behind": "Por detrás del upstream",
+    "modifiedCount": "{count} con cambios"
+  },
+  "toast": {
+    "openedVscode": "Abierto en VS Code",
+    "openedTerminal": "Terminal abierta",
+    "removed": "Worktree eliminado"
   }
 }

@@ -1,5 +1,4 @@
 {
-  "title": "Worktrees",
   "root": {
     "label": "Repositories root",
     "none": "No root folder selected",
@@ -10,7 +9,9 @@
   "empty": {
     "noRoot": "Choose the folder that contains your repositories to see their worktrees.",
     "noResults": "No worktrees match the filters.",
-    "noWorktrees": "No git repositories were found under the root folder."
+    "noWorktrees": "No git repositories were found under the root folder.",
+    "noRootTitle": "Choose your repositories folder",
+    "noWorktreesTitle": "No repositories found"
   },
   "filter": {
     "search": "Search",
@@ -32,9 +33,27 @@
   "actions": {
     "openVscode": "Open in VS Code",
     "openTerminal": "Open terminal",
-    "remove": "Remove"
+    "remove": "Remove",
+    "removeMain": "The main worktree cannot be removed"
   },
   "remove": {
     "message": "Remove the worktree at {path}? The folder will be deleted; the branch is kept."
+  },
+  "scannedJustNow": "Scanned just now",
+  "scannedAgo": "Scanned {age}",
+  "scanning": "Scanning repositories…",
+  "rescan": "Rescan",
+  "retry": "Retry",
+  "stats": {
+    "worktrees": "Worktrees",
+    "modified": "With changes",
+    "ahead": "Ahead of upstream",
+    "behind": "Behind upstream",
+    "modifiedCount": "{count} with changes"
+  },
+  "toast": {
+    "openedVscode": "Opened in VS Code",
+    "openedTerminal": "Terminal opened",
+    "removed": "Worktree removed"
   }
 }

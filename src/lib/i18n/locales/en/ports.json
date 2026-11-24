@@ -1,9 +1,9 @@
 {
-  "title": "Ports",
   "filter": {
     "search": "Search",
     "searchPlaceholder": "Port, PID, name, path or project",
-    "includeUdp": "Include UDP"
+    "all": "All",
+    "clear": "Clear search"
   },
   "autoRefresh": {
     "label": "Auto refresh every {secs} s",
@@ -13,12 +13,11 @@
     "port": "Port",
     "protocol": "Protocol",
     "pid": "PID",
-    "worktree": "Worktree",
-    "path": "Working folder"
+    "path": "Working folder",
+    "owner": "Owner"
   },
   "unknownPath": "Unknown",
   "unknownPathHint": "The folder is not readable (protected or elevated process).",
-  "worktreeNone": "—",
   "empty": {
     "none": "No listening ports were found.",
     "noResults": "No ports match the search."
@@ -31,5 +30,16 @@
     "message": "Kill {name} (PID {pid}), which listens on port {port}? Unsaved work in that process will be lost.",
     "confirm": "Kill"
   },
-  "platformNote": "Port detection is fully supported on Windows. On macOS and Linux it is best effort: processes owned by other users may not be visible."
+  "platformNote": "Port detection is fully supported on Windows. On macOS and Linux it is best effort: processes owned by other users may not be visible.",
+  "count_one": "{count} port",
+  "count_other": "{count} ports",
+  "elevated": {
+    "title": "Some processes are hidden or unreadable",
+    "message": "Elevated or protected processes may not show their folder or owner; they appear as unknown."
+  },
+  "retry": "Retry",
+  "toast": {
+    "killed": "Process terminated: {name}",
+    "killedDetail": "PID {pid}, port {port}"
+  }
 }

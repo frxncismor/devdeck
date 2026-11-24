@@ -75,6 +75,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
+    /* In a flex column (the shell content area) overflow:hidden lets the card shrink and clip its rows. */
+    flex-shrink: 0;
   }
   .head {
     font-size: inherit;

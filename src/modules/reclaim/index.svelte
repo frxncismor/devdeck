@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import ConfirmDialog from "../../components/ConfirmDialog.svelte";
   import { toAppError } from "../../lib/api";
   import { configState } from "../../lib/config.svelte";
@@ -42,6 +42,7 @@
   let error = $state<AppError | null>(null);
   let notice = $state<string | null>(null);
   let pending = $state<Pending | null>(null);
+  let busy = $state(false);
 
   const root = $derived(configState.value.root);
   const scope = $derived(configState.value.scope);
@@ -65,50 +66,75 @@
     }
   }
 
+  /** Out-of-order guards: only the latest call of each loader may assign data or clear its spinner. */
+  let processesSeq = 0;
+  let worktreesSeq = 0;
+  let foldersSeq = 0;
+
   async function loadProcesses(): Promise<void> {
+    const mine = ++processesSeq;
     loadingProcesses = true;
     try {
-      processes = await reclaimApi.processes(currentScope());
+      const result = await reclaimApi.processes(currentScope());
+      if (mine !== processesSeq) return;
+      processes = result;
     } catch (e) {
-      fail(e);
+      if (mine === processesSeq) fail(e);
     } finally {
-      loadingProcesses = false;
+      if (mine === processesSeq) loadingProcesses = false;
     }
     await loadSummary();
   }
 
   async function loadWorktrees(): Promise<void> {
+    const mine = ++worktreesSeq;
     loadingWorktrees = true;
     try {
-      worktrees = await reclaimApi.forgotten(currentScope());
+      const result = await reclaimApi.forgotten(currentScope());
+      if (mine !== worktreesSeq) return;
+      worktrees = result;
     } catch (e) {
-      fail(e);
+      if (mine === worktreesSeq) fail(e);
     } finally {
-      loadingWorktrees = false;
+      if (mine === worktreesSeq) loadingWorktrees = false;
     }
     await loadSummary();
   }
 
   async function loadFolders(): Promise<void> {
-    if (scanning) return;
+    // A newer scan (scope change or refresh) supersedes the running one: cancel it and discard its result.
+    const mine = ++foldersSeq;
+    const scanScope = JSON.stringify(currentScope());
+    if (jobId) void reclaimApi.cancel(jobId).catch(() => undefined);
+    jobId = null;
     scanning = true;
     cancelled = false;
     progress = null;
     try {
-      const scan = await startFolderScan(currentScope(), (p) => (progress = p));
+      const scan = await startFolderScan(currentScope(), (p) => {
+        if (mine === foldersSeq) progress = p;
+      });
+      if (mine !== foldersSeq) {
+        void reclaimApi.cancel(scan.jobId).catch(() => undefined);
+        return;
+      }
       jobId = scan.jobId;
       const done = await scan.done;
+      if (mine !== foldersSeq || scanScope !== JSON.stringify(currentScope()))
+        return;
       if (done.cancelled) cancelled = true;
       else if (done.error) error = done.error;
       else if (done.folders) folders = done.folders;
     } catch (e) {
-      fail(e);
+      if (mine === foldersSeq) fail(e);
     } finally {
-      scanning = false;
-      jobId = null;
-      progress = null;
+      if (mine === foldersSeq) {
+        scanning = false;
+        jobId = null;
+        progress = null;
+      }
     }
-    await loadSummary();
+    if (mine === foldersSeq) await loadSummary();
   }
 
   async function cancelFolders(): Promise<void> {
@@ -123,6 +149,11 @@
     void loadFolders();
   }
 
+  onDestroy(() => {
+    foldersSeq++;
+    if (jobId) void reclaimApi.cancel(jobId).catch(() => undefined);
+  });
+
   // Reload everything when the scope or the root changes (and once on mount).
   $effect(() => {
     void scope;
@@ -132,7 +163,8 @@
 
   async function confirmPending(): Promise<void> {
     const p = pending;
-    if (!p) return;
+    if (!p || busy) return;
+    busy = true;
     error = null;
     notice = null;
     try {
@@ -164,6 +196,8 @@
       error = err;
       // A process that already vanished or a folder that is gone: refresh what is shown.
       if (p.type === "process") void loadProcesses();
+    } finally {
+      busy = false;
     }
   }
 
@@ -296,6 +330,7 @@
   title={dialog.title}
   message={dialog.message}
   confirmLabel={dialog.confirm}
+  {busy}
   onconfirm={() => void confirmPending()}
   oncancel={() => (pending = null)}
 />

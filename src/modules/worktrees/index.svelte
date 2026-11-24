@@ -26,30 +26,38 @@
   /** Worktree pending removal and whether the second (discard changes) step is shown. */
   let pending = $state<Worktree | null>(null);
   let forcing = $state(false);
+  let busy = $state(false);
 
   const root = $derived(configState.value.root);
   const visible = $derived(
     data ? filterGrouped(data, { dirtyOnly, query }) : null,
   );
 
+  /** Guards against out-of-order responses (same pattern as Ports). */
+  let seq = 0;
+
   async function scan(): Promise<void> {
+    const mine = ++seq;
     if (!root) {
       data = null;
+      loading = false;
       return;
     }
     loading = true;
     error = null;
     try {
-      data = await api.withScope<Grouped<Worktree>>(
+      const result = await api.withScope<Grouped<Worktree>>(
         "worktrees_scan",
         currentScope(),
       );
+      if (mine !== seq) return;
+      data = result;
       // The scan refreshed the backend project list; sync the selector.
       await refreshProjects();
     } catch (e) {
-      error = toAppError(e);
+      if (mine === seq) error = toAppError(e);
     } finally {
-      loading = false;
+      if (mine === seq) loading = false;
     }
   }
 
@@ -81,7 +89,8 @@
 
   async function confirmRemove(): Promise<void> {
     const w = pending;
-    if (!w) return;
+    if (!w || busy) return;
+    busy = true;
     try {
       await api.call("worktree_remove", { path: w.path, force: forcing });
       pending = null;
@@ -97,6 +106,8 @@
       pending = null;
       forcing = false;
       error = err;
+    } finally {
+      busy = false;
     }
   }
 
@@ -250,6 +261,7 @@
   confirmLabel={forcing
     ? t("common.worktree.remove.forceConfirm")
     : t("common.worktree.remove.confirm")}
+  {busy}
   onconfirm={() => void confirmRemove()}
   oncancel={cancelRemove}
 />

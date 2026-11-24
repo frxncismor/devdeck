@@ -1,5 +1,4 @@
 {
-  "title": "Visor JSON",
   "intro": "Abre un archivo JSON grande para explorarlo sin cargarlo en memoria.",
   "open": {
     "button": "Abrir archivo JSON…",

@@ -27,8 +27,7 @@
     "detached": "Desacoplado"
   },
   "sync": {
-    "noUpstream": "Sin upstream",
-    "inSync": "Sincronizado"
+    "noUpstream": "Sin upstream"
   },
   "actions": {
     "openVscode": "Abrir en VS Code",

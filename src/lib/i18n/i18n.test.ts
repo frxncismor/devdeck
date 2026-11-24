@@ -135,3 +135,39 @@ describe("backend error codes", () => {
     expect([...codes].filter((c) => !known.includes(c))).toEqual([]);
   });
 });
+
+describe("i18n strings have no unresolved braces", () => {
+  for (const l of ["en", "es"] as const) {
+    it(`every "${l}" string only uses braces as {placeholder}`, () => {
+      const flat = flatten(messages[l] as unknown as Json);
+      const bad = Object.entries(flat).filter(([, s]) =>
+        /[{}]/.test(s.replace(/\{\w+\}/g, "")),
+      );
+      expect(bad.map(([k]) => k)).toEqual([]);
+    });
+  }
+});
+
+describe("plural keys resolve with a numeric count", () => {
+  it("jsonViewer.tree.keys/items never fall back to the raw key", () => {
+    for (const l of ["en", "es"] as const) {
+      applyLocale(l);
+      for (const count of [1, 2, 1234]) {
+        for (const key of [
+          "jsonViewer.tree.keys",
+          "jsonViewer.tree.items",
+        ] as MessageKey[]) {
+          const out = t(key, { count, n: String(count) });
+          expect(out).not.toBe(key);
+          expect(out).toContain(String(count));
+          expect(out).not.toMatch(/[{}]/);
+        }
+      }
+    }
+    applyLocale("en");
+    expect(t("jsonViewer.tree.keys", { count: 1, n: "1" })).toBe("1 key");
+    expect(t("jsonViewer.tree.items", { count: 1234, n: "1,234" })).toBe(
+      "1,234 items",
+    );
+  });
+});

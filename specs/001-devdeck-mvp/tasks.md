@@ -114,7 +114,7 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [x] T083 Review errors and empty/loading states in the 4 modules (every error code has an `errors.*` translation) — `src/modules/*`
 - [x] T084 Performance pass (SC-001..SC-004) with real data — report
 - [x] T085 Security review: minimal capabilities, validated paths, no secrets — `src-tauri/capabilities/default.json`
-- [ ] T086 CI green on the 3 platforms — `.github/workflows/ci.yml` (pending the first GitHub run after the push/PR; only Windows verified locally)
+- [x] T086 CI green on the 3 platforms — `.github/workflows/ci.yml` (PR #1, run 45341091142 on fb14de4)
 - [x] T087 [US5] i18n review: no literal UI text left in components, Spanish copy reviewed, dedupe shared keys into `common.json`, switching language at runtime updates every view, dates/numbers/sizes follow the language (SC-008, SC-009) — `src/**`, `src/lib/i18n/locales/**`
 
 ## Phase 4 — Deliverables (US8)
@@ -194,7 +194,7 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 | SC-002 | T050, T055, T084 | Met (release build, Windows): 524 MB dense fixture, 18 M containers, indexed in 2.3 s, RSS growth 1.25 GB incl. mmap pages, navigation 156 µs |
 | SC-003 | T053, T055, T084 | Met: first 100 search hits over 524 MB in 1 ms |
 | SC-004 | T005, T080, T084 | Met |
-| SC-005 | T014, T086, T091, T096 | Pending: first GitHub CI run and test tag |
+| SC-005 | T014, T086, T091, T096 | Partial: CI green on the 3 OSes (run 45341091142); test tag pending (T096) |
 | SC-006 | T007, T034, T045, T063, T068, T085 | Backend validation tested; front confirmation checked manually |
 | SC-007 | T016–T022b | Met |
 | SC-008 | T012d, T087 | Met |

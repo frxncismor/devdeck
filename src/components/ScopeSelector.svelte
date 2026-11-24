@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { toAppError } from "../lib/api";
+  import { errorMessage } from "../lib/errors";
   import { t } from "../lib/i18n/i18n.svelte";
   import { configState } from "../lib/config.svelte";
   import { scopeState, setScope } from "../lib/scope.svelte";
@@ -11,7 +13,9 @@
 
   function onchange(e: Event) {
     const v = (e.currentTarget as HTMLSelectElement).value;
-    void setScope(v === "" ? { kind: "global" } : { kind: "project", id: v });
+    setScope(v === "" ? { kind: "global" } : { kind: "project", id: v }).catch(
+      (err) => console.error(errorMessage(toAppError(err))),
+    );
   }
 </script>
 

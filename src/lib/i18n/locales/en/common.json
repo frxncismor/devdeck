@@ -11,9 +11,7 @@
   },
   "scope": {
     "label": "Scope",
-    "global": "Global",
-    "project": "Project",
-    "noProjects": "No projects found"
+    "global": "Global"
   },
   "language": {
     "label": "Language",
@@ -27,20 +25,11 @@
     "cancel": "Cancel"
   },
   "buttons": {
-    "ok": "OK",
     "cancel": "Cancel",
-    "close": "Close",
-    "refresh": "Refresh",
-    "retry": "Retry",
-    "browse": "Browse…",
-    "copy": "Copy",
-    "delete": "Delete",
-    "details": "Details"
+    "refresh": "Refresh"
   },
   "state": {
-    "loading": "Loading…",
-    "empty": "Nothing to show",
-    "comingSoon": "This module is not implemented yet"
+    "loading": "Loading…"
   },
   "table": {
     "items_one": "{count} item",

@@ -1,5 +1,4 @@
 {
-  "title": "JSON Viewer",
   "intro": "Open a large JSON file to browse it without loading it into memory.",
   "open": {
     "button": "Open JSON file…",

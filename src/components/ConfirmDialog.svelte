@@ -6,11 +6,19 @@
     title?: string;
     message: string;
     confirmLabel?: string;
+    busy?: boolean;
     onconfirm: () => void;
     oncancel: () => void;
   }
-  let { open, title, message, confirmLabel, onconfirm, oncancel }: Props =
-    $props();
+  let {
+    open,
+    title,
+    message,
+    confirmLabel,
+    busy = false,
+    onconfirm,
+    oncancel,
+  }: Props = $props();
 
   let dialog: HTMLDialogElement | undefined = $state();
 
@@ -28,7 +36,7 @@
     <button type="button" onclick={oncancel}>
       {t("common.confirm.cancel")}
     </button>
-    <button type="button" class="danger" onclick={onconfirm}>
+    <button type="button" class="danger" disabled={busy} onclick={onconfirm}>
       {confirmLabel ?? t("common.confirm.confirm")}
     </button>
   </div>

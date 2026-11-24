@@ -17,7 +17,8 @@ export async function refreshProjects(): Promise<void> {
   try {
     scopeState.projects = await api.listProjects();
   } catch {
-    scopeState.projects = [];
+    // Transient failure: keep the current scope and projects untouched.
+    return;
   }
   const s = configState.value.scope;
   if (s.kind === "project" && !scopeState.projects.some((p) => p.id === s.id)) {

@@ -11,9 +11,7 @@
   },
   "scope": {
     "label": "Ámbito",
-    "global": "Global",
-    "project": "Proyecto",
-    "noProjects": "No se encontraron proyectos"
+    "global": "Global"
   },
   "language": {
     "label": "Idioma",
@@ -27,20 +25,11 @@
     "cancel": "Cancelar"
   },
   "buttons": {
-    "ok": "Aceptar",
     "cancel": "Cancelar",
-    "close": "Cerrar",
-    "refresh": "Actualizar",
-    "retry": "Reintentar",
-    "browse": "Examinar…",
-    "copy": "Copiar",
-    "delete": "Eliminar",
-    "details": "Detalles"
+    "refresh": "Actualizar"
   },
   "state": {
-    "loading": "Cargando…",
-    "empty": "Nada que mostrar",
-    "comingSoon": "Este módulo aún no está implementado"
+    "loading": "Cargando…"
   },
   "table": {
     "items_one": "{count} elemento",

@@ -53,7 +53,10 @@
       const done = await job.done;
       if (done.error) error = errorMessage(done.error);
       else if (done.cancelled) status = t("jsonViewer.status.cancelled");
-      else if (done.session) {
+      else if (done.session && destroyed) {
+        // Left the module while indexing: close the session that nobody will use.
+        void jsonApi.close(done.session.sessionId).catch(() => undefined);
+      } else if (done.session) {
         session = done.session;
         root = await jsonApi.root(done.session.sessionId);
       }
@@ -69,7 +72,10 @@
     if (indexJob) void jsonApi.cancel(indexJob);
   }
 
+  let destroyed = false;
   onDestroy(() => {
+    destroyed = true;
+    if (indexJob) void jsonApi.cancel(indexJob);
     if (session) void jsonApi.close(session.sessionId).catch(() => undefined);
   });
 </script>

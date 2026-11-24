@@ -195,7 +195,7 @@
           ? t("jsonViewer.search.hitKey")
           : t("jsonViewer.search.hitValue")}
       </span>
-      <span class="path" title={current.path}>{current.path}</span>
+      <span class="hit-path" title={current.path}>{current.path}</span>
       <span class="snippet subtle">{current.snippet}</span>
     </p>
   {/if}
@@ -301,7 +301,8 @@
     text-transform: uppercase;
     color: var(--accent-text);
   }
-  .path {
+  /* Not `.path`: that global class is rtl (truncates from the start) and would move the leading `$`. */
+  .hit-path {
     flex: none;
     max-width: 50%;
     overflow: hidden;

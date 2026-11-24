@@ -120,9 +120,9 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 ## Phase 4 — Deliverables (US8)
 - [x] T090 [P] Own SVG icon and `pnpm tauri icon` — `assets/icon.svg`, `src-tauri/icons/*`
 - [x] T091 [P] Release workflow with tauri-action (draft, .msi + NSIS .exe) — `.github/workflows/release.yml`
-- [ ] T092 [P] Keep a Changelog CHANGELOG with `0.1.0` — `CHANGELOG.md`
+- [x] T092 [P] Keep a Changelog CHANGELOG with `0.1.0` — `CHANGELOG.md`
 - [x] T093 [P] Consistent version 0.1.0 and the repository description in `package.json`, `Cargo.toml`, `tauri.conf.json` — various
-- [ ] T094 English README (starts with the repository description from `plan.md`; what it is, install, usage, development, language support, security `setup:hooks`/`setup:gitleaks`, how to generate screenshots/GIF) — `README.md`
+- [x] T094 English README (starts with the repository description from `plan.md`; what it is, install, usage, development, language support, security `setup:hooks`/`setup:gitleaks`, how to generate screenshots/GIF) — `README.md`
 - [ ] T095 Screenshots of the 4 modules (English and Spanish) and a GIF of the flow — `docs/img/*`
 - [ ] T096 Test the release on a throwaway tag (run by the main orchestrator with Paco's permission) — verification
 - [ ] T097 Final `/speckit.analyze` and close-out — `specs/001-devdeck-mvp/`

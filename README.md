@@ -7,7 +7,7 @@
 
 A Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see which worktree owns each listening port, browse multi-hundred-MB JSON files, and reclaim disk and RAM from forgotten worktrees and orphaned dev processes.
 
-![DevDeck demo](docs/img/demo.gif)
+<!-- TODO(screenshots): demo GIF goes here after the UI redesign: ![DevDeck demo](docs/img/demo.gif) -->
 
 ## What it does
 
@@ -17,19 +17,19 @@ DevDeck is a single window with four modules, a **Global / project scope selecto
 
 Point DevDeck at a root folder and it finds every git repo and lists all of its worktrees: branch, clean/dirty state with file count, ahead/behind versus upstream, and the last commit. Open a worktree in VS Code or a terminal, or remove a linked worktree (with confirmation; dirty worktrees need a stronger one).
 
-![Worktrees](docs/img/worktrees-en.png)
+<!-- TODO(screenshots): ![Worktrees](docs/img/worktrees-en.png) -->
 
 ### Ports
 
 Lists listening TCP ports (UDP optional) with PID, process name and executable path, and attributes each process to the worktree or project its working directory lives in. Search by port, PID, name, path or project; kill a process after confirming; refresh manually or automatically.
 
-![Ports](docs/img/ports-en.png)
+<!-- TODO(screenshots): ![Ports](docs/img/ports-en.png) -->
 
 ### JSON Viewer
 
 Opens JSON files of several hundred MB without loading them into the webview. The file is indexed in one streaming pass in the background (with progress and cancellation); the tree is virtualized and children are fetched on demand. Search keys and values, copy a node's path (`$.a.b[3]`), copy or save a formatted subtree, or save the whole file formatted. Invalid JSON is reported with its offset.
 
-![JSON Viewer](docs/img/json-viewer-en.png)
+<!-- TODO(screenshots): ![JSON Viewer](docs/img/json-viewer-en.png) -->
 
 ### Reclaim
 
@@ -39,15 +39,13 @@ Shows how much RAM and disk you can recover, in the current scope:
 - **Dev processes** - node, vite, cargo, rust-analyzer, headless browsers, Docker and similar, with RAM, CPU and age. Processes whose working directory is in a deleted worktree are flagged as orphaned.
 - **Regenerable folders** - `node_modules`, `target`, `.venv`, `dist` and package-manager caches, with size and last use. The backend rejects any path that is not on the allow-list.
 
-![Reclaim](docs/img/reclaim-en.png)
+<!-- TODO(screenshots): ![Reclaim](docs/img/reclaim-en.png) -->
 
 ## Language support
 
 The UI ships in English (default) and Spanish. Switching is instant, persisted, and also changes date, number and size formatting. A test fails if the two locale files differ in keys or placeholders.
 
-| Worktrees (Español)                        | Reclaim (Español)                      |
-| ------------------------------------------ | -------------------------------------- |
-| ![Worktrees ES](docs/img/worktrees-es.png) | ![Reclaim ES](docs/img/reclaim-es.png) |
+<!-- TODO(screenshots): Spanish screenshots side by side: docs/img/worktrees-es.png and docs/img/reclaim-es.png -->
 
 ## Tech stack
 
@@ -126,9 +124,7 @@ Build the installers with `pnpm tauri build` (bundles: MSI and NSIS).
 
 ## Screenshots
 
-### Regenerating screenshots
-
-<!-- TODO(capturas) -->
+<!-- TODO(screenshots): screenshots and the demo GIF will be captured after the UI redesign; document here how to regenerate them (demo data script, WebView2 remote debugging + Playwright, ffmpeg palette GIF). -->
 
 ## License
 

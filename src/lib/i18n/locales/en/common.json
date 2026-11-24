@@ -7,11 +7,18 @@
     "worktrees": "Worktrees",
     "ports": "Ports",
     "jsonViewer": "JSON Viewer",
-    "reclaim": "Reclaim"
+    "reclaim": "Reclaim",
+    "sidebar": "Sidebar",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   },
   "scope": {
     "label": "Scope",
-    "global": "Global"
+    "global": "Global",
+    "filter": "Filter projects…",
+    "noMatch": "No projects match",
+    "projects_one": "{count} project",
+    "projects_other": "All {count} projects"
   },
   "language": {
     "label": "Language",
@@ -33,7 +40,8 @@
   },
   "table": {
     "items_one": "{count} item",
-    "items_other": "{count} items"
+    "items_other": "{count} items",
+    "total": "Total"
   },
   "errors": {
     "unknown": "Something went wrong",
@@ -81,5 +89,30 @@
       "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
       "forceConfirm": "Discard and remove"
     }
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "titlebar": {
+    "search": "Search…",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Go to a module or switch scope…",
+    "empty": "No matches",
+    "goTo": "Go to {name}",
+    "scopeTo": "Scope: {name}"
+  },
+  "toast": {
+    "dismiss": "Dismiss"
+  },
+  "units": {
+    "ram": "RAM",
+    "disk": "Disk"
   }
 }

@@ -1,133 +1,182 @@
 # Implementation Plan: DevDeck MVP
 
-**Spec**: [spec.md](spec.md) | **Constitución**: `.specify/memory/constitution.md`
-Detalle de decisiones: [research.md](research.md) · modelos: [data-model.md](data-model.md) · comandos: [contracts/commands.md](contracts/commands.md) · arranque: [quickstart.md](quickstart.md)
+**Spec**: [spec.md](spec.md) | **Constitution**: `.specify/memory/constitution.md`
+Decision details: [research.md](research.md) · models: [data-model.md](data-model.md) · commands: [contracts/commands.md](contracts/commands.md) · getting started: [quickstart.md](quickstart.md)
 
-## Resumen
-App Tauri 2 con lógica en una crate de librería `devdeck-core` (sin Tauri) y una crate fina `src-tauri` que solo expone
-comandos. Front Svelte 5 + TS + Vite (sin SvelteKit) con store de ámbito. Git por CLI, puertos con `listeners`/`sysinfo`,
-JSON con índice en streaming + lectura por offset.
+## Summary
+Tauri 2 app with the logic in a library crate `devdeck-core` (no Tauri) and a thin `src-tauri` crate that only exposes
+commands. Svelte 5 + TS + Vite frontend (no SvelteKit) with a scope store and a minimal typed i18n layer (en/es). Git via
+CLI, ports with `listeners`/`sysinfo`, JSON with a streaming index + offset reads.
 
-## Contexto técnico
-Rust estable (MSRV = la de Tauri 2), Tauri 2, Svelte 5 + TS + Vite 6, pnpm. Almacenamiento: plugin `store` (config).
-Tests: `cargo test` (core), `vitest` (front). Destino: Windows 10/11 (garantizado), macOS/Linux compilan.
+## Technical context
+Stable Rust (MSRV = Tauri 2's), Tauri 2, Svelte 5 + TS + Vite 6, pnpm. Storage: `store` plugin (config).
+Tests: `cargo test` (core), `vitest` (front). Target: Windows 10/11 (guaranteed), macOS/Linux compile.
 
-## Estructura
+## Structure
 ```
 Cargo.toml                    # workspace: crates/devdeck-core, src-tauri
 crates/devdeck-core/src/
   lib.rs  error.rs  scope.rs  project.rs  process_info.rs  fsutil.rs
-  worktrees/{mod,git,scan}.rs
+  worktrees/{mod,git,scan,open}.rs
   ports/{mod,listing}.rs
   json_viewer/{mod,indexer,reader,search,format}.rs
   cleanup/{mod,sizes,processes,folders,forgotten,summary}.rs
 src-tauri/src/
-  main.rs  lib.rs            # run(); registro de comandos
+  main.rs  lib.rs            # run(); command registration
   error.rs  state.rs
   commands/{mod,config,project,worktrees,ports,json_viewer,cleanup}.rs
 src-tauri/{tauri.conf.json,capabilities/default.json,icons/}
 src/                          # Svelte
   main.ts  App.svelte  lib/{api.ts,scope.svelte.ts,types.ts,format.ts}
-  modules/{worktrees,ports,json-viewer,cleanup}/  # una carpeta por módulo
-  components/{Sidebar,ScopeSelector,ConfirmDialog,VirtualList,GroupedTable}.svelte
+  lib/i18n/{index.ts,i18n.svelte.ts,keys.ts,i18n.test.ts}
+  lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,cleanup}.json   # one file per module and language
+  modules/{worktrees,ports,json-viewer,cleanup}/  # one folder per module
+  components/{Sidebar,ScopeSelector,LanguageSelector,ConfirmDialog,VirtualList,GroupedTable}.svelte
 .githooks/pre-commit  .gitleaks.toml  scripts/{setup-gitleaks.mts,setup-gitleaks.test.mts}
-.github/workflows/{ci.yml,release.yml}
+.github/workflows/{ci.yml,secret-scan.yml,release.yml}
 ```
-**Puntos de extensión sin conflicto**: cada módulo tiene su archivo en `commands/` y su carpeta en `src/modules/`. La
-fase 1 deja `commands/mod.rs` con un macro/lista `generate_handler![ ... ]` ya completa con los nombres de todos los
-comandos como stubs (`NotImplemented`), de modo que los agentes de fase 2 solo reemplazan el cuerpo en su archivo y no
-tocan el registro. Igual en front: `App.svelte` ya importa los 4 módulos; cada `index.svelte` es de su dueño.
+**Conflict-free extension points**: each module has its own file in `commands/`, its own folder in `src/modules/` and
+its own pair of locale files. Phase 1A leaves `commands/mod.rs` with a complete `generate_handler![ ... ]` list holding
+every command name as a stub (`NotImplemented`), so phase-2 agents only replace the body in their own file and never touch
+the registry. Likewise on the front: `App.svelte` already imports the 4 modules (each `index.svelte` is owned by its
+module), and `src/lib/i18n/index.ts` already imports all 10 locale JSON files (created as `{}` in 1A); phase-2 agents only
+fill their own two files.
 
-## Decisiones (justificación y alternativa descartada)
-| Tema | Decisión | Descartada |
+## Decisions (rationale and rejected alternative)
+| Topic | Decision | Rejected |
 |---|---|---|
-| Workspace | `devdeck-core` + `src-tauri` | Todo en `src-tauri`: tests lentos con Tauri y mezcla UI/lógica |
-| Front | Svelte 5 + Vite sin SvelteKit | SvelteKit adapter-static: routing/SSR innecesario; rutas = estado de módulo |
-| Paquetes | pnpm | npm: la referencia (grim-dawn-builds) y los scripts de seguridad ya usan pnpm |
-| Git | CLI `git` (`worktree list --porcelain`, `status --porcelain=v2 --branch`, `log -1`) | `git2`: soporte de worktrees limitado, compila libgit2 (lento/pesado); `gix` aún incompleto para status/worktree remove |
-| Puertos | crate `listeners` (PID por puerto, Win/Mac/Linux) + `sysinfo` | `netstat2`: menos mantenido; `GetExtendedTcpTable` a mano con `windows`: más código y `unsafe` |
-| Procesos | `sysinfo` (nombre, exe, cwd, memoria, CPU, start_time, kill) | WMI: lento y solo Windows |
-| cwd en Windows | `Process::cwd()` (lee el PEB); si `None` ⇒ "desconocido" | Inyección/dbghelp: robusto pero fuera de alcance |
-| Visor JSON | índice propio en streaming + `memmap2` | Cargar con serde_json::Value: 500 MB ⇒ varios GB |
-| Árbol virtual | componente propio (lista plana de filas visibles + ventana) | Librería: dependencia por 80 líneas de código |
-| Tamaños | `jwalk` no (rayon extra); `walkdir` en hilo bloqueante con `AtomicBool` de cancelación | jwalk: más rápido pero más complejidad |
-| Borrado | `std::fs::remove_dir_all` tras validar lista blanca; sin papelera | `trash`: lento con miles de ficheros, comportamiento por SO |
-| Ámbito | Filtrado/agrupado/totales en Rust (`scope.rs`) | Filtrar en front: duplica lógica, no testeable (constitución III) |
-| Config | `tauri-plugin-store` | Archivo propio JSON: reinventa |
+| Workspace | `devdeck-core` + `src-tauri` | Everything in `src-tauri`: slow tests with Tauri and UI/logic mixed |
+| Frontend | Svelte 5 + Vite without SvelteKit | SvelteKit adapter-static: unneeded routing/SSR; routes = module state |
+| Packages | pnpm | npm: the reference (grim-dawn-builds) and the security scripts already use pnpm |
+| Git | `git` CLI (`worktree list --porcelain`, `status --porcelain=v2 --branch`, `log -1`) | `git2`: limited worktree support, builds libgit2 (slow/heavy); `gix` still incomplete for status/worktree remove |
+| Ports | `listeners` crate (PID per port, Win/Mac/Linux) + `sysinfo` | `netstat2`: less maintained; hand-written `GetExtendedTcpTable` with `windows`: more code and `unsafe` |
+| Processes | `sysinfo` (name, exe, cwd, memory, CPU, start_time, kill) | WMI: slow and Windows-only |
+| cwd on Windows | `Process::cwd()` (reads the PEB); if `None` ⇒ "unknown" | Injection/dbghelp: robust but out of scope |
+| JSON viewer | own streaming index + `memmap2` | Loading into `serde_json::Value`: 500 MB ⇒ several GB |
+| Virtual tree | own component (flat list of visible rows + window) | Library: a dependency for ~80 lines of code |
+| Sizes | `walkdir` on a blocking thread with a cancel `AtomicBool`; not `jwalk` (extra rayon) | jwalk: faster but more complexity |
+| Deletion | `std::fs::remove_dir_all` after allow-list validation; no recycle bin | `trash`: slow with thousands of files, per-OS behavior |
+| Scope | Filtering/grouping/totals in Rust (`scope.rs`) | Filtering in the front: duplicated logic, untestable (constitution III) |
+| Config | `tauri-plugin-store` | Own JSON file: reinvents it |
+| i18n | Own minimal layer: Svelte 5 runes + static JSON + typed keys (~80 lines) | `svelte-i18n`: stores-based API (not runes), ICU message parser and async locale loading we do not need for 2 static languages; plus an extra dependency and untyped keys by default |
 
-## Ámbito Global / proyecto (contrato compartido, fase 1)
-- `project.rs`: `Project {id, name, main_path, worktree_paths}`; `build_projects(root)` usa `worktrees::list`.
+## Global / project scope (shared contract, phase 1)
+- `project.rs`: `Project {id, name, main_path, worktree_paths}`; `build_projects(root)` uses `worktrees::list`.
 - `scope.rs`: `enum Scope { Global, Project(ProjectId) }`; `attribute(path, &[Project]) -> Option<ProjectId>`
-  (normaliza separadores, quita `\\?\`, minúsculas en Windows, prefijo por componentes, gana el más largo);
+  (normalizes separators, strips `\\?\`, lowercases on Windows, component-wise prefix, longest wins);
   `Grouped<T> { groups: Vec<Group<T>>, total: Totals }`, `Group { project: Option<ProjectRef>, items, totals }`,
-  `Totals { ram_bytes, disk_bytes, count }`; `group_by_project(items, scope, projects)` genérico sobre un trait `Attributable`
+  `Totals { ram_bytes, disk_bytes, count }`; `group_by_project(items, scope, projects)` generic over an `Attributable` trait
   (`fn path(&self)->Option<&Path>`, `ram()`, `disk()`).
-- Front: `scope.svelte.ts` guarda el ámbito (persistido en config) y lo pasa a cada `api.*`; `GroupedTable.svelte` renderiza grupos.
-- Cada bloque de fase 2 implementa `Attributable` para su tipo y llama `group_by_project`.
+- Front: `scope.svelte.ts` stores the scope (persisted in the config) and passes it to every `api.*`; `GroupedTable.svelte` renders groups
+  and shows the "No project" label from `common.noProject` when `group.project` is null.
+- Each phase-2 block implements `Attributable` for its type and calls `group_by_project`.
+
+## Internationalization (en / es)
+**Decision: own minimal layer, not `svelte-i18n`.** Two static languages, no plurals beyond one/other, no lazy loading. The
+layer is ~80 lines, uses Svelte 5 runes (so components re-render on language change with no store subscriptions), and gives
+compile-time-checked keys, which `svelte-i18n` does not by default.
+
+- **Resources**: `src/lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,cleanup}.json`. One file per module and per
+  language, so phase-2 agents never edit the same file. `common.json` (shell, scope/language selectors, buttons, confirm
+  dialog, generic errors, "No project") is owned by 1A; module agents put module-specific copy in their own file and only
+  reuse `common.*` keys. Changes to `common.json` after 1A go through the integration phase.
+- **Closed index**: `src/lib/i18n/index.ts` statically imports the 10 files and builds
+  `messages = { en: { common, worktrees, ports, jsonViewer, cleanup }, es: { ... } }`. The namespace list is fixed in 1A; adding a
+  module namespace later is an explicit edit of this one file.
+- **Typed keys**: `keys.ts` derives `type MessageKey` from the `en` catalogue with a recursive template-literal type over the
+  nested JSON (`"worktrees.actions.remove"`, `"common.noProject"`). `t(key: MessageKey, params?: Record<string, string|number>)`
+  therefore fails `svelte-check` on a typo or a deleted key. `es` is typed as `typeof en` structure through the parity test.
+- **API** (`i18n.svelte.ts`): `locale` rune (`"en" | "es"`), `setLocale(l)` (persists via `set_config`), `t()` with `{name}`
+  interpolation and `_one`/`_other` plural suffix keys selected with `Intl.PluralRules`. Missing key in `es` falls back to `en`
+  (and the parity test makes that impossible in CI). Unknown stored language ⇒ `en`.
+- **Language selection**: default `en`; stored in `Config.language`; **no automatic system-language detection** (decision: keeps
+  behavior predictable for demos and removes a startup branch; revisit only if Paco asks). `LanguageSelector.svelte` lives
+  next to `ScopeSelector` in the shell. `<html lang>` follows the locale.
+- **Formatting** (`src/lib/format.ts`, locale-aware via the `locale` rune): `formatBytes` (binary scale, numeric part via
+  `Intl.NumberFormat`, unit labels KB/MB/GB/TB), `formatNumber`, `formatPercent`, `formatDate`/`formatDateTime`
+  (`Intl.DateTimeFormat`), `formatRelativeAge` (`Intl.RelativeTimeFormat`, days/hours/minutes).
+- **Backend errors**: Rust `Error` serializes as `{ kind, code, params?, detail? }`. `code` is a stable snake-case identifier
+  (e.g. `worktree_main_not_removable`, `process_access_denied`, `json_invalid_at_offset`); `params` carries values to
+  interpolate (`{offset}`); `detail` is raw technical text (git stderr, OS error) shown only in an expandable "details" area,
+  never as the headline. The front maps `errors.<code>` in `common.json` (fallback `errors.unknown`). Rust returns no UI text:
+  not for errors, not for "No project", not for tray/dialog titles (the front passes translated titles to the dialog plugin).
+- **Parity test** (`src/lib/i18n/i18n.test.ts`, vitest, part of `pnpm test`): flattens every namespace of `en` and `es` and
+  asserts identical key sets and identical `{placeholder}` sets per key; also scans `src/**/*.svelte|ts` for `t("...")` literals
+  and asserts each exists in `en`. Run in CI on all 3 OSes.
+- **No literal-detection lint rule** (too noisy for the benefit); the manual review in Phase 3 (T087) covers stray literals.
+- **Language of artifacts**: code, comments, identifiers, commits, specs, README, CHANGELOG, CI and the repo description are
+  English (constitution VIII). Spanish exists only in `locales/es/*.json`.
 
 ## Worktrees
-`git` invocado con `std::process::Command` en un trait `GitRunner` (mockeable). Escaneo: recorrer la raíz hasta
-profundidad N, un repo = directorio con `.git` (dir o archivo ⇒ worktree enlazado, se resuelve al principal con
-`git rev-parse --git-common-dir`). Por worktree 3 llamadas git en un pool acotado (4 hilos). Abrir: `code <ruta>` y
-`wt -d <ruta>` (fallback `pwsh -NoExit -WorkingDirectory`, luego `cmd /K cd /d`) con `opener`/`std::process`; sin shell.
-Quitar: `git worktree remove [--force] <ruta>` desde el repo principal; el backend rechaza el principal.
+`git` invoked with `std::process::Command` behind a `GitRunner` trait (mockable). Scan: walk the root to depth N, a repo = a
+directory with `.git` (dir, or file ⇒ linked worktree, resolved to the main one with `git rev-parse --git-common-dir`). Per
+worktree 3 git calls in a bounded pool (4 threads). Open: `code <path>` and `wt -d <path>` (fallback `pwsh -NoExit
+-WorkingDirectory`, then `cmd /K cd /d`) with `opener`/`std::process`; no shell. Remove: `git worktree remove [--force] <path>`
+from the main repo; the backend rejects the main worktree.
 
-## Puertos
-`listeners::get_all()` → `{pid, name, path, socket}`; se enriquece con `sysinfo` (ruta, cwd). El módulo `process_info`
-(fase 1, contrato) expone `snapshot() -> Vec<ProcInfo{pid,name,exe,cwd,ram,cpu,start_time,parent}>` y `kill(pid, expected_name)`
-(revalida nombre antes de matar, evita reutilización de PID). Límites: procesos elevados/protegidos ⇒ `cwd=None`,
-`exe=None`; 32 bits bajo 64 ⇒ `None`. macOS/Linux: mejor esfuerzo.
+## Ports
+`listeners::get_all()` → `{pid, name, path, socket}`; enriched with `sysinfo` (path, cwd). The `process_info` module (phase 1,
+contract) exposes `snapshot() -> Vec<ProcInfo{pid,name,exe,cwd,ram,cpu,start_time,parent}>` and `kill(pid, expected_name)`
+(revalidates the name before killing, avoids PID reuse). Limits: elevated/protected processes ⇒ `cwd=None`, `exe=None`; 32-bit
+under 64-bit ⇒ `None`. macOS/Linux: best effort.
 
-## Visor JSON
-1. Archivo mapeado con `memmap2` (solo lectura). Un tokenizador propio sobre `&[u8]` (sin asignar valores) recorre una vez.
-2. Índice: solo **contenedores** (objeto/array) en un `Vec<Node>` de ~32 B: `{offset:u64, end:u64(len), kind:u8, child_count:u32, parent:u32, key_range}`.
-   Los hijos hoja no se indexan: `json_children` re-escanea el contenedor desde su offset y devuelve el rango `[offset,limit)`;
-   para contenedores con millones de hijos se guarda cada 1024.º hijo como punto de salto (índice disperso) para que la paginación sea O(1024).
-3. Memoria: ~32 B por contenedor + 8 B por punto de salto. 500 MB con 5 M contenedores ≈ 160 MB; límite práctico ~1–2 GB de archivo / ~20 M contenedores.
-4. Progreso: evento `json://progress {bytes_done, total}` cada ~1 %; cancelación con `AtomicBool`; indexación en `spawn_blocking`.
-5. Búsqueda: escaneo en segundo plano del mmap (memchr para subcadenas, case-insensitive opcional); calcula la ruta de cada acierto con una pila; envía lotes por evento `json://search-batch` (máx. 500 por lote, tope total configurable 10 000).
-6. Formatear: subárbol ≤ 5 MB a pretty-print en memoria (reutilizando el tokenizador, sin parsear a `Value`); "guardar formateado" escribe en streaming con `BufWriter` y sangría por profundidad.
-7. Ruta `$.a.b[3]`: se reconstruye subiendo por `parent` + clave/índice.
-8. Archivo modificado tras indexar: se guarda `mtime+len`; si cambian, error "archivo cambiado, reabrir".
+## JSON Viewer
+1. File mapped with `memmap2` (read-only). An own tokenizer over `&[u8]` (no value allocation) walks it once.
+2. Index: only **containers** (object/array) in a `Vec<Node>` of ~32 B: `{offset:u64, end:u64(len), kind:u8, child_count:u32, parent:u32, key_range}`.
+   Leaf children are not indexed: `json_children` re-scans the container from its offset and returns the `[offset,limit)` range;
+   for containers with millions of children every 1024th child is stored as a jump point (sparse index) so pagination is O(1024).
+3. Memory: ~32 B per container + 8 B per jump point. 500 MB with 5 M containers ≈ 160 MB; practical limit ~1–2 GB file / ~20 M containers.
+4. Progress: event `json://progress {bytes_done, total}` about every 1 %; cancellation with `AtomicBool`; indexing in `spawn_blocking`.
+5. Search: background scan of the mmap (memchr for substrings, optional case-insensitivity); computes each hit's path with a stack; sends batches via the `json://search-batch` event (max 500 per batch, configurable total cap 10 000).
+6. Format: subtree ≤ 5 MB pretty-printed in memory (reusing the tokenizer, no parse to `Value`); "save formatted" writes in streaming mode with `BufWriter` and depth-based indentation.
+7. Path `$.a.b[3]`: rebuilt by walking up through `parent` + key/index.
+8. File modified after indexing: `mtime+len` are stored; if they change, error code `json_file_changed` ("file changed, reopen").
 
-## Oculto / Limpieza (reutiliza contratos)
-- **Procesos**: `process_info::snapshot()` filtrado por lista de nombres de dev; antigüedad por `start_time`; atribución por cwd vía `scope::attribute`; huérfano = cwd con prefijo de una ruta de worktree que ya no existe (se conserva un registro `known_worktrees` en el store, refrescado en cada escaneo, para detectar los borrados).
-- **Worktrees olvidados**: `worktrees::list` + tamaño (walkdir cancelable, sin seguir symlinks/junctions: `file_type().is_symlink()` y, en Windows, atributo `REPARSE_POINT`); antigüedad = fecha del último commit; integrada = `git merge-base --is-ancestor <rama> <base>` (más barato y determinista que `branch --merged`); sin cambios = status vacío; procesos vivos = snapshot con cwd bajo el worktree.
-- **Carpetas**: por cada worktree/repo, buscar nombres de la lista blanca (`node_modules`, `target`, `.venv`, `dist`) sin entrar en ellas ni en `.git`. Cachés globales Windows: npm `%LOCALAPPDATA%\npm-cache`, pnpm `%LOCALAPPDATA%\pnpm\store` (o `pnpm store path`), cargo `%USERPROFILE%\.cargo\registry` y `.cargo\git`. Último uso = mtime máx. (carpeta + primer nivel).
-- **Resumen**: RAM recuperable = suma RAM de procesos huérfanos + de dev sin puerto/cwd en worktree vivo; disco recuperable = carpetas regenerables + worktrees olvidados + cachés. Se calcula en Rust.
-- **Borrado seguro**: `validate_deletable(path)` canonicaliza, exige nombre en lista blanca o ser exactamente una caché global conocida, no ser symlink, y estar bajo un worktree/repo conocido o ser la caché; si no, `Error::NotAllowed`.
+## Hidden / Cleanup (reuses contracts)
+- **Processes**: `process_info::snapshot()` filtered by the dev name list; age from `start_time`; attribution by cwd via `scope::attribute`; orphan = cwd with the prefix of a worktree path that no longer exists (a `known_worktrees` record is kept in the store, refreshed on every scan, to detect deleted ones).
+- **Forgotten worktrees**: `worktrees::list` + size (cancelable walkdir, not following symlinks/junctions: `file_type().is_symlink()` and, on Windows, the `REPARSE_POINT` attribute); age = last commit date; merged = `git merge-base --is-ancestor <branch> <base>` (cheaper and more deterministic than `branch --merged`); no changes = empty status; live processes = snapshot with cwd under the worktree.
+- **Folders**: for each worktree/repo, look for allow-listed names (`node_modules`, `target`, `.venv`, `dist`) without descending into them or `.git`. Windows global caches: npm `%LOCALAPPDATA%\npm-cache`, pnpm `%LOCALAPPDATA%\pnpm\store` (or `pnpm store path`), cargo `%USERPROFILE%\.cargo\registry` and `.cargo\git`. Last use = max mtime (folder + first level).
+- **Summary**: recoverable RAM = RAM of orphaned processes + dev processes with no port/cwd in a live worktree; recoverable disk = regenerable folders + forgotten worktrees + caches. Computed in Rust.
+- **Safe deletion**: `validate_deletable(path)` canonicalizes, requires an allow-listed name or exactly a known global cache, not a symlink, and being under a known worktree/repo or being the cache; otherwise `Error::NotAllowed`.
 
-## Comandos, estado, eventos, plugins
-Ver [contracts/commands.md](contracts/commands.md). Estado: `AppState { config: Mutex<Config>, json: Mutex<Option<JsonSession>>, jobs: Mutex<HashMap<JobId, Arc<AtomicBool>>> }`.
-Errores: `enum Error` con `thiserror` + `Serialize` como `{kind, message}`. Plugins: `dialog`, `opener`, `store`, `clipboard-manager`.
-Capabilities (Tauri 2) en `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`, `store:default`,
-`clipboard-manager:allow-write-text`, `opener:allow-open-path` limitado; sin `shell` genérico: los lanzamientos de `code`/`wt` van en Rust.
+## Commands, state, events, plugins
+See [contracts/commands.md](contracts/commands.md). State: `AppState { config: Mutex<Config>, json: Mutex<Option<JsonSession>>, jobs: Mutex<HashMap<JobId, Arc<AtomicBool>>> }`.
+Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `opener`, `store`, `clipboard-manager`.
+Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`, `store:default`,
+`clipboard-manager:allow-write-text`, `opener:allow-open-path` limited; no generic `shell`: `code`/`wt` launches happen in Rust.
 
-## Seguridad (gitleaks 8.30.1)
-- `.githooks/pre-commit` adaptado de `grim-dawn-builds` (POSIX sh, fallo cerrado, versión exacta, rechaza symlink, `--staged --redact`).
-- `.gitleaks.toml`: `[extend] useDefault = true`, título `devdeck secret scan`.
-- `scripts/setup-gitleaks.mts` (+ `.test.mts`): asset fijo oficial con SHA-256 (win32/linux x64), instala en `.tools/gitleaks/8.30.1/`, verifica versión. macOS: sin asset en la referencia ⇒ se exige gitleaks 8.30.1 en PATH (`brew`); decisión: no añadir hashes sin verificarlos contra la release.
-- `package.json` (del scaffold): `"setup:hooks": "git config core.hooksPath .githooks"`, `"setup:gitleaks": "tsx scripts/setup-gitleaks.mts"`, `"test:scripts"`. Dependencia del scaffold: `package.json`, `tsx` y `vitest`.
-- CI: job `secret-scan` (ubuntu): `fetch-depth: 0`, instala gitleaks 8.30.1 con checksum, `gitleaks git --redact --config .gitleaks.toml --log-opts "<base>..<head>"` (PR: base=`pull_request.base.sha`, head=`pull_request.head.sha`; push: `before..sha`; si `before` es todo ceros, solo el commit `sha`).
-- `.tools/` y `.gitleaks-report*` en `.gitignore`. `pnpm setup:hooks` se documenta en README y en `scripts` `prepare` no (evitar efectos al instalar).
+## Security (gitleaks 8.30.1)
+- `.githooks/pre-commit` adapted from `grim-dawn-builds` (POSIX sh, fail closed, exact version, rejects symlink, `--staged --redact`).
+- `.gitleaks.toml`: `[extend] useDefault = true`, title `devdeck secret scan`.
+- `scripts/setup-gitleaks.mts` (+ `.test.mts`): official pinned asset with SHA-256 (win32/linux x64), installs to `.tools/gitleaks/8.30.1/`, verifies the version. macOS: the reference has no asset ⇒ gitleaks 8.30.1 is required on PATH (`brew`); decision: do not add hashes without verifying them against the release.
+- `package.json` (from the scaffold): `"setup:hooks": "git config core.hooksPath .githooks"`, `"setup:gitleaks": "tsx scripts/setup-gitleaks.mts"`, `"test:scripts"`. Scaffold dependency: `package.json`, `tsx` and `vitest`.
+- CI: `secret-scan` job (ubuntu): `fetch-depth: 0`, installs gitleaks 8.30.1 with checksum, `gitleaks git --redact --config .gitleaks.toml --log-opts "<base>..<head>"` (PR: base=`pull_request.base.sha`, head=`pull_request.head.sha`; push: `before..sha`; if `before` is all zeros, only commit `sha`).
+- `.tools/` and `.gitleaks-report*` in `.gitignore`. `pnpm setup:hooks` is documented in the README and is **not** wired to the `prepare` script (avoids side effects on install).
 
-## CI y release
-`ci.yml`: matriz `windows-latest, macos-latest, ubuntu-latest`; pasos: checkout, pnpm + node, rust toolchain (rustfmt, clippy), caché (`Swatinem/rust-cache`), deps Linux (`libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev`),
+## CI and release
+`ci.yml`: matrix `windows-latest, macos-latest, ubuntu-latest`; steps: checkout, pnpm + node, rust toolchain (rustfmt, clippy), cache (`Swatinem/rust-cache`), Linux deps (`libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev`),
 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, `pnpm install --frozen-lockfile`,
-`pnpm lint`, `pnpm check` (svelte-check), `pnpm test`, `pnpm test:scripts`. Job aparte `secret-scan`.
-`release.yml`: `on: push: tags: ['v*']`, job windows con `tauri-apps/tauri-action@v0` (`releaseDraft: true`, bundles `msi` y `nsis`); macOS/Linux opcional desactivado.
-Icono: `pnpm tauri icon assets/icon.svg` (SVG propio en `assets/`). CHANGELOG Keep a Changelog. README: capturas manuales en `docs/img/` y GIF grabado con ScreenToGif; se documenta cómo regenerarlos.
+`pnpm lint`, `pnpm check` (svelte-check), `pnpm test` (includes the i18n parity test), `pnpm test:scripts`. Separate `secret-scan` job.
+`release.yml`: `on: push: tags: ['v*']`, Windows job with `tauri-apps/tauri-action@v0` (`releaseDraft: true`, bundles `msi` and `nsis`); macOS/Linux optional and disabled.
+Icon: `pnpm tauri icon assets/icon.svg` (own SVG in `assets/`). CHANGELOG Keep a Changelog. README (English): manual screenshots in `docs/img/` (both languages shown) and a GIF recorded with ScreenToGif; how to regenerate them is documented.
 
-## Riesgos
-| Riesgo | Mitigación |
+## Repository description (README tagline and GitHub "About")
+> DevDeck — a Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see which worktree owns each listening port, browse multi-hundred-MB JSON files, and reclaim disk and RAM from forgotten worktrees, orphaned dev processes and regenerable build folders.
+
+Used verbatim as the first line of `README.md`, as `description` in `package.json`/`Cargo.toml`/`tauri.conf.json` (shortened where a field limit applies), and as the GitHub repository description (set by the main orchestrator with Paco's permission, T098).
+
+## Risks
+| Risk | Mitigation |
 |---|---|
-| `cwd` ilegible (elevados) | "desconocido"; no se atribuye; test con `ProcSource` simulado |
-| Índice JSON tarda/gasta RAM | índice solo de contenedores, cancelación, límite documentado |
-| Borrado destructivo | lista blanca + canonicalize + confirmación + tests de rechazo |
-| Atribución errónea por prefijo (`/a/foo` vs `/a/foobar`) | prefijo por componentes, test |
-| Runner CI Linux sin deps | paso apt explícito |
-| Memoria baja de la máquina de desarrollo | no compilar en paralelo muchos agentes; `CARGO_BUILD_JOBS=2` |
-| gitleaks sin asset macOS | PATH + versión exacta; documentado |
+| Unreadable `cwd` (elevated) | "unknown"; not attributed; test with a simulated `ProcSource` |
+| JSON index slow/memory-hungry | containers-only index, cancellation, documented limit |
+| Destructive deletion | allow-list + canonicalize + confirmation + rejection tests |
+| Wrong attribution by prefix (`/a/foo` vs `/a/foobar`) | component-wise prefix, test |
+| Linux CI runner without deps | explicit apt step |
+| Low memory on the dev machine | do not compile many agents in parallel; `CARGO_BUILD_JOBS=2` |
+| No gitleaks macOS asset | PATH + exact version; documented |
+| Untranslated/missing keys or stray literals | typed keys + parity test (CI) + Phase 3 literal review (T087) |
+| Spanish text leaking into code/specs | constitution VIII; reviewer checks; `es` strings only in `locales/es` |
 
-## Pruebas por módulo
-Core: repos git temporales (`tempfile` + `git init`) para Worktrees/olvidados; `ProcSource`/`PortSource` traits con datos simulados para Puertos/procesos; JSON generados (`tests/fixtures` en código: anidado, arrays enormes, Unicode, inválido); atribución y agrupado con propiedades simples; `validate_deletable` con carpetas temporales y symlinks; scripts de seguridad con `vitest` (checksum, plataforma, rutas) y prueba manual del hook con un secreto falso. Front: `vitest` para stores y formato; `svelte-check`.
+## Tests per module
+Core: temporary git repos (`tempfile` + `git init`) for Worktrees/forgotten; `ProcSource`/`PortSource` traits with simulated data for Ports/processes; generated JSON (fixtures in code: nested, huge arrays, Unicode, invalid); attribution and grouping with simple properties; `validate_deletable` with temp folders and symlinks; security scripts with `vitest` (checksum, platform, paths) and manual hook test with a fake secret. Front: `vitest` for stores, `format.ts` (en and es) and i18n parity; `svelte-check`.

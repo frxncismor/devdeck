@@ -2,38 +2,46 @@
 
 ## Core Principles
 
-### I. Alcance sencillo, no robusto
-DevDeck es una herramienta personal de portafolio. Se prefiere la solución más simple que cumpla el criterio de
-aceptación: solo lectura más acciones con confirmación, sin automatismos, sin demonios ni sincronización. Ninguna
-funcionalidad añade abstracciones "por si acaso".
+### I. Simple scope, not robust
+DevDeck is a personal portfolio tool. The simplest solution that meets the acceptance criteria is preferred:
+read-only views plus confirmed actions, no automation, no daemons, no sync. No feature adds "just in case"
+abstractions.
 
-### II. Lógica en Rust, testeada
-Toda la lógica (git, puertos, procesos, JSON, limpieza, atribución a proyectos) vive en la crate `devdeck-core`,
-sin dependencia de Tauri. Se prueba con tests unitarios que no usan red ni UI (repos git temporales, JSON
-generados, capa de sistema simulada mediante traits). Una función sin test no se da por terminada.
+### II. Logic in Rust, tested
+All logic (git, ports, processes, JSON, cleanup, project attribution) lives in the `devdeck-core` crate, with no
+dependency on Tauri. It is covered by unit tests that use no network and no UI (temporary git repos, generated JSON,
+a simulated system layer behind traits). A function without a test is not done.
 
-### III. Frontend fino
-Svelte 5 + TypeScript solo presenta datos y envía comandos. No contiene reglas de negocio: filtrado por ámbito,
-atribución, ordenación pesada y parseo se hacen en Rust. El webview nunca carga archivos grandes completos.
+### III. Thin frontend
+Svelte 5 + TypeScript only presents data and sends commands. It holds no business rules: scope filtering,
+attribution, heavy sorting and parsing all happen in Rust. The webview never loads large files whole.
 
-### IV. Windows primero
-Windows es la plataforma garantizada. macOS y Linux deben compilar y pasar el CI; el módulo Puertos (y el cwd de
-procesos) solo se garantiza en Windows, en otras plataformas es mejor esfuerzo y se degrada a "desconocido".
+### IV. Windows first
+Windows is the guaranteed platform. macOS and Linux must build and pass CI; the Ports module (and process cwd) is
+only guaranteed on Windows and degrades to "unknown" elsewhere.
 
-### V. CI verde obligatorio
-Nada se integra sin: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`, y `lint` + `svelte-check` +
-tests del front, en Windows, macOS y Linux.
+### V. Green CI required
+Nothing is merged without: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`, and `lint` +
+`svelte-check` + frontend tests, on Windows, macOS and Linux.
 
-### VI. Acciones destructivas seguras
-Matar procesos, quitar worktrees y borrar carpetas exigen confirmación explícita, operan solo sobre elementos
-validados por el backend (lista blanca, nunca el worktree principal) y nunca siguen symlinks/junctions.
+### VI. Safe destructive actions
+Killing processes, removing worktrees and deleting folders require explicit confirmation, operate only on items
+validated by the backend (allow-list, never the main worktree) and never follow symlinks/junctions.
 
-### VII. Commits, versiones y secretos
-Conventional Commits y CHANGELOG (Keep a Changelog). Nunca se escriben ni muestran tokens, credenciales ni
-cadenas de conexión en código, logs, capturas o README.
+### VII. Commits, versions and secrets
+Conventional Commits and a CHANGELOG (Keep a Changelog). Tokens, credentials and connection strings are never
+written or shown in code, logs, screenshots or the README. Commits are protected by a pinned gitleaks pre-commit hook
+and a CI scan.
 
-## Gobierno
-Esta constitución prevalece sobre preferencias locales. Cambiarla exige actualizar este archivo y justificar el
-cambio en el PR.
+### VIII. English-only project, bilingual UI
+Code, identifiers, comments, commit messages, specs, README, CHANGELOG, CI and the repository description are
+written in English. The application UI is bilingual: English by default, Spanish as the second language. Every
+user-visible string lives in the `en`/`es` resource files (no literals in components), both languages must keep
+identical keys (enforced by a test), dates/numbers/sizes are formatted per language with `Intl`, and the backend
+returns stable error codes, never UI text.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-23 | **Last Amended**: 2026-11-23
+## Governance
+This constitution takes precedence over local preferences. Amending it requires updating this file and justifying
+the change in the PR.
+
+**Version**: 1.1.0 | **Ratified**: 2026-11-23 | **Last Amended**: 2026-11-23

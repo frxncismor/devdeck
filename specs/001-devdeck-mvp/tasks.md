@@ -1,123 +1,140 @@
 # Tasks: DevDeck MVP
 
-Formato: `T### [P] [USx] descripción — ruta`. `[P]` = paralelizable con otras `[P]` de la misma fase (archivos distintos).
-Cada agente trabaja en su propio worktree y solo toca los archivos de su bloque.
+Format: `T### [P] [USx] description — path`. `[P]` = parallelizable with other `[P]` tasks of the same phase (different files).
+Each agent works in its own worktree and only touches the files of its block. A suffix (`T012a`) marks a task inserted
+after the original numbering to avoid renumbering; IDs are stable references.
 
-## Reparto sugerido
+## Suggested split
 
-| Fase | Bloque | Agente | Archivos que toca | Depende de |
+| Phase | Block | Agent | Files touched | Depends on |
 |---|---|---|---|---|
-| 1A | Scaffold (T001–T015) | `scaffold` (secuencial, único) | `Cargo.toml`, `package.json`, `src-tauri/**`, `crates/devdeck-core/src/{lib,error,scope,project,process_info,fsutil}.rs` y stubs, `src/**` shell, `.github/workflows/ci.yml` | — |
-| 1B | Seguridad gitleaks (T016–T022) | `seguridad` | `.githooks/pre-commit`, `.gitleaks.toml`, `scripts/setup-gitleaks*.mts`, `.gitignore`, job `secret-scan` en `.github/workflows/secret-scan.yml` | T016 depende del `package.json` de 1A solo para añadir 2 scripts (T021, tras 1A); el resto es independiente y puede ir en paralelo con 1A |
-| 2A | Worktrees (T030–T040) | `worktrees` | `crates/devdeck-core/src/worktrees/**`, `src-tauri/src/commands/worktrees.rs`, `src/modules/worktrees/**` | 1A |
-| 2B | Puertos (T041–T048) | `puertos` | `crates/devdeck-core/src/ports/**`, `commands/ports.rs`, `src/modules/ports/**` | 1A (contrato `process_info`, `worktrees::list` stub y `scope`) |
-| 2C | Visor JSON (T049–T060) | `json` | `crates/devdeck-core/src/json_viewer/**`, `commands/json_viewer.rs`, `src/modules/json-viewer/**` | 1A |
-| 2D | Oculto (T061–T073) | `oculto` | `crates/devdeck-core/src/cleanup/**`, `commands/cleanup.rs`, `src/modules/cleanup/**` | 1A (contratos); integra con 2A/2B al final de fase |
-| 3 | Integración y pulido (T080–T086) | `integracion` | cualquiera (secuencial) | 2A–2D |
-| 4 | Entregables (T090–T097) | `entregables` + `docs` | `.github/workflows/release.yml`, `assets/`, `src-tauri/icons/`, `CHANGELOG.md`, `README.md`, `docs/img/` | 3 |
+| 1A | Scaffold + i18n infrastructure (T001–T015, T012a–T012d) | `scaffold` (sequential, single) | `Cargo.toml`, `package.json`, `src-tauri/**`, `crates/devdeck-core/src/{lib,error,scope,project,process_info,fsutil}.rs` and stubs, `src/**` shell, `src/lib/i18n/{index,keys}.ts`, `src/lib/i18n/i18n.svelte.ts`, `src/lib/i18n/i18n.test.ts`, `src/lib/i18n/locales/{en,es}/common.json` (filled) and the other 8 locale files created as `{}`, `src/components/LanguageSelector.svelte`, `src/lib/format.ts`, `.github/workflows/ci.yml` | — |
+| 1B | gitleaks security (T016–T022b) | `security` | `.githooks/pre-commit`, `.gitleaks.toml`, `scripts/setup-gitleaks*.mts`, `.gitignore`, `secret-scan` job in `.github/workflows/secret-scan.yml` | T021 needs the 1A `package.json` only to add 3 scripts (after 1A); the rest is independent and can run in parallel with 1A |
+| 2A | Worktrees (T030–T040) | `worktrees` | `crates/devdeck-core/src/worktrees/**`, `src-tauri/src/commands/worktrees.rs`, `src/modules/worktrees/**`, `src/lib/i18n/locales/{en,es}/worktrees.json` | 1A |
+| 2B | Ports (T041–T048) | `ports` | `crates/devdeck-core/src/ports/**`, `commands/ports.rs`, `src/modules/ports/**`, `src/lib/i18n/locales/{en,es}/ports.json` | 1A (`process_info` contract, `worktrees::list` stub and `scope`) |
+| 2C | JSON Viewer (T049–T060a) | `json` | `crates/devdeck-core/src/json_viewer/**`, `commands/json_viewer.rs`, `src/modules/json-viewer/**`, `src/lib/i18n/locales/{en,es}/json-viewer.json` | 1A |
+| 2D | Hidden / Cleanup (T061–T070) | `cleanup` | `crates/devdeck-core/src/cleanup/**`, `commands/cleanup.rs`, `src/modules/cleanup/**`, `src/lib/i18n/locales/{en,es}/cleanup.json` | 1A (contracts); integrates with 2A/2B at the end of the phase |
+| 3 | Integration and polish (T080–T087) | `integration` | anything (sequential), including `locales/*/common.json` | 2A–2D |
+| 4 | Deliverables (T090–T098) | `deliverables` + `docs` | `.github/workflows/release.yml`, `assets/`, `src-tauri/icons/`, `CHANGELOG.md`, `README.md`, `docs/img/` | 3 |
 
-Conflictos evitados: `commands/mod.rs`, `lib.rs`, `App.svelte` y `Cargo.toml` los cierra la fase 1A; en fase 2 no se editan. Si un bloque necesita una dependencia nueva en `crates/devdeck-core/Cargo.toml`, la añade **solo** el agente de ese bloque en una línea (el integrador resuelve el conflicto trivial de dependencias en `[dependencies]`; para evitarlo, 1A pre-declara todas: `walkdir, memmap2, memchr, listeners, sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
+Conflicts avoided: `commands/mod.rs`, `lib.rs`, `App.svelte`, `Cargo.toml` and `src/lib/i18n/index.ts` are closed by phase 1A
+and not edited in phase 2. **i18n rule**: one resource file per module and per language; a phase-2 agent edits only its own
+`locales/{en,es}/<module>.json` (adding `en` and `es` keys together, FR-056) and only *reads* `common.json`. If a module needs
+a shared string, it adds a module-specific key instead of touching `common.json`; the integration phase may later dedupe.
+If a block needs a new dependency in `crates/devdeck-core/Cargo.toml`, only that block's agent adds it in a single line (the
+integrator resolves the trivial `[dependencies]` conflict; to avoid it, 1A pre-declares all: `walkdir, memmap2, memchr, listeners,
+sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 
-## Fase 1A — Setup / scaffold (secuencial, un agente)
-- [ ] T001 Workspace Cargo con `crates/devdeck-core` y `src-tauri`; dependencias pre-declaradas — `Cargo.toml`, `crates/devdeck-core/Cargo.toml`, `src-tauri/Cargo.toml`
-- [ ] T002 Proyecto Svelte 5 + TS + Vite con pnpm y scripts `dev/build/lint/check/test` (eslint, prettier, svelte-check, vitest) — `package.json`, `vite.config.ts`, `tsconfig.json`, `svelte.config.js`, `eslint.config.js`
-- [ ] T003 Integrar Tauri 2 (`tauri.conf.json`, plugins dialog/opener/store/clipboard, capabilities mínimas) — `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`, `src-tauri/src/{main,lib}.rs`
-- [ ] T004 Tipos de error `thiserror`+`Serialize` en core y re-export — `crates/devdeck-core/src/error.rs`, `src-tauri/src/error.rs`
-- [ ] T005 [US2] Contrato `project.rs` (`Project`, `ProjectId`, `build_projects`) — `crates/devdeck-core/src/project.rs`
-- [ ] T006 [US2] Contrato `scope.rs` (`Scope`, `attribute`, `Totals`, `Group`, `Grouped`, `group_by_project`, trait `Attributable`) con tests (prefijo por componentes, case-insensitive en Windows, `\\?\`, "Sin proyecto") — `crates/devdeck-core/src/scope.rs`
-- [ ] T007 Contrato `process_info.rs` (`ProcInfo`, trait `ProcSource`, `SysinfoSource`, `snapshot`, `kill` con revalidación de nombre) y tests con fuente simulada — `crates/devdeck-core/src/process_info.rs`
-- [ ] T008 Contrato `worktrees::list(repo) -> Vec<Worktree>` (firma + tipos + stub `NotImplemented`) — `crates/devdeck-core/src/worktrees/mod.rs`
-- [ ] T009 `fsutil.rs`: `is_link_or_reparse(path)`, `dir_size(path, cancel, progress)` sin seguir enlaces, con tests — `crates/devdeck-core/src/fsutil.rs`
-- [ ] T010 Estado `AppState`, config con plugin store, comandos `get_config/set_config/list_projects` — `src-tauri/src/state.rs`, `src-tauri/src/commands/{mod,config,project}.rs`
-- [ ] T011 Un archivo de comandos por módulo con todos los comandos de `contracts/commands.md` como stubs `NotImplemented` y `generate_handler!` completo — `src-tauri/src/commands/{worktrees,ports,json_viewer,cleanup}.rs`
-- [ ] T012 [US2] Front: `api.ts`, `types.ts`, store de ámbito persistido `scope.svelte.ts`, `ScopeSelector.svelte`, `GroupedTable.svelte`, `ConfirmDialog.svelte`, `VirtualList.svelte` — `src/lib/*`, `src/components/*`
-- [ ] T013 Front: layout con `Sidebar.svelte` y 4 módulos vacíos (un `index.svelte` por carpeta, ya importados en `App.svelte`) — `src/App.svelte`, `src/modules/*/index.svelte`
-- [ ] T014 CI base: matriz 3 SO con fmt, clippy -D warnings, test, pnpm lint/check/test — `.github/workflows/ci.yml`
-- [ ] T015 `.gitignore`, `rust-toolchain.toml`, `.editorconfig`, CHANGELOG vacío — `.gitignore`, `rust-toolchain.toml`, `CHANGELOG.md`
+## Phase 1A — Setup / scaffold + i18n infrastructure (sequential, one agent)
+- [ ] T001 Cargo workspace with `crates/devdeck-core` and `src-tauri`; pre-declared dependencies — `Cargo.toml`, `crates/devdeck-core/Cargo.toml`, `src-tauri/Cargo.toml`
+- [ ] T002 Svelte 5 + TS + Vite project with pnpm and scripts `dev/build/lint/check/test` (eslint, prettier, svelte-check, vitest) — `package.json`, `vite.config.ts`, `tsconfig.json`, `svelte.config.js`, `eslint.config.js`
+- [ ] T003 Integrate Tauri 2 (`tauri.conf.json`, dialog/opener/store/clipboard plugins, minimal capabilities) — `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`, `src-tauri/src/{main,lib}.rs`
+- [ ] T004 [US5] Error types `thiserror`+`Serialize` as `{kind, code, params?, detail?}` with stable snake-case codes, re-exported (no UI text in Rust) — `crates/devdeck-core/src/error.rs`, `src-tauri/src/error.rs`
+- [ ] T005 [US2] `project.rs` contract (`Project`, `ProjectId`, `build_projects`) — `crates/devdeck-core/src/project.rs`
+- [ ] T006 [US2] `scope.rs` contract (`Scope`, `attribute`, `Totals`, `Group`, `Grouped`, `group_by_project`, `Attributable` trait) with tests (component-wise prefix, case-insensitive on Windows, `\\?\`, "No project") — `crates/devdeck-core/src/scope.rs`
+- [ ] T007 `process_info.rs` contract (`ProcInfo`, `ProcSource` trait, `SysinfoSource`, `snapshot`, `kill` with name revalidation) and tests with a simulated source — `crates/devdeck-core/src/process_info.rs`
+- [ ] T008 `worktrees::list(repo) -> Vec<Worktree>` contract (signature + types + `NotImplemented` stub) — `crates/devdeck-core/src/worktrees/mod.rs`
+- [ ] T009 `fsutil.rs`: `is_link_or_reparse(path)`, `dir_size(path, cancel, progress)` not following links, with tests — `crates/devdeck-core/src/fsutil.rs`
+- [ ] T010 [US5] `AppState`, config with the store plugin (including `language`), commands `get_config/set_config/list_projects` — `src-tauri/src/state.rs`, `src-tauri/src/commands/{mod,config,project}.rs`
+- [ ] T011 One commands file per module with every command from `contracts/commands.md` as `NotImplemented` stubs and a complete `generate_handler!` — `src-tauri/src/commands/{worktrees,ports,json_viewer,cleanup}.rs`
+- [ ] T012 [US2] Front: `api.ts`, `types.ts`, persisted scope store `scope.svelte.ts`, `ScopeSelector.svelte`, `GroupedTable.svelte` (renders `common.noProject` for a null project), `ConfirmDialog.svelte`, `VirtualList.svelte`; all their text through `t()` — `src/lib/*`, `src/components/*`
+- [ ] T012a [US5] i18n core: `src/lib/i18n/{index.ts,keys.ts,i18n.svelte.ts}` — closed index importing the 10 locale files, `MessageKey` type derived from `en`, `locale` rune, `setLocale` (persists via `set_config`, sets `<html lang>`), `t(key, params?)` with `{name}` interpolation, `_one/_other` plurals and fallback to `en` — `src/lib/i18n/*`
+- [ ] T012b [US5] Locale resources: `locales/{en,es}/common.json` filled (sidebar, scope selector, language selector, confirm dialog, generic buttons, `noProject`, `errors.<code>` for every code from T004, `errors.unknown`) and the other 8 files (`worktrees|ports|json-viewer|cleanup` × `en|es`) created as `{}` — `src/lib/i18n/locales/{en,es}/*.json`
+- [ ] T012c [US5] `LanguageSelector.svelte` in the shell (English / Español, applied immediately, persisted) and `src/lib/format.ts` locale-aware helpers (`formatBytes`, `formatNumber`, `formatPercent`, `formatDate`, `formatDateTime`, `formatRelativeAge` via `Intl`) with unit tests for `en` and `es` — `src/components/LanguageSelector.svelte`, `src/lib/format.ts`, `src/lib/format.test.ts`
+- [ ] T012d [US5] Parity test: same keys and same `{placeholders}` in `en` and `es` per namespace, and every `t("...")` literal used in `src/**` exists in `en` — `src/lib/i18n/i18n.test.ts`
+- [ ] T013 Front: layout with `Sidebar.svelte` (+ scope and language selectors) and 4 empty modules (one `index.svelte` per folder, already imported in `App.svelte`) — `src/App.svelte`, `src/modules/*/index.svelte`
+- [ ] T014 Base CI: 3-OS matrix with fmt, clippy -D warnings, test, pnpm lint/check/test (test includes i18n parity) — `.github/workflows/ci.yml`
+- [ ] T015 `.gitignore`, `rust-toolchain.toml`, `.editorconfig`, empty CHANGELOG — `.gitignore`, `rust-toolchain.toml`, `CHANGELOG.md`
 
-## Fase 1B — Seguridad gitleaks (bloque propio, antes de cualquier commit de código de módulos)
-- [ ] T016 [P] [US4] `.githooks/pre-commit` adaptado de la referencia (8.30.1, `--staged --redact`, fallo cerrado, rechaza symlink) con bit ejecutable (`git update-index --chmod=+x`) — `.githooks/pre-commit`
-- [ ] T017 [P] [US4] `.gitleaks.toml` (`useDefault = true`, título devdeck) — `.gitleaks.toml`
-- [ ] T018 [P] [US4] `scripts/setup-gitleaks.mts`: asset win32/linux x64 con SHA-256, instalación en `.tools/gitleaks/8.30.1/`, verificación de versión — `scripts/setup-gitleaks.mts`
-- [ ] T019 [P] [US4] Test del instalador sin red (asset, checksum, rutas inválidas, versión) — `scripts/setup-gitleaks.test.mts`
-- [ ] T020 [P] [US4] `.tools/` y `.gitleaks-report*` en `.gitignore` (línea añadida tras T015) — `.gitignore`
-- [ ] T021 [US4] **Depende del `package.json` de 1A (T002)**: añadir `setup:hooks`, `setup:gitleaks`, `test:scripts` y `tsx` — `package.json`
-- [ ] T022 [P] [US4] Workflow `secret-scan` (PR y push, `fetch-depth: 0`, rango de commits, gitleaks 8.30.1 con checksum, `--redact`) — `.github/workflows/secret-scan.yml`
-- [ ] T022b [US4] Al integrar: ejecutar `pnpm setup:hooks` en el repo principal y comprobar `git config core.hooksPath` = `.githooks` y que un secreto falso staged bloquea — verificación (sin commitear el secreto)
+## Phase 1B — gitleaks security (own block, before any module code commit)
+- [ ] T016 [P] [US4] `.githooks/pre-commit` adapted from the reference (8.30.1, `--staged --redact`, fail closed, rejects symlink) with the executable bit (`git update-index --chmod=+x`) — `.githooks/pre-commit`
+- [ ] T017 [P] [US4] `.gitleaks.toml` (`useDefault = true`, devdeck title) — `.gitleaks.toml`
+- [ ] T018 [P] [US4] `scripts/setup-gitleaks.mts`: win32/linux x64 asset with SHA-256, install into `.tools/gitleaks/8.30.1/`, version verification — `scripts/setup-gitleaks.mts`
+- [ ] T019 [P] [US4] Installer test without network (asset, checksum, invalid paths, version) — `scripts/setup-gitleaks.test.mts`
+- [ ] T020 [P] [US4] `.tools/` and `.gitleaks-report*` in `.gitignore` (line added after T015) — `.gitignore`
+- [ ] T021 [US4] **Depends on the 1A `package.json` (T002)**: add `setup:hooks`, `setup:gitleaks`, `test:scripts` and `tsx` — `package.json`
+- [ ] T022 [P] [US4] `secret-scan` workflow (PR and push, `fetch-depth: 0`, commit range, gitleaks 8.30.1 with checksum, `--redact`) — `.github/workflows/secret-scan.yml`
+- [ ] T022b [US4] On integration: run `pnpm setup:hooks` in the main repo and check `git config core.hooksPath` = `.githooks` and that a staged fake secret blocks the commit — verification (the secret is never committed)
 
-**Checkpoint**: 1A + 1B integrados; solo entonces arrancan los bloques de fase 2.
+**Checkpoint**: 1A + 1B integrated; only then do the phase-2 blocks start.
 
-## Fase 2A — Worktrees (US1) [P]
-- [ ] T030 [P] [US1] Trait `GitRunner` + implementación con `Command` — `crates/devdeck-core/src/worktrees/git.rs`
-- [ ] T031 [P] [US1] Parser de `worktree list --porcelain`, `status --porcelain=v2 --branch` (dirty, ahead/behind), `log -1` + tests con salidas de ejemplo — `crates/devdeck-core/src/worktrees/git.rs`
-- [ ] T032 [P] [US1] Escaneo de la raíz (profundidad, resolución al repo principal) — `crates/devdeck-core/src/worktrees/scan.rs`
-- [ ] T033 [US1] `worktrees::list` real + tests con repos git temporales (con worktrees, sucio, sin upstream, detached) — `crates/devdeck-core/src/worktrees/mod.rs`
-- [ ] T034 [US1] `remove` (rechaza principal, `--force` solo si sucio confirmado) + tests — `crates/devdeck-core/src/worktrees/mod.rs`
-- [ ] T035 [P] [US1] Abrir VS Code y terminal (`wt -d` → `pwsh` → `cmd`) sin shell, con test del constructor de comandos — `crates/devdeck-core/src/worktrees/open.rs`
-- [ ] T036 [US1][US2] Comandos `worktrees_scan` (agrupado por ámbito), `worktree_open_*`, `worktree_remove` — `src-tauri/src/commands/worktrees.rs`
-- [ ] T037 [US1] UI: selector de carpeta raíz (dialog) persistida, tabla agrupada, badges de estado, acciones y confirmación — `src/modules/worktrees/index.svelte`, `src/modules/worktrees/*.svelte`
-- [ ] T038 [US1] Test front (formato de ahead/behind, filtros) — `src/modules/worktrees/*.test.ts`
+## Phase 2A — Worktrees (US1) [P]
+- [ ] T030 [P] [US1] `GitRunner` trait + `Command` implementation — `crates/devdeck-core/src/worktrees/git.rs`
+- [ ] T031 [P] [US1] Parsers for `worktree list --porcelain`, `status --porcelain=v2 --branch` (dirty, ahead/behind), `log -1` + tests with sample outputs — `crates/devdeck-core/src/worktrees/git.rs`
+- [ ] T032 [P] [US1] Root scan (depth, resolution to the main repo) — `crates/devdeck-core/src/worktrees/scan.rs`
+- [ ] T033 [US1] Real `worktrees::list` + tests with temporary git repos (with worktrees, dirty, no upstream, detached) — `crates/devdeck-core/src/worktrees/mod.rs`
+- [ ] T034 [US1] `remove` (rejects main, `--force` only if dirty and confirmed) + tests — `crates/devdeck-core/src/worktrees/mod.rs`
+- [ ] T035 [P] [US1] Open VS Code and terminal (`wt -d` → `pwsh` → `cmd`) without a shell, with a command-builder test — `crates/devdeck-core/src/worktrees/open.rs`
+- [ ] T036 [US1][US2] Commands `worktrees_scan` (grouped by scope), `worktree_open_*`, `worktree_remove` — `src-tauri/src/commands/worktrees.rs`
+- [ ] T037 [US1][US5] UI: root-folder picker (dialog) persisted, grouped table, status badges, actions and confirmation; all text via `t()`, ages/dates via `format.ts` — `src/modules/worktrees/index.svelte`, `src/modules/worktrees/*.svelte`
+- [ ] T038 [US1] Front test (ahead/behind formatting, filters) — `src/modules/worktrees/*.test.ts`
+- [ ] T039 [US5] Worktrees copy: keys in both languages (`en` and `es` together) — `src/lib/i18n/locales/{en,es}/worktrees.json`
 
-## Fase 2B — Puertos (US3) [P]
-- [ ] T041 [P] [US3] Trait `PortSource` + implementación `listeners`; modelo `ListeningPort` — `crates/devdeck-core/src/ports/listing.rs`
-- [ ] T042 [US3] Enriquecer con `process_info` (ruta, cwd) y atribuir con `scope::attribute` (usa los worktrees de `worktrees::list`/`Project`) — `crates/devdeck-core/src/ports/mod.rs`
-- [ ] T043 [P] [US3] Búsqueda/filtro (`port, pid, nombre, ruta, proyecto`) + tests — `crates/devdeck-core/src/ports/mod.rs`
-- [ ] T044 [US3] Tests con `PortSource` y `ProcSource` simulados (cwd desconocido, varios puertos por PID) — `crates/devdeck-core/src/ports/mod.rs`
-- [ ] T045 [US3] Comandos `ports_list` y `process_kill` — `src-tauri/src/commands/ports.rs`
-- [ ] T046 [US3] UI: tabla agrupada, búsqueda, matar con confirmación, refresco auto opcional — `src/modules/ports/index.svelte`
-- [ ] T047 [US3] Nota en README/UI de comportamiento en macOS/Linux (mejor esfuerzo) — `src/modules/ports/index.svelte`
+## Phase 2B — Ports (US3) [P]
+- [ ] T041 [P] [US3] `PortSource` trait + `listeners` implementation; `ListeningPort` model — `crates/devdeck-core/src/ports/listing.rs`
+- [ ] T042 [US3] Enrich with `process_info` (path, cwd) and attribute with `scope::attribute` (uses the worktrees from `worktrees::list`/`Project`) — `crates/devdeck-core/src/ports/mod.rs`
+- [ ] T043 [P] [US3] Search/filter (`port, pid, name, path, project`) + tests — `crates/devdeck-core/src/ports/mod.rs`
+- [ ] T044 [US3] Tests with simulated `PortSource` and `ProcSource` (unknown cwd, several ports per PID) — `crates/devdeck-core/src/ports/mod.rs`
+- [ ] T045 [US3] Commands `ports_list` and `process_kill` — `src-tauri/src/commands/ports.rs`
+- [ ] T046 [US3][US5] UI: grouped table, search, kill with confirmation, optional auto refresh; all text via `t()` — `src/modules/ports/index.svelte`
+- [ ] T047 [US3] Note in README/UI about macOS/Linux behavior (best effort) — `src/modules/ports/index.svelte`
+- [ ] T048 [US5] Ports copy: keys in both languages — `src/lib/i18n/locales/{en,es}/ports.json`
 
-## Fase 2C — Visor JSON (US5) [P]
-- [ ] T049 [P] [US5] Tokenizador sobre `&[u8]` + errores con offset + tests (Unicode, escapes, números, inválidos) — `crates/devdeck-core/src/json_viewer/indexer.rs`
-- [ ] T050 [US5] Indexador de contenedores con saltos cada 1024 hijos, progreso y cancelación — `crates/devdeck-core/src/json_viewer/indexer.rs`
-- [ ] T051 [P] [US5] Lector por offset con `memmap2`, `children(node, offset, limit)`, `value(node, max)`, detección de archivo cambiado — `crates/devdeck-core/src/json_viewer/reader.rs`
-- [ ] T052 [P] [US5] Ruta `$.a.b[3]` con escape de claves — `crates/devdeck-core/src/json_viewer/mod.rs`
-- [ ] T053 [US5] Búsqueda por lotes (claves/valores, case, tope) — `crates/devdeck-core/src/json_viewer/search.rs`
-- [ ] T054 [P] [US5] Pretty-print de subárbol con tope y guardado formateado en streaming — `crates/devdeck-core/src/json_viewer/format.rs`
-- [ ] T055 [US5] Generador de fixtures JSON en tests (anidado, array enorme, una línea, claves duplicadas) y test de memoria/tiempo con fixture ~50 MB marcado `#[ignore]` para 500 MB — `crates/devdeck-core/src/json_viewer/mod.rs`
-- [ ] T056 [US5] Comandos `json_*` con sesión en `AppState`, eventos de progreso y búsqueda — `src-tauri/src/commands/json_viewer.rs`
-- [ ] T057 [US5] UI: abrir (dialog), barra de progreso/cancelar — `src/modules/json-viewer/index.svelte`
-- [ ] T058 [US5] UI: árbol virtualizado con expansión perezosa (lista plana de filas visibles) — `src/modules/json-viewer/Tree.svelte`
-- [ ] T059 [US5] UI: búsqueda con resultados paginados, copiar ruta, formatear/copiar/guardar — `src/modules/json-viewer/{Search,NodeActions}.svelte`
-- [ ] T060 [US5] Tests front del aplanado del árbol — `src/modules/json-viewer/tree.test.ts`
+## Phase 2C — JSON Viewer (US6) [P]
+- [ ] T049 [P] [US6] Tokenizer over `&[u8]` + errors with offset + tests (Unicode, escapes, numbers, invalid) — `crates/devdeck-core/src/json_viewer/indexer.rs`
+- [ ] T050 [US6] Container indexer with jumps every 1024 children, progress and cancellation — `crates/devdeck-core/src/json_viewer/indexer.rs`
+- [ ] T051 [P] [US6] Offset reader with `memmap2`, `children(node, offset, limit)`, `value(node, max)`, changed-file detection (`json_file_changed`) — `crates/devdeck-core/src/json_viewer/reader.rs`
+- [ ] T052 [P] [US6] Path `$.a.b[3]` with key escaping — `crates/devdeck-core/src/json_viewer/mod.rs`
+- [ ] T053 [US6] Batched search (keys/values, case, cap) — `crates/devdeck-core/src/json_viewer/search.rs`
+- [ ] T054 [P] [US6] Subtree pretty-print with cap and streaming formatted save — `crates/devdeck-core/src/json_viewer/format.rs`
+- [ ] T055 [US6] JSON fixture generator in tests (nested, huge array, single line, duplicate keys) and a memory/time test with a ~50 MB fixture, with a 500 MB variant marked `#[ignore]` — `crates/devdeck-core/src/json_viewer/mod.rs`
+- [ ] T056 [US6] `json_*` commands with a session in `AppState`, progress and search events — `src-tauri/src/commands/json_viewer.rs`
+- [ ] T057 [US6][US5] UI: open (dialog), progress bar/cancel; all text via `t()` — `src/modules/json-viewer/index.svelte`
+- [ ] T058 [US6] UI: virtualized tree with lazy expansion (flat list of visible rows) — `src/modules/json-viewer/Tree.svelte`
+- [ ] T059 [US6][US5] UI: search with paginated results, copy path, format/copy/save; all text via `t()` — `src/modules/json-viewer/{Search,NodeActions}.svelte`
+- [ ] T060 [US6] Front tests of tree flattening — `src/modules/json-viewer/tree.test.ts`
+- [ ] T060a [US5] JSON Viewer copy: keys in both languages — `src/lib/i18n/locales/{en,es}/json-viewer.json`
 
-## Fase 2D — Oculto / Limpieza (US6) [P]
-- [ ] T061 [P] [US6] Procesos de dev: lista de nombres, `kind`, antigüedad, atribución, marca huérfano (`known_worktrees`) + tests con `ProcSource` simulado — `crates/devdeck-core/src/cleanup/processes.rs`
-- [ ] T062 [P] [US6] Carpetas regenerables: búsqueda por lista blanca sin entrar en ellas, cachés globales Windows, último uso, tamaños con `fsutil::dir_size` — `crates/devdeck-core/src/cleanup/folders.rs`
-- [ ] T063 [P] [US6] `validate_deletable` + `delete_folder` (canonicalize, lista blanca, rechaza enlaces) y tests de rechazo — `crates/devdeck-core/src/cleanup/folders.rs`
-- [ ] T064 [US6] Worktrees olvidados: `worktrees::list` + tamaño + antigüedad + `merge-base --is-ancestor` + sin cambios + procesos vivos, tests con repos temporales — `crates/devdeck-core/src/cleanup/forgotten.rs`
-- [ ] T065 [US6] Resumen recuperable (RAM/disco) y agrupado por proyecto con `scope::group_by_project` + tests — `crates/devdeck-core/src/cleanup/summary.rs`
-- [ ] T066 [US6] Comandos `cleanup_*` con trabajos cancelables y progreso — `src-tauri/src/commands/cleanup.rs`
-- [ ] T067 [US6] UI: resumen superior, pestañas Worktrees/Procesos/Carpetas, vista agrupada Global/proyecto con totales — `src/modules/cleanup/index.svelte`, `src/modules/cleanup/*.svelte`
-- [ ] T068 [US6] UI: acciones con confirmación (quitar worktree, terminar proceso, borrar carpeta mostrando tamaño) — `src/modules/cleanup/*.svelte`
-- [ ] T069 [US6] Tests front del resumen/formato — `src/modules/cleanup/*.test.ts`
+## Phase 2D — Hidden / Cleanup (US7) [P]
+- [ ] T061 [P] [US7] Dev processes: name list, `kind`, age, attribution, orphan flag (`known_worktrees`) + tests with a simulated `ProcSource` — `crates/devdeck-core/src/cleanup/processes.rs`
+- [ ] T062 [P] [US7] Regenerable folders: allow-list search without descending into them, Windows global caches, last use, sizes with `fsutil::dir_size` — `crates/devdeck-core/src/cleanup/folders.rs`
+- [ ] T063 [P] [US7] `validate_deletable` + `delete_folder` (canonicalize, allow-list, rejects links) and rejection tests — `crates/devdeck-core/src/cleanup/folders.rs`
+- [ ] T064 [US7] Forgotten worktrees: `worktrees::list` + size + age + `merge-base --is-ancestor` + no changes + live processes, tests with temporary repos — `crates/devdeck-core/src/cleanup/forgotten.rs`
+- [ ] T065 [US7] Recoverable summary (RAM/disk) and grouping by project with `scope::group_by_project` + tests — `crates/devdeck-core/src/cleanup/summary.rs`
+- [ ] T066 [US7] `cleanup_*` commands with cancelable jobs and progress — `src-tauri/src/commands/cleanup.rs`
+- [ ] T067 [US7][US5] UI: top summary, Worktrees/Processes/Folders tabs, Global/project grouped view with totals; all text via `t()` — `src/modules/cleanup/index.svelte`, `src/modules/cleanup/*.svelte`
+- [ ] T068 [US7][US5] UI: actions with confirmation (remove worktree, terminate process, delete folder showing size); all text via `t()` — `src/modules/cleanup/*.svelte`
+- [ ] T069 [US7] Front tests of summary/formatting — `src/modules/cleanup/*.test.ts`
+- [ ] T070 [US5] Hidden/Cleanup copy: keys in both languages — `src/lib/i18n/locales/{en,es}/cleanup.json`
 
-## Fase 3 — Integración y pulido
-- [ ] T080 [US2] Ver que los 3 módulos con ámbito usan el store y recargan al cambiar; arreglar divergencias — `src/modules/*`
-- [ ] T081 [US3] Cruce puertos↔worktrees real con `Project` de la raíz configurada (si no cupo en 2B) — `crates/devdeck-core/src/ports/mod.rs`
-- [ ] T082 [US6] Oculto reutiliza `worktrees::list` y `process_info` reales de 2A/2B (quitar stubs) — `crates/devdeck-core/src/cleanup/*`
-- [ ] T083 Revisión de errores y estados vacíos/cargando en los 4 módulos — `src/modules/*`
-- [ ] T084 Pasada de rendimiento (SC-001..SC-004) con datos reales — informe
-- [ ] T085 Revisión de seguridad: capabilities mínimas, rutas validadas, sin secretos — `src-tauri/capabilities/default.json`
-- [ ] T086 CI verde en las 3 plataformas — `.github/workflows/ci.yml`
+## Phase 3 — Integration and polish
+- [ ] T080 [US2] Check that the 3 scope-aware modules use the store and reload on change; fix divergences — `src/modules/*`
+- [ ] T081 [US3] Real ports↔worktrees cross-reference with the configured root's `Project` (if it did not fit in 2B) — `crates/devdeck-core/src/ports/mod.rs`
+- [ ] T082 [US7] Hidden reuses the real `worktrees::list` and `process_info` from 2A/2B (remove stubs) — `crates/devdeck-core/src/cleanup/*`
+- [ ] T083 Review errors and empty/loading states in the 4 modules (every error code has an `errors.*` translation) — `src/modules/*`
+- [ ] T084 Performance pass (SC-001..SC-004) with real data — report
+- [ ] T085 Security review: minimal capabilities, validated paths, no secrets — `src-tauri/capabilities/default.json`
+- [ ] T086 CI green on the 3 platforms — `.github/workflows/ci.yml`
+- [ ] T087 [US5] i18n review: no literal UI text left in components, Spanish copy reviewed, dedupe shared keys into `common.json`, switching language at runtime updates every view, dates/numbers/sizes follow the language (SC-008, SC-009) — `src/**`, `src/lib/i18n/locales/**`
 
-## Fase 4 — Entregables (US7)
-- [ ] T090 [P] Icono propio SVG y `pnpm tauri icon` — `assets/icon.svg`, `src-tauri/icons/*`
-- [ ] T091 [P] Workflow de release con tauri-action (borrador, .msi + NSIS .exe) — `.github/workflows/release.yml`
-- [ ] T092 [P] CHANGELOG Keep a Changelog con `0.1.0` — `CHANGELOG.md`
-- [ ] T093 [P] Versión 0.1.0 coherente en `package.json`, `Cargo.toml`, `tauri.conf.json` — varios
-- [ ] T094 README (qué es, instalación, uso, desarrollo, seguridad `setup:hooks`/`setup:gitleaks`, cómo generar capturas/GIF) — `README.md`
-- [ ] T095 Capturas de los 4 módulos y GIF del flujo — `docs/img/*`
-- [ ] T096 Probar el release en un tag de prueba (lo ejecuta el principal con permiso de Paco) — verificación
-- [ ] T097 `/speckit.analyze` final y cierre — `specs/001-devdeck-mvp/`
+## Phase 4 — Deliverables (US8)
+- [ ] T090 [P] Own SVG icon and `pnpm tauri icon` — `assets/icon.svg`, `src-tauri/icons/*`
+- [ ] T091 [P] Release workflow with tauri-action (draft, .msi + NSIS .exe) — `.github/workflows/release.yml`
+- [ ] T092 [P] Keep a Changelog CHANGELOG with `0.1.0` — `CHANGELOG.md`
+- [ ] T093 [P] Consistent version 0.1.0 and the repository description in `package.json`, `Cargo.toml`, `tauri.conf.json` — various
+- [ ] T094 English README (starts with the repository description from `plan.md`; what it is, install, usage, development, language support, security `setup:hooks`/`setup:gitleaks`, how to generate screenshots/GIF) — `README.md`
+- [ ] T095 Screenshots of the 4 modules (English and Spanish) and a GIF of the flow — `docs/img/*`
+- [ ] T096 Test the release on a throwaway tag (run by the main orchestrator with Paco's permission) — verification
+- [ ] T097 Final `/speckit.analyze` and close-out — `specs/001-devdeck-mvp/`
+- [ ] T098 Set the GitHub repository description (text in `plan.md`) — run by the main orchestrator with Paco's permission — verification
 
-## Dependencias
-1A → (2A ‖ 2B ‖ 2C ‖ 2D) → 3 → 4. 1B es paralelo a 1A salvo T021 (necesita T002) y T020 (necesita T015). Dentro de 2: T033 depende de T030–T032; T042 de T041; T050 de T049; T064 de `worktrees::list` (contrato T008); T065 de T061–T064.
+## Dependencies
+1A → (2A ‖ 2B ‖ 2C ‖ 2D) → 3 → 4. 1B is parallel to 1A except T021 (needs T002) and T020 (needs T015). Within 1A: T012a → T012b → T012c, T012d; T012 and T013 need T012a. Within 2: T033 depends on T030–T032; T042 on T041; T050 on T049; T064 on `worktrees::list` (contract T008); T065 on T061–T064; each module's locale task (T039, T048, T060a, T070) runs together with its UI tasks.
 
-## Matriz FR → tareas
-| FR | Tareas |
+## FR → tasks matrix
+| FR | Tasks |
 |---|---|
-| FR-001 | T013 |
+| FR-001 | T013, T012c |
 | FR-002 | T010, T037 |
 | FR-003 | T005 |
 | FR-004 | T006 |
@@ -153,12 +170,22 @@ Conflictos evitados: `commands/mod.rs`, `lib.rs`, `App.svelte` y `Cargo.toml` lo
 | FR-047 | T009, T062 |
 | FR-048 | T063, T068 |
 | FR-049 | T006, T062, T065 |
-| FR-050 | T006, T007, T009, T031–T034, T044, T049–T055, T061–T065 |
-| FR-051 | T014, T086 |
-| FR-052 | T091, T096 |
-| FR-053 | T090, T092, T094, T095 |
+| FR-050 | T012a, T012c, T013 |
+| FR-051 | T010, T012a, T012c |
+| FR-052 | T012a, T012b, T037, T039, T046, T048, T057, T059, T060a, T067, T068, T070, T087 |
+| FR-053 | T012c, T037, T087 |
+| FR-054 | T004, T012b, T012, T083 |
+| FR-055 | T012d, T014 |
+| FR-056 | T039, T048, T060a, T070 |
 | FR-060 | T016 |
 | FR-061 | T017 |
 | FR-062 | T018, T020, T021 |
 | FR-063 | T022 |
 | FR-064 | T019 |
+| FR-070 | T006, T007, T009, T031–T034, T044, T049–T055, T061–T065 |
+| FR-071 | T014, T086 |
+| FR-072 | T091, T096 |
+| FR-073 | T090, T092, T093, T094, T095, T098 |
+
+## User story → tasks
+US1 T030–T039 · US2 T005, T006, T012, T036, T080 · US3 T041–T048, T081 · US4 T016–T022b · US5 T004, T010, T012a–T012d, T039, T048, T060a, T070, T087 · US6 T049–T060a · US7 T061–T070, T082 · US8 T090–T098.

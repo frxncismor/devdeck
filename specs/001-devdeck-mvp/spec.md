@@ -1,156 +1,179 @@
 # Feature Specification: DevDeck MVP
 
 **Feature Branch**: `001-devdeck-mvp`  |  **Created**: 2026-11-23  |  **Status**: Draft
-**Input**: `runs/11231900/peticion.md` (petición de Paco + ampliaciones: módulo "Oculto", selector Global/proyecto, seguridad con gitleaks).
+**Input**: `runs/11231900/peticion.md` (Paco's request + additions: "Hidden" module, Global/project scope selector, gitleaks security, English-only project with bilingual UI).
 
-DevDeck es una app de escritorio (Tauri 2 + Rust, Svelte + TS) con barra lateral de 4 módulos: **Worktrees**,
-**Puertos**, **Visor JSON** y **Oculto/Limpieza**, más un **selector de ámbito (Global / proyecto)** transversal.
-Plataforma garantizada: Windows. Alcance sencillo, no robusto.
+DevDeck is a desktop app (Tauri 2 + Rust, Svelte + TS) with a sidebar of 4 modules: **Worktrees**, **Ports**,
+**JSON Viewer** and **Hidden / Cleanup**, plus a cross-cutting **scope selector (Global / project)** and a
+**language selector (English / Spanish)**. Guaranteed platform: Windows. Simple scope, not robust.
 
-## Conceptos
+## Concepts
 
-- **Proyecto**: un repo principal + todos sus worktrees. Identificado por la ruta canónica del repo principal.
-- **Ámbito** (scope): `Global` o `Proyecto(id)`. Filtra las vistas de Worktrees, Puertos y Oculto.
-- **Sin proyecto**: grupo de Global para lo que no pertenece a ningún proyecto (cachés globales, procesos sin repo).
+- **Project**: a main repo + all its worktrees. Identified by the canonical path of the main repo.
+- **Scope**: `Global` or `Project(id)`. Filters the Worktrees, Ports and Hidden views.
+- **No project**: the Global group for anything that belongs to no project (global caches, processes without a repo).
+- **Language**: `en` (default) or `es`. Controls every user-visible string and the date/number/size formatting.
 
 ## User Scenarios & Testing
 
-### US1 — Worktrees de mis repos (P1)
-Como dev quiero indicar una carpeta raíz y ver todos los worktrees de cada repo con su estado.
-**Prueba independiente**: con una raíz con 2 repos (uno con 2 worktrees) la lista muestra 3 filas con los datos correctos.
-1. **Dado** una raíz configurada, **cuando** abro Worktrees, **entonces** veo por repo cada worktree con rama, estado
-   (limpio / sucio + nº de archivos), ahead/behind vs upstream y último commit (hash corto, mensaje, fecha).
-2. **Dado** un worktree, **cuando** pulso "VS Code" o "Terminal", **entonces** se abre en esa ruta.
-3. **Dado** un worktree no principal, **cuando** pulso "Quitar" y confirmo, **entonces** se elimina; el principal no ofrece la acción.
-4. **Dado** una rama sin upstream, **entonces** ahead/behind se muestra como "—".
+### US1 — Worktrees of my repos (P1)
+As a dev I want to point at a root folder and see every worktree of each repo with its state.
+**Independent test**: with a root containing 2 repos (one with 2 worktrees) the list shows 3 rows with correct data.
+1. **Given** a configured root, **when** I open Worktrees, **then** I see, per repo, each worktree with branch, state
+   (clean / dirty + file count), ahead/behind vs upstream and last commit (short hash, subject, date).
+2. **Given** a worktree, **when** I click "VS Code" or "Terminal", **then** it opens at that path.
+3. **Given** a non-main worktree, **when** I click "Remove" and confirm, **then** it is removed; the main worktree does not offer the action.
+4. **Given** a branch without upstream, **then** ahead/behind is shown as "—".
 
-### US2 — Selector Global / proyecto (P1)
-Quiero ver todo agrupado por proyecto con totales, o centrarme en un proyecto.
-1. **Dado** ámbito Global, **entonces** cada módulo agrupa por proyecto (más "Sin proyecto") con totales de RAM y disco por grupo y total general.
-2. **Dado** que elijo un proyecto, **entonces** todos los módulos muestran solo lo de ese repo y sus worktrees.
-3. **Dado** que cambio de módulo, **entonces** el ámbito se mantiene; al reiniciar la app se restaura el último.
+### US2 — Global / project scope selector (P1)
+I want to see everything grouped by project with totals, or focus on a single project.
+1. **Given** Global scope, **then** each module groups by project (plus "No project") with RAM and disk totals per group and a grand total.
+2. **Given** I pick a project, **then** every module shows only that repo and its worktrees.
+3. **Given** I switch module, **then** the scope is kept; on app restart the last one is restored.
 
-### US3 — Puertos en escucha (P1)
-1. **Dado** procesos escuchando, **entonces** veo puerto, protocolo, PID, nombre y ruta del ejecutable.
-2. **Cuando** escribo en la búsqueda, **entonces** filtra por puerto, PID, nombre, ruta o proyecto.
-3. **Cuando** pulso "Matar" y confirmo, **entonces** el proceso termina y desaparece al refrescar.
-4. **Dado** un proceso cuyo cwd cuelga de un worktree, **entonces** la fila muestra ese worktree/proyecto; si el cwd no se puede leer muestra "desconocido".
+### US3 — Listening ports (P1)
+1. **Given** processes listening, **then** I see port, protocol, PID, name and executable path.
+2. **When** I type in the search box, **then** it filters by port, PID, name, path or project.
+3. **When** I click "Kill" and confirm, **then** the process ends and disappears on refresh.
+4. **Given** a process whose cwd lives under a worktree, **then** the row shows that worktree/project; if the cwd cannot be read it shows "unknown".
 
-### US4 — Seguridad: nadie commitea secretos (P1)
-Quiero que ningún commit con secretos entre en el repo, ni local ni en CI.
-1. **Dado** un clon nuevo, **cuando** ejecuto `pnpm setup:hooks` y `pnpm setup:gitleaks`, **entonces** `git config core.hooksPath` devuelve `.githooks` y existe `.tools/gitleaks/8.30.1/`.
-2. **Dado** un cambio staged con un secreto de prueba, **cuando** hago `git commit`, **entonces** el hook lo bloquea (salida redactada).
-3. **Dado** que falta gitleaks o su versión no es 8.30.1, **entonces** el commit se bloquea con instrucciones (fallo cerrado).
-4. **Dado** un PR/push, **entonces** el CI repite gitleaks sobre el rango de commits y falla si hay hallazgos.
+### US4 — Security: nobody commits secrets (P1)
+I want no commit containing secrets to enter the repo, locally or in CI.
+1. **Given** a fresh clone, **when** I run `pnpm setup:hooks` and `pnpm setup:gitleaks`, **then** `git config core.hooksPath` returns `.githooks` and `.tools/gitleaks/8.30.1/` exists.
+2. **Given** a staged change with a test secret, **when** I run `git commit`, **then** the hook blocks it (redacted output).
+3. **Given** gitleaks is missing or its version is not 8.30.1, **then** the commit is blocked with instructions (fail closed).
+4. **Given** a PR/push, **then** CI repeats gitleaks over the commit range and fails on findings.
 
-### US5 — Visor JSON grande (P2)
-1. **Cuando** abro un archivo de varios cientos de MB, **entonces** se indexa en segundo plano con progreso y cancelación, y la UI sigue respondiendo.
-2. **Cuando** expando un nodo, **entonces** se piden sus hijos paginados; el árbol está virtualizado.
-3. **Cuando** busco un texto, **entonces** llegan resultados por lotes (clave/valor) y puedo saltar a cada uno.
-4. **Cuando** selecciono un nodo, **entonces** puedo copiar su ruta (`$.a.b[3]`), copiar/exportar su subárbol formateado, o guardar el archivo formateado.
-5. **Dado** un JSON inválido, **entonces** se muestra el error con offset sin colgar la app.
+### US5 — Bilingual interface (P1)
+As a user (or a recruiter reviewing the project) I want the UI in English or Spanish and to switch at any time.
+**Independent test**: switching the language changes every visible text, date, number and size format without restart.
+1. **Given** a first launch with no saved preference, **then** the UI is in English.
+2. **When** I pick "Español" in the language selector, **then** all texts switch to Spanish immediately and the choice is saved in the config; after restart it is restored.
+3. **Given** Spanish, **then** dates, numbers and sizes use Spanish conventions (e.g. `1,5 GB`, `23 nov 2026`); in English, `1.5 GB`, `Nov 23, 2026`.
+4. **Given** a backend error, **then** the UI shows a translated message chosen from the error's stable code; Rust never supplies UI text.
+5. **Given** the repo, **then** a test fails if `en` and `es` resource files differ in keys or placeholders.
 
-### US6 — Oculto / Limpieza (P2)
-1. Resumen arriba: RAM y disco recuperables (respetando el ámbito).
-2. **Worktrees olvidados**: tamaño en disco, antigüedad del último commit, rama integrada en la base / sin cambios, procesos vivos dentro; acción quitar con confirmación.
-3. **Procesos de dev en segundo plano/huérfanos**: RAM, CPU, antigüedad, proyecto/worktree; los de cwd en un worktree ya borrado se marcan "huérfano"; acción terminar con confirmación.
-4. **Carpetas regenerables** (node_modules, target, .venv, dist, cachés npm/pnpm/cargo): tamaño y último uso; borrar con confirmación.
-5. Solo lectura + acciones confirmadas; nada se ejecuta solo.
+### US6 — Large JSON viewer (P2)
+1. **When** I open a file of several hundred MB, **then** it is indexed in the background with progress and cancellation, and the UI stays responsive.
+2. **When** I expand a node, **then** its children are requested paginated; the tree is virtualized.
+3. **When** I search for text, **then** results arrive in batches (key/value) and I can jump to each one.
+4. **When** I select a node, **then** I can copy its path (`$.a.b[3]`), copy/export its formatted subtree, or save the formatted file.
+5. **Given** invalid JSON, **then** the error is shown with its offset without hanging the app.
 
-### US7 — Entregables profesionales (P3)
-CI verde en 3 SO, release automática por tag `v*` con .msi y .exe, README con capturas y GIF, icono propio, CHANGELOG.
+### US7 — Hidden / Cleanup (P2)
+1. Summary on top: recoverable RAM and disk (respecting the scope).
+2. **Forgotten worktrees**: disk size, last-commit age, branch merged into base / no changes, live processes inside; remove action with confirmation.
+3. **Background/orphaned dev processes**: RAM, CPU, age, project/worktree; those whose cwd is in an already-deleted worktree are flagged "orphaned"; terminate action with confirmation.
+4. **Regenerable folders** (node_modules, target, .venv, dist, npm/pnpm/cargo caches): size and last use; delete with confirmation.
+5. Read-only plus confirmed actions; nothing runs by itself.
+
+### US8 — Professional deliverables (P3)
+Green CI on 3 OSes, automatic release on `v*` tag with .msi and .exe, README with screenshots and GIF, custom icon, CHANGELOG, English repository description.
 
 ## Requirements
 
-### Shell y ámbito
-- **FR-001**: Barra lateral con 4 módulos (Worktrees, Puertos, Visor JSON, Oculto) y selector de ámbito siempre visible.
-- **FR-002**: Configuración persistida (carpeta raíz, último ámbito, base de ramas) en el almacén de la app.
-- **FR-003**: Modelo `Project` (id, nombre, repo principal, worktrees) construido del escaneo de la raíz.
-- **FR-004**: Función de atribución `ruta → proyecto` por prefijo de ruta más largo, normalizada, case-insensitive en Windows; sin coincidencia ⇒ "Sin proyecto".
-- **FR-005**: Los comandos de Worktrees, Puertos y Oculto aceptan un ámbito y devuelven los datos ya filtrados.
-- **FR-006**: En Global la respuesta viene agrupada por proyecto con totales de RAM y disco por grupo y total general; "Sin proyecto" es un grupo más.
-- **FR-007**: En ámbito proyecto solo se devuelven elementos atribuidos a ese proyecto.
-- **FR-008**: El ámbito seleccionado es un store global del front (persistido); cambiarlo recarga el módulo visible.
-- **FR-009**: Errores serializables y mostrados en la UI sin cerrar la app.
+### Shell and scope
+- **FR-001**: Sidebar with 4 modules (Worktrees, Ports, JSON Viewer, Hidden), an always-visible scope selector and an always-visible language selector.
+- **FR-002**: Persisted configuration (root folder, last scope, branch base, language) in the app store.
+- **FR-003**: `Project` model (id, name, main repo, worktrees) built from the root scan.
+- **FR-004**: Attribution function `path → project` by longest path prefix, normalized, case-insensitive on Windows; no match ⇒ "No project".
+- **FR-005**: Worktrees, Ports and Hidden commands accept a scope and return already-filtered data.
+- **FR-006**: In Global the response is grouped by project with RAM and disk totals per group and a grand total; "No project" is just another group.
+- **FR-007**: In project scope only items attributed to that project are returned.
+- **FR-008**: The selected scope is a global frontend store (persisted); changing it reloads the visible module.
+- **FR-009**: Errors are serializable as `{kind, code, params?, detail?}` and shown in the UI without closing the app (translation per FR-054).
 
 ### Worktrees
-- **FR-010**: Escanear la carpeta raíz (profundidad configurable, por defecto 2) detectando repos git.
-- **FR-011**: Por repo, listar worktrees con `git worktree list --porcelain`: ruta, rama (o detached), principal sí/no.
-- **FR-012**: Por worktree: nº de archivos modificados y estado limpio/sucio.
-- **FR-013**: Por worktree: ahead/behind vs upstream.
-- **FR-014**: Por worktree: último commit (hash corto, asunto, fecha).
-- **FR-015**: Acción abrir en VS Code (`code`).
-- **FR-016**: Acción abrir terminal (Windows Terminal `wt -d`, fallback `pwsh`/`cmd`).
-- **FR-017**: Acción quitar worktree con confirmación, rechazada para el principal; si está sucio exige confirmación reforzada (`--force` solo entonces).
-- **FR-018**: Listar worktrees es un contrato compartido (`worktrees::list`) reutilizado por Puertos y Oculto.
+- **FR-010**: Scan the root folder (configurable depth, default 2) detecting git repos.
+- **FR-011**: Per repo, list worktrees with `git worktree list --porcelain`: path, branch (or detached), main yes/no.
+- **FR-012**: Per worktree: number of modified files and clean/dirty state.
+- **FR-013**: Per worktree: ahead/behind vs upstream.
+- **FR-014**: Per worktree: last commit (short hash, subject, date).
+- **FR-015**: Open in VS Code action (`code`).
+- **FR-016**: Open terminal action (Windows Terminal `wt -d`, fallback `pwsh`/`cmd`).
+- **FR-017**: Remove worktree action with confirmation, rejected for the main worktree; if dirty it requires reinforced confirmation (`--force` only then).
+- **FR-018**: Listing worktrees is a shared contract (`worktrees::list`) reused by Ports and Hidden.
 
-### Puertos
-- **FR-020**: Listar puertos TCP en escucha (UDP opcional, desactivado por defecto) con PID.
-- **FR-021**: Por puerto: nombre del proceso y ruta del ejecutable.
-- **FR-022**: Búsqueda por puerto, PID, nombre, ruta, proyecto.
-- **FR-023**: Matar proceso con confirmación; error claro si falta permiso.
-- **FR-024**: Obtener el cwd del proceso (`process_info`) y atribuirlo a worktree/proyecto; "desconocido" si no es legible.
-- **FR-025**: Refresco manual y automático opcional cada N s.
+### Ports
+- **FR-020**: List listening TCP ports (UDP optional, off by default) with PID.
+- **FR-021**: Per port: process name and executable path.
+- **FR-022**: Search by port, PID, name, path, project.
+- **FR-023**: Kill process with confirmation; clear error if permission is missing.
+- **FR-024**: Obtain the process cwd (`process_info`) and attribute it to a worktree/project; "unknown" if unreadable.
+- **FR-025**: Manual refresh and optional automatic refresh every N s.
 
-### Visor JSON
-- **FR-030**: Abrir archivo JSON de cientos de MB sin cargarlo en el webview ni entero en memoria como árbol.
-- **FR-031**: Indexación en streaming en una pasada, con progreso (eventos) y cancelación.
-- **FR-032**: `json_children(node, offset, limit)` paginado; valores leídos del archivo bajo demanda.
-- **FR-033**: Árbol virtualizado con expansión perezosa.
-- **FR-034**: Búsqueda en claves y/o valores en segundo plano, resultados por lotes, límite configurable.
-- **FR-035**: Copiar ruta del nodo en formato `$.a.b[3]` (claves no identificador: `$["a b"]`).
-- **FR-036**: Formatear: pretty-print del subárbol (con tope de tamaño) copiar/guardar, y guardar el archivo completo formateado en streaming.
-- **FR-037**: JSON inválido ⇒ error con posición; sin pánico.
+### JSON Viewer
+- **FR-030**: Open a JSON file of hundreds of MB without loading it into the webview or entirely into memory as a tree.
+- **FR-031**: Single-pass streaming indexing with progress (events) and cancellation.
+- **FR-032**: Paginated `json_children(node, offset, limit)`; values read from the file on demand.
+- **FR-033**: Virtualized tree with lazy expansion.
+- **FR-034**: Search in keys and/or values in the background, results in batches, configurable limit.
+- **FR-035**: Copy node path in `$.a.b[3]` format (non-identifier keys: `$["a b"]`).
+- **FR-036**: Format: pretty-print the subtree (with size cap) to copy/save, and save the whole formatted file in streaming mode.
+- **FR-037**: Invalid JSON ⇒ error with position; no panic.
 
-### Oculto / Limpieza
-- **FR-040**: Resumen con RAM y disco recuperables (en el ámbito).
-- **FR-041**: Worktrees olvidados: tamaño, antigüedad del último commit, rama integrada en la base o sin cambios, procesos vivos dentro; criterio "olvidado" configurable (por defecto > 30 días o integrada).
-- **FR-042**: Quitar worktree olvidado con confirmación (reutiliza FR-017).
-- **FR-043**: Procesos de dev (lista de nombres: node, esbuild, vite, cargo, rustc, rust-analyzer, chrome/chromium headless, playwright, docker, vmmem/wsl…) con RAM, CPU, antigüedad y proyecto/worktree.
-- **FR-044**: Marcar "huérfano" el proceso con cwd en un worktree que ya no existe.
-- **FR-045**: Terminar proceso con confirmación (reutiliza FR-023).
-- **FR-046**: Carpetas regenerables (lista blanca: node_modules, target, .venv, dist, caché npm/pnpm/cargo) con tamaño y último uso.
-- **FR-047**: Cálculo de tamaños en segundo plano con progreso y cancelación, sin seguir symlinks/junctions.
-- **FR-048**: Borrar carpeta con confirmación; el backend rechaza cualquier ruta que no sea un nombre de la lista blanca o caché conocida.
-- **FR-049**: Cachés globales y procesos sin repo aparecen en "Sin proyecto".
+### Hidden / Cleanup
+- **FR-040**: Summary with recoverable RAM and disk (in scope).
+- **FR-041**: Forgotten worktrees: size, last-commit age, branch merged into base or no changes, live processes inside; "forgotten" criterion configurable (default > 30 days or merged).
+- **FR-042**: Remove a forgotten worktree with confirmation (reuses FR-017).
+- **FR-043**: Dev processes (name list: node, esbuild, vite, cargo, rustc, rust-analyzer, headless chrome/chromium, playwright, docker, vmmem/wsl…) with RAM, CPU, age and project/worktree.
+- **FR-044**: Flag "orphaned" the process whose cwd is in a worktree that no longer exists.
+- **FR-045**: Terminate process with confirmation (reuses FR-023).
+- **FR-046**: Regenerable folders (allow-list: node_modules, target, .venv, dist, npm/pnpm/cargo cache) with size and last use.
+- **FR-047**: Size computation in the background with progress and cancellation, without following symlinks/junctions.
+- **FR-048**: Delete folder with confirmation; the backend rejects any path that is not an allow-listed name or known cache.
+- **FR-049**: Global caches and processes without a repo appear under "No project".
 
-### Seguridad
-- **FR-060**: `.githooks/pre-commit` ejecuta gitleaks **8.30.1** sobre lo staged con `--redact`; bloquea (fallo cerrado) si gitleaks falta, no es la versión exacta, o `.tools/...` es un symlink.
-- **FR-061**: `.gitleaks.toml` con el ruleset por defecto (`useDefault = true`), sin excepciones salvo justificadas en el SDD.
-- **FR-062**: Scripts `setup:hooks` (`git config core.hooksPath .githooks`) y `setup:gitleaks` (descarga el binario fijado a `.tools/gitleaks/8.30.1/`, verifica SHA-256, comprueba versión; Windows y Linux x64; en macOS se usa gitleaks 8.30.1 del PATH). `.tools/` en `.gitignore`.
-- **FR-063**: CI: job que ejecuta gitleaks 8.30.1 sobre el rango de commits del PR (y del push), con historial completo (`fetch-depth: 0`), `--redact`.
-- **FR-064**: Test del instalador (selección de asset, checksum, rutas inválidas) sin red.
+### Internationalization (i18n)
+- **FR-050**: The UI ships in English (default) and Spanish. A language selector is always visible (FR-001) and applies immediately without restart.
+- **FR-051**: The chosen language is persisted in the config (`language: "en" | "es"`). Default `en`; the system language is **not** auto-detected (predictable, simpler; recorded as a decision in the plan).
+- **FR-052**: Every user-visible string lives in resource files `src/lib/i18n/locales/{en,es}/<module>.json` (one file per module and language); components contain no literal UI text and call the typed translator `t(key, params?)`.
+- **FR-053**: Dates, numbers, sizes, percentages and relative times are formatted with `Intl` according to the active language (shared helpers in `src/lib/format.ts`).
+- **FR-054**: The backend never returns UI text: errors carry a stable `kind` + `code` (+ optional `params`), and the frontend maps `errors.<code>` to the translated message. Group labels such as "No project" are rendered by the frontend from a null project.
+- **FR-055**: A front test fails when `en` and `es` differ in keys or in `{placeholders}` per namespace, and when a key used via `t()` in code is missing from `en`.
+- **FR-056**: Each module block adds its own keys to its own resource files (en and es together) in the same change that adds its UI.
 
-### Entregables
-- **FR-050**: Tests unitarios Rust de la lógica de cada módulo.
-- **FR-051**: CI GitHub Actions (fmt, clippy -D warnings, test, lint/svelte-check/tests front) en windows/macos/ubuntu.
-- **FR-052**: Release con tauri-action en tag `v*`, borrador con .msi y NSIS .exe.
-- **FR-053**: README con capturas y GIF, icono propio, CHANGELOG Keep a Changelog.
+### Security
+- **FR-060**: `.githooks/pre-commit` runs gitleaks **8.30.1** on staged content with `--redact`; it blocks (fail closed) if gitleaks is missing, is not the exact version, or `.tools/...` is a symlink.
+- **FR-061**: `.gitleaks.toml` with the default ruleset (`useDefault = true`), no exceptions unless justified in the SDD.
+- **FR-062**: Scripts `setup:hooks` (`git config core.hooksPath .githooks`) and `setup:gitleaks` (downloads the pinned binary into `.tools/gitleaks/8.30.1/`, verifies SHA-256, checks version; Windows and Linux x64; on macOS gitleaks 8.30.1 from PATH is used). `.tools/` in `.gitignore`.
+- **FR-063**: CI: job running gitleaks 8.30.1 over the PR (and push) commit range, with full history (`fetch-depth: 0`), `--redact`.
+- **FR-064**: Installer test (asset selection, checksum, invalid paths) without network.
+
+### Deliverables
+- **FR-070**: Rust unit tests for each module's logic.
+- **FR-071**: GitHub Actions CI (fmt, clippy -D warnings, test, front lint/svelte-check/tests) on windows/macos/ubuntu.
+- **FR-072**: Release with tauri-action on `v*` tag, draft with .msi and NSIS .exe.
+- **FR-073**: README (English) with screenshots and GIF, custom icon, Keep a Changelog CHANGELOG, and the English repository description (see quickstart).
 
 ## Success Criteria
-- **SC-001**: Lista de 20 worktrees en < 3 s en Windows (git CLI con paralelismo acotado).
-- **SC-002**: JSON de 500 MB indexado sin superar ~1,5 GB de RAM y UI sin bloqueos > 100 ms; abrir/expandir nodo < 200 ms tras indexar.
-- **SC-003**: Búsqueda en 500 MB entrega el primer lote < 2 s.
-- **SC-004**: Cambio de ámbito refresca el módulo < 1 s (los tamaños llegan por progreso).
-- **SC-005**: CI verde en las 3 plataformas; un tag `v*` produce un borrador con instaladores.
-- **SC-006**: Ninguna acción destructiva se ejecuta sin confirmación (test de contrato en backend).
-- **SC-007**: Tras integrar, en devdeck `git config core.hooksPath` devuelve `.githooks`; un secreto de prueba staged bloquea el commit y el job de CI falla sobre un commit con ese secreto.
+- **SC-001**: List of 20 worktrees in < 3 s on Windows (git CLI with bounded parallelism).
+- **SC-002**: 500 MB JSON indexed without exceeding ~1.5 GB RAM and UI with no blocks > 100 ms; opening/expanding a node < 200 ms after indexing.
+- **SC-003**: Search over 500 MB delivers the first batch in < 2 s.
+- **SC-004**: Scope change refreshes the module in < 1 s (sizes arrive via progress).
+- **SC-005**: CI green on the 3 platforms; a `v*` tag produces a draft with installers.
+- **SC-006**: No destructive action runs without confirmation (backend contract test).
+- **SC-007**: After integration, in devdeck `git config core.hooksPath` returns `.githooks`; a staged test secret blocks the commit and the CI job fails on a commit with that secret.
+- **SC-008**: The i18n parity test passes: `en` and `es` have exactly the same keys and placeholders in every namespace; switching language changes all visible text with no restart and no leftover literals (manual check in Phase 3).
+- **SC-009**: Date/number/size formatting follows the active language (unit tests of `format.ts` for `en` and `es`).
 
 ## Edge Cases
-Repo bare; worktree prunable/ruta inexistente; rama detached; sin upstream; raíz inexistente; submódulos; proceso
-elevado (cwd/ruta ilegibles); PID reutilizado entre listado y kill (revalidar nombre+PID); JSON de una sola línea
-gigante, Unicode, claves duplicadas, números enormes; archivo modificado tras indexar; symlinks/junctions en
-node_modules; permisos denegados al medir tamaño; mismo proceso con varios puertos; rutas con mayúsculas distintas
-en Windows; gitleaks descargado corrupto (checksum falla).
+Bare repo; prunable worktree/non-existent path; detached branch; no upstream; non-existent root; submodules; elevated
+process (unreadable cwd/path); PID reused between listing and kill (revalidate name+PID); single-line giant JSON,
+Unicode, duplicate keys, huge numbers; file modified after indexing; symlinks/junctions in node_modules; permission
+denied while measuring size; same process with several ports; paths with different casing on Windows; corrupted
+downloaded gitleaks (checksum fails); missing translation key at runtime (falls back to English, never shows the raw key blank); unknown saved language value (falls back to `en`).
 
-## Fuera de alcance
-Editar JSON; clonar/crear worktrees; commits/push desde la app; limpieza automática o programada; actualizador
-automático; telemetría; garantía de Puertos en macOS/Linux; firma de código; escaneo periódico del historial completo.
+## Out of Scope
+Editing JSON; cloning/creating worktrees; commits/push from the app; automatic or scheduled cleanup; auto-updater;
+telemetry; Ports guarantee on macOS/Linux; code signing; periodic full-history scanning; languages beyond en/es;
+automatic system-language detection; right-to-left layouts.
 
-## Supuestos
-- Base de ramas "integrada" = `main` (configurable; fallback `master`/HEAD remoto).
-- Borrado de carpetas: **definitivo** (regenerables), con confirmación mostrando tamaño; sin papelera (evita crate `trash` y es más rápido con miles de archivos).
-- "Último uso" = mtime máximo de la carpeta y su primer nivel (barato); no atime (desactivado en Windows).
-- Una sola raíz de repos; varias raíces fuera de alcance.
-- Filtrado/agrupado/totales en Rust; el front solo guarda el ámbito.
-- Gestor de paquetes pnpm (igual que la referencia `grim-dawn-builds`); scripts de seguridad en TypeScript con `tsx`.
+## Assumptions
+- Branch base for "merged" = `main` (configurable; fallback `master`/remote HEAD).
+- Folder deletion is **permanent** (regenerable), with confirmation showing the size; no recycle bin (avoids the `trash` crate and is faster with thousands of files).
+- "Last use" = max mtime of the folder and its first level (cheap); not atime (disabled on Windows).
+- A single repo root; multiple roots are out of scope.
+- Filtering/grouping/totals in Rust; the frontend only stores the scope and the language.
+- Package manager pnpm (same as the `grim-dawn-builds` reference); security scripts in TypeScript with `tsx`.
+- Process names, paths, git output, branch names and commit subjects are shown as-is (data, not translated).

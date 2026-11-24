@@ -7,23 +7,23 @@
 
 A Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see which worktree owns each listening port, browse multi-hundred-MB JSON files, and reclaim disk and RAM from forgotten worktrees and orphaned dev processes.
 
-<!-- TODO(screenshots): demo GIF goes here after the UI redesign: ![DevDeck demo](docs/img/demo.gif) -->
+![DevDeck demo](docs/img/demo.gif)
 
 ## What it does
 
-DevDeck is a single window with four modules, a **Global / project scope selector** and an **English / Spanish language selector**. Everything is read-only until you confirm an action; nothing runs on its own.
+DevDeck is a single window with four modules in a collapsible sidebar, a custom title bar with a command palette (**Ctrl K**), a **dark / light theme** switch, a **Global / project scope selector** and an **English / Spanish language selector**. Everything is read-only until you confirm an action; nothing runs on its own.
 
 ### Worktrees
 
 Point DevDeck at a root folder and it finds every git repo and lists all of its worktrees: branch, clean/dirty state with file count, ahead/behind versus upstream, and the last commit. Open a worktree in VS Code or a terminal, or remove a linked worktree (with confirmation; dirty worktrees need a stronger one).
 
-<!-- TODO(screenshots): ![Worktrees](docs/img/worktrees-en.png) -->
+![Worktrees](docs/img/worktrees-en.png)
 
 ### Ports
 
 Lists listening TCP ports (UDP optional) with PID, process name and executable path, and attributes each process to the worktree or project its working directory lives in. Search by port, PID, name, path or project; kill a process after confirming; refresh manually or automatically.
 
-<!-- TODO(screenshots): ![Ports](docs/img/ports-en.png) -->
+![Ports](docs/img/ports-en.png)
 
 ### JSON Viewer
 
@@ -39,13 +39,16 @@ Shows how much RAM and disk you can recover, in the current scope:
 - **Dev processes** - node, vite, cargo, rust-analyzer, headless browsers, Docker and similar, with RAM, CPU and age. Processes whose working directory is in a deleted worktree are flagged as orphaned.
 - **Regenerable folders** - `node_modules`, `target`, `.venv`, `dist` and package-manager caches, with size and last use. The backend rejects any path that is not on the allow-list.
 
-<!-- TODO(screenshots): ![Reclaim](docs/img/reclaim-en.png) -->
+![Reclaim](docs/img/reclaim-en.png)
 
 ## Language support
 
 The UI ships in English (default) and Spanish. Switching is instant, persisted, and also changes date, number and size formatting. A test fails if the two locale files differ in keys or placeholders.
 
-<!-- TODO(screenshots): Spanish screenshots side by side: docs/img/worktrees-es.png and docs/img/reclaim-es.png -->
+<p>
+  <img src="docs/img/worktrees-es.png" alt="Worktrees (Spanish)" width="49%">
+  <img src="docs/img/reclaim-es.png" alt="Reclaim (Spanish)" width="49%">
+</p>
 
 ## Tech stack
 
@@ -124,7 +127,15 @@ Build the installers with `pnpm tauri build` (bundles: MSI and NSIS).
 
 ## Screenshots
 
-<!-- TODO(screenshots): screenshots and the demo GIF will be captured after the UI redesign; document here how to regenerate them (demo data script, WebView2 remote debugging + Playwright, ffmpeg palette GIF). -->
+The images in `docs/img/` are captured from the release build (dark theme) against throwaway demo data, so no real project, path or process shows up. To regenerate them (Windows):
+
+1. Create the demo data: three small git repos with linked worktrees and regenerable folders under `C:\devdeck-demo` (`gen-demo.ps1`), and a large anonymous JSON file (`node gen-json.js <out.json>`, about 130 MB).
+2. Start one or two demo servers with their working directory inside a demo worktree, for example `node -e "require('http').createServer().listen(5173)"`, and point the DevDeck root folder at `C:\devdeck-demo` (Global scope, English).
+3. Install the release build and run the UI Automation script (`capture-t095.ps1`): it opens DevDeck once, clicks through each module and language, and saves every window with `PrintWindow`.
+4. Optimize the PNGs with `magick <in>.png -strip -define png:compression-level=9 <out>.png`.
+5. Build `docs/img/demo.gif` with ffmpeg: scale the frames to about 1100 px wide, cross-fade them with `xfade`, and use a two-pass palette (`palettegen` + `paletteuse`) to keep it under 5 MB.
+
+The scripts are kept with the development notes, not in this repository.
 
 ## License
 

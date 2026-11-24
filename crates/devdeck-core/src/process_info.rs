@@ -33,7 +33,15 @@ pub struct SysinfoSource;
 impl SysinfoSource {
     fn system() -> Option<sysinfo::System> {
         let mut sys = sysinfo::System::new().ok()?;
-        sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+        sys.refresh_processes_specifics(
+            sysinfo::ProcessesToUpdate::All,
+            true,
+            sysinfo::ProcessRefreshKind::nothing()
+                .with_cwd(sysinfo::UpdateKind::OnlyIfNotSet)
+                .with_exe(sysinfo::UpdateKind::OnlyIfNotSet)
+                .with_memory()
+                .with_cpu(),
+        );
         Some(sys)
     }
 }
@@ -74,14 +82,30 @@ pub fn snapshot(source: &dyn ProcSource) -> Vec<ProcInfo> {
     v
 }
 
-/// Kills `pid` only if its current name still equals `expected_name` (case-insensitive),
-/// which protects against PID reuse.
-pub fn kill(source: &dyn ProcSource, pid: u32, expected_name: &str) -> Result<()> {
-    let current = source
-        .snapshot()
+/// Kills `pid` only if its current name still equals `expected_name` (case-insensitive) and,
+/// when `expected_start_time` is given (and non-zero), its start time matches too; both protect
+/// against PID reuse. Never kills DevDeck itself, its parent, or the system pids 0 and 4.
+pub fn kill(
+    source: &dyn ProcSource,
+    pid: u32,
+    expected_name: &str,
+    expected_start_time: Option<u64>,
+) -> Result<()> {
+    let snap = source.snapshot();
+    let me = std::process::id();
+    let my_parent = snap.iter().find(|p| p.pid == me).and_then(|p| p.parent_pid);
+    if pid == 0 || pid == 4 || pid == me || my_parent == Some(pid) {
+        return Err(Error::not_allowed("process_access_denied"));
+    }
+    let current = snap
         .into_iter()
         .find(|p| p.pid == pid)
         .ok_or_else(|| Error::not_found("process_not_found"))?;
+    if let Some(t) = expected_start_time {
+        if t != 0 && current.start_time != 0 && current.start_time != t {
+            return Err(Error::not_found("process_not_found"));
+        }
+    }
     if !current.name.eq_ignore_ascii_case(expected_name) {
         return Err(Error::not_allowed("process_name_mismatch")
             .with_param("expected", expected_name)
@@ -145,29 +169,70 @@ mod tests {
     #[test]
     fn kill_succeeds_when_name_matches() {
         let f = fake(true);
-        kill(&f, 30, "NODE.EXE").unwrap();
+        kill(&f, 30, "NODE.EXE", None).unwrap();
         assert_eq!(*f.killed.borrow(), vec![30]);
     }
 
     #[test]
     fn kill_rejects_name_mismatch_without_killing() {
         let f = fake(true);
-        let e = kill(&f, 30, "vite.exe").unwrap_err();
+        let e = kill(&f, 30, "vite.exe", None).unwrap_err();
         assert_eq!(e.code, "process_name_mismatch");
         assert!(f.killed.borrow().is_empty());
     }
 
     #[test]
     fn kill_unknown_pid_is_not_found() {
-        let e = kill(&fake(true), 999, "node.exe").unwrap_err();
+        let e = kill(&fake(true), 999, "node.exe", None).unwrap_err();
         assert_eq!(e.kind, ErrorKind::NotFound);
         assert_eq!(e.code, "process_not_found");
     }
 
     #[test]
     fn kill_refused_by_os_is_access_denied() {
-        let e = kill(&fake(false), 30, "node.exe").unwrap_err();
+        let e = kill(&fake(false), 30, "node.exe", None).unwrap_err();
         assert_eq!(e.code, "process_access_denied");
+    }
+
+    #[test]
+    fn kill_rejects_protected_pids() {
+        let me = std::process::id();
+        let mut own = proc(me, "devdeck.exe");
+        own.parent_pid = Some(777);
+        let f = Fake {
+            procs: vec![
+                own,
+                proc(777, "explorer.exe"),
+                proc(0, "idle"),
+                proc(4, "System"),
+            ],
+            allow_kill: true,
+            killed: RefCell::new(vec![]),
+        };
+        for (pid, name) in [
+            (me, "devdeck.exe"),
+            (777, "explorer.exe"),
+            (0, "idle"),
+            (4, "System"),
+        ] {
+            let e = kill(&f, pid, name, None).unwrap_err();
+            assert_eq!(e.kind, ErrorKind::NotAllowed);
+            assert_eq!(e.code, "process_access_denied");
+        }
+        assert!(f.killed.borrow().is_empty());
+    }
+
+    #[test]
+    fn kill_checks_start_time_when_given() {
+        let mut f = fake(true);
+        f.procs[0].start_time = 500;
+        let e = kill(&f, 30, "node.exe", Some(501)).unwrap_err();
+        assert_eq!(e.code, "process_not_found");
+        assert!(f.killed.borrow().is_empty());
+        kill(&f, 30, "node.exe", Some(500)).unwrap();
+        // 0 means "unknown": comparison skipped.
+        kill(&f, 30, "node.exe", Some(0)).unwrap();
+        kill(&f, 30, "node.exe", None).unwrap();
     }
 
     #[test]
@@ -177,5 +242,18 @@ mod tests {
         let mine = procs.iter().find(|p| p.pid == me).expect("own pid");
         assert!(!mine.name.is_empty());
         assert!(mine.ram_bytes > 0);
+    }
+
+    #[test]
+    fn sysinfo_source_reads_own_cwd() {
+        let me = std::process::id();
+        let procs = SysinfoSource.snapshot();
+        let mine = procs.iter().find(|p| p.pid == me).expect("own pid");
+        let cwd = mine.cwd.as_ref().expect("cwd must be refreshed");
+        let expected = std::env::current_dir().unwrap();
+        assert_eq!(
+            crate::scope::normalize(cwd),
+            crate::scope::normalize(&expected)
+        );
     }
 }

@@ -78,6 +78,9 @@ export const reclaimApi = {
     api.call<{ freedBytes: number }>("reclaim_delete_folder", { path }),
   removeWorktree: (path: string, force: boolean) =>
     api.call<void>("worktree_remove", { path, force }),
-  killProcess: (pid: number, expectedName: string) =>
-    api.call<void>("process_kill", { pid, expectedName }),
+  killProcess: (
+    pid: number,
+    expectedName: string,
+    expectedStartTime?: number,
+  ) => api.call<void>("process_kill", { pid, expectedName, expectedStartTime }),
 };

@@ -7,7 +7,7 @@ All types live in `devdeck-core` with `serde` (camelCase) and are mirrored by ha
 - **Project**: `{ id, name, mainPath, worktreePaths[] }`; **ProjectRef** `{id,name}`.
 - **Totals**: `{ count, ramBytes, diskBytes }`. **Group<T>**: `{ project?: ProjectRef /* null = "No project" (label rendered by the frontend) */, items: T[], totals }`. **Grouped<T>**: `{ groups: Group<T>[], total: Totals }`.
 - **Worktree**: `{ path, repoPath, project?, branch?, detached, isMain, dirtyCount, ahead?, behind?, lastCommit?: {hash, subject, dateIso, timestamp /* Unix secs */}, exists }`.
-- **ListeningPort**: `{ port, protocol:"tcp"|"udp", pid, processName, exePath?, cwd?, worktreePath?, project? }`.
+- **ListeningPort**: `{ port, protocol:"tcp"|"udp", pid, processName, startTime, exePath?, cwd?, worktreePath?, project? }`.
 - **ProcInfo**: `{ pid, name, exe?, cwd?, ramBytes, cpuPercent, startTime, parentPid? }`.
 - **DevProcess** (Reclaim): `ProcInfo + { kind, project?, worktreePath?, orphan, ageSecs }`.
 - **ForgottenWorktree**: `{ worktree, diskBytes?, lastCommitAgeDays?, merged, clean, liveProcesses, reasons[] }` where `reasons` are stable codes (`stale`, `merged`, `clean`, `live_processes`) translated by the frontend.

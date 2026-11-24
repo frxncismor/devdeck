@@ -22,7 +22,7 @@ Convention: `Result<T, Error>`; `scope: Scope` where indicated (filtered in Rust
 | Command | Input | Output |
 |---|---|---|
 | `ports_list` | `scope, includeUdp, query?` | `Grouped<ListeningPort>` |
-| `process_kill` | `pid, expectedName` | `()` (shared with Reclaim) |
+| `process_kill` | `pid, expectedName, expectedStartTime?` | `()` (shared with Reclaim); rejects pid 0/4, DevDeck itself and its parent (`process_access_denied`); a start-time mismatch (seconds, `ProcInfo.startTime`; 0/absent skips it) is `process_not_found` |
 
 ## json_viewer
 | Command | Input | Output / events |

@@ -55,8 +55,16 @@ fn native(p: &Path) -> PathBuf {
     }
 }
 
+/// Same location: equal after normalization or, when both exist, equal once canonicalized
+/// (git reports long names while a caller may pass an 8.3 short name such as `RUNNER~1`).
 fn same_path(a: &Path, b: &Path) -> bool {
-    scope::normalize(a) == scope::normalize(b)
+    if scope::normalize(a) == scope::normalize(b) {
+        return true;
+    }
+    match (crate::fsutil::real_path(a), crate::fsutil::real_path(b)) {
+        (Some(x), Some(y)) => scope::normalize(&x) == scope::normalize(&y),
+        _ => false,
+    }
 }
 
 fn project_ref(main: &Path) -> ProjectRef {

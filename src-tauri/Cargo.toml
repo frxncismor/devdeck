@@ -3,6 +3,7 @@ name = "devdeck"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 description = "DevDeck — a Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see which worktree owns each listening port, browse multi-hundred-MB JSON files, and reclaim disk and RAM from forgotten worktrees, orphaned dev processes and regenerable build folders."
 
 [lib]

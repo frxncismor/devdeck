@@ -115,3 +115,23 @@ describe("t()", () => {
     applyLocale("en");
   });
 });
+
+describe("backend error codes", () => {
+  const rust = import.meta.glob(
+    ["/crates/**/src/**/*.rs", "/src-tauri/src/**/*.rs"],
+    { query: "?raw", import: "default", eager: true },
+  ) as Record<string, string>;
+
+  it("has a common.errors translation for every code Rust emits", () => {
+    const codes = new Set<string>();
+    for (const text of Object.values(rust)) {
+      // Drop the unit tests: they may use throwaway codes.
+      const prod = text.split("#[cfg(test)]")[0];
+      for (const m of prod.matchAll(/Error::\w+\([^)]*?"([a-z][a-z_]*)"\s*\)/g))
+        codes.add(m[1]);
+    }
+    expect(codes.size).toBeGreaterThan(10);
+    const known = Object.keys(messages.en.common.errors);
+    expect([...codes].filter((c) => !known.includes(c))).toEqual([]);
+  });
+});

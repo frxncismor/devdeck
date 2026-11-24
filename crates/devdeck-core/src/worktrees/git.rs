@@ -20,7 +20,7 @@ impl GitOutput {
 }
 
 /// Runs `git <args>` with `cwd` as working directory. `Err` only when git itself cannot be started.
-pub trait GitRunner {
+pub trait GitRunner: Sync {
     fn run(&self, cwd: &Path, args: &[&str]) -> Result<GitOutput>;
 }
 

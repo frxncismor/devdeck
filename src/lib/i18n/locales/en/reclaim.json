@@ -24,7 +24,6 @@
   },
   "common": {
     "refresh": "Refresh",
-    "size": "Size",
     "unknown": "Unknown",
     "none": "—"
   },
@@ -33,31 +32,21 @@
     "empty": "No forgotten worktrees found.",
     "noRoot": "Choose the repositories folder in the Worktrees tab first.",
     "columns": {
-      "branch": "Branch",
-      "age": "Last commit",
-      "size": "Size",
-      "state": "State",
-      "actions": "Actions"
+      "state": "State"
     },
     "age_one": "{count} day ago",
     "age_other": "{count} days ago",
-    "noCommits": "No commits",
     "processes_one": "{count} process inside",
-    "processes_other": "{count} processes inside",
-    "missing": "Missing folder",
-    "dirty_one": "{count} change",
-    "dirty_other": "{count} changes"
+    "processes_other": "{count} processes inside"
   },
   "processes": {
     "description": "Development processes that may be holding memory. Processes whose working folder no longer exists are marked as orphans.",
     "empty": "No dev processes found.",
     "columns": {
-      "process": "Process",
       "ram": "RAM",
       "cpu": "CPU",
       "age": "Running for",
-      "folder": "Folder",
-      "actions": "Actions"
+      "folder": "Folder"
     },
     "orphan": "Orphan",
     "unknownFolder": "Unknown folder"
@@ -70,14 +59,11 @@
     "found_one": "{count} folder found",
     "found_other": "{count} folders found",
     "measured": "Measured {done} of {total}",
-    "cancel": "Cancel",
     "cancelled": "The search was cancelled. Showing the previous results.",
     "columns": {
       "path": "Folder",
       "kind": "Type",
-      "size": "Size",
-      "lastUsed": "Last used",
-      "actions": "Actions"
+      "lastUsed": "Last used"
     }
   },
   "kind": {
@@ -114,13 +100,8 @@
     "deleteFolder": "Delete"
   },
   "removeWorktree": {
-    "title": "Remove worktree",
     "message": "Remove the worktree at {path} ({size})? The folder will be deleted; the branch is kept.",
-    "liveWarning": "{count} process(es) are running inside it and may be interrupted.",
-    "confirm": "Remove",
-    "forceTitle": "Discard uncommitted changes?",
-    "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
-    "forceConfirm": "Discard and remove"
+    "liveWarning": "{count} process(es) are running inside it and may be interrupted."
   },
   "terminate": {
     "title": "Terminate process",

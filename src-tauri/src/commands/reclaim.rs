@@ -2,6 +2,7 @@
 //! `worktree_remove` and terminating a process is `process_kill`. The folder search runs as a
 //! cancelable job (`job://progress`, `job://done`); the other listings are plain async commands on
 //! the blocking pool.
+use crate::commands::project::{known_projects, known_projects_blocking};
 use crate::error::{Error, ErrorKind, Result};
 use crate::state::AppState;
 use devdeck_core::process_info::{ProcInfo, ProcSource, SysinfoSource};
@@ -88,22 +89,6 @@ fn config(state: &AppState) -> Config {
     }
 }
 
-/// Projects known to the app; when the Worktrees tab was never opened, derived from the root once.
-fn known_projects(state: &AppState, cfg: &Config) -> Vec<Project> {
-    {
-        let known = state.projects.lock().unwrap();
-        if !known.is_empty() {
-            return known.clone();
-        }
-    }
-    let Some(root) = cfg.root.as_deref() else {
-        return Vec::new();
-    };
-    let projects = worktrees::projects_from_root(root, cfg.scan_depth);
-    *state.projects.lock().unwrap() = projects.clone();
-    projects
-}
-
 fn snapshot() -> Vec<ProcInfo> {
     SysinfoSource.snapshot()
 }
@@ -113,8 +98,7 @@ pub async fn reclaim_dev_processes(
     scope: Scope,
     state: State<'_, AppState>,
 ) -> Result<Grouped<DevProcess>> {
-    let cfg = config(&state);
-    let projects = known_projects(&state, &cfg);
+    let projects = known_projects(&state).await;
     let list = {
         let projects = projects.clone();
         blocking(move || Ok(processes::list(&SysinfoSource, &projects, now_secs()))).await?
@@ -156,8 +140,7 @@ pub async fn reclaim_forgotten_worktrees(
 
 #[tauri::command]
 pub async fn reclaim_summary(scope: Scope, state: State<'_, AppState>) -> Result<ReclaimSummary> {
-    let cfg = config(&state);
-    let projects = known_projects(&state, &cfg);
+    let projects = known_projects(&state).await;
     let (forgotten, folders) = {
         let c = CACHE.lock().unwrap();
         (c.forgotten.clone(), c.folders.clone())
@@ -213,7 +196,7 @@ pub fn reclaim_folders(app: AppHandle, state: State<'_, AppState>, scope: Scope)
     };
     tauri::async_runtime::spawn_blocking(move || {
         let state = app.state::<AppState>();
-        let projects = known_projects(&state, &cfg);
+        let projects = known_projects_blocking(&state);
         let emit_app = app.clone();
         let jid = job_id.clone();
         let mut emit = move |done: u64, total: Option<u64>| {

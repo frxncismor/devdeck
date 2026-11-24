@@ -7,7 +7,7 @@
   import { configState, updateConfig } from "../../lib/config.svelte";
   import { errorMessage } from "../../lib/errors";
   import { formatRelativeAge } from "../../lib/format";
-  import { t, type MessageKey } from "../../lib/i18n/i18n.svelte";
+  import { t } from "../../lib/i18n/i18n.svelte";
   import { currentScope, refreshProjects } from "../../lib/scope.svelte";
   import type { AppError, Grouped } from "../../lib/types";
   import {
@@ -15,7 +15,6 @@
     filterGrouped,
     formatAheadBehind,
     isDirtyError,
-    LOCAL_ERROR_CODES,
     type Worktree,
   } from "./logic";
 
@@ -32,12 +31,6 @@
   const visible = $derived(
     data ? filterGrouped(data, { dirtyOnly, query }) : null,
   );
-
-  function describe(e: AppError): string {
-    return (LOCAL_ERROR_CODES as readonly string[]).includes(e.code)
-      ? t(`worktrees.errors.${e.code}` as MessageKey)
-      : errorMessage(e);
-  }
 
   async function scan(): Promise<void> {
     if (!root) {
@@ -147,7 +140,7 @@
 
   {#if error}
     <p class="error" role="alert">
-      {describe(error)}
+      {errorMessage(error)}
       {#if error.detail}<small>{error.detail}</small>{/if}
     </p>
   {/if}
@@ -165,11 +158,11 @@
       <GroupedTable data={visible}>
         {#snippet head()}
           <tr>
-            <th>{t("worktrees.columns.branch")}</th>
+            <th>{t("common.columns.branch")}</th>
             <th>{t("worktrees.columns.status")}</th>
             <th>{t("worktrees.columns.sync")}</th>
-            <th>{t("worktrees.columns.lastCommit")}</th>
-            <th>{t("worktrees.columns.actions")}</th>
+            <th>{t("common.columns.lastCommit")}</th>
+            <th>{t("common.columns.actions")}</th>
           </tr>
         {/snippet}
         {#snippet row(w: Worktree)}
@@ -186,10 +179,10 @@
             </td>
             <td>
               {#if !w.exists}
-                <span class="badge warn">{t("worktrees.badge.missing")}</span>
+                <span class="badge warn">{t("common.worktree.missing")}</span>
               {:else if w.dirtyCount > 0}
                 <span class="badge dirty">
-                  {t("worktrees.badge.dirty", { count: w.dirtyCount })}
+                  {t("common.worktree.dirty", { count: w.dirtyCount })}
                 </span>
               {:else}
                 <span class="badge ok">{t("worktrees.badge.clean")}</span>
@@ -200,7 +193,7 @@
               {#if w.lastCommit}
                 {formatRelativeAge(ageSecs(w.lastCommit.timestamp))}
               {:else}
-                {t("worktrees.lastCommit.none")}
+                {t("common.worktree.noCommits")}
               {/if}
             </td>
             <td class="actions">
@@ -242,19 +235,21 @@
 <ConfirmDialog
   open={pending !== null}
   title={forcing
-    ? t("worktrees.remove.forceTitle")
-    : t("worktrees.remove.title")}
+    ? t("common.worktree.remove.forceTitle")
+    : t("common.worktree.remove.title")}
   message={pending
     ? t(
-        forcing ? "worktrees.remove.forceMessage" : "worktrees.remove.message",
+        forcing
+          ? "common.worktree.remove.forceMessage"
+          : "worktrees.remove.message",
         {
           path: pending.path,
         },
       )
     : ""}
   confirmLabel={forcing
-    ? t("worktrees.remove.forceConfirm")
-    : t("worktrees.remove.confirm")}
+    ? t("common.worktree.remove.forceConfirm")
+    : t("common.worktree.remove.confirm")}
   onconfirm={() => void confirmRemove()}
   oncancel={cancelRemove}
 />

@@ -13,10 +13,8 @@
     "port": "Puerto",
     "protocol": "Protocolo",
     "pid": "PID",
-    "process": "Proceso",
     "worktree": "Worktree",
-    "path": "Carpeta de trabajo",
-    "actions": "Acciones"
+    "path": "Carpeta de trabajo"
   },
   "unknownPath": "Desconocida",
   "unknownPathHint": "La carpeta no se puede leer (proceso protegido o elevado).",

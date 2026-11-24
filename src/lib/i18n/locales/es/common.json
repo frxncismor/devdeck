@@ -1,5 +1,7 @@
 {
-  "app": { "name": "DevDeck" },
+  "app": {
+    "name": "DevDeck"
+  },
   "sidebar": {
     "label": "Módulos",
     "worktrees": "Worktrees",
@@ -61,6 +63,34 @@
     "json_file_changed": "El archivo cambió en disco, ábrelo de nuevo",
     "cancelled": "La operación se canceló",
     "unsupported_platform": "No compatible con esta plataforma",
-    "not_implemented": "Aún no implementado"
+    "not_implemented": "Aún no implementado",
+    "worktree_dirty": "El worktree tiene cambios sin confirmar",
+    "vscode_not_found": "No se encontró VS Code (el comando code)",
+    "terminal_not_found": "No se pudo iniciar ninguna terminal",
+    "json_value_too_large": "Este valor supera el límite de {maxBytes} para formatear; guárdalo en un archivo.",
+    "json_save_same_file": "Elige otro archivo: el archivo abierto no se puede sobrescribir.",
+    "json_session_not_found": "El archivo ya no está abierto; ábrelo de nuevo.",
+    "json_node_not_found": "Ese nodo ya no existe en el archivo.",
+    "json_too_large": "Este archivo es demasiado grande para indexarlo."
+  },
+  "columns": {
+    "actions": "Acciones",
+    "process": "Proceso",
+    "branch": "Rama",
+    "lastCommit": "Último commit",
+    "size": "Tamaño"
+  },
+  "worktree": {
+    "noCommits": "Sin commits",
+    "missing": "Carpeta ausente",
+    "dirty_one": "{count} cambio",
+    "dirty_other": "{count} cambios",
+    "remove": {
+      "title": "Eliminar worktree",
+      "confirm": "Eliminar",
+      "forceTitle": "¿Descartar los cambios sin confirmar?",
+      "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
+      "forceConfirm": "Descartar y eliminar"
+    }
   }
 }

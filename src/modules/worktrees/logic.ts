@@ -74,12 +74,6 @@ export function filterGrouped(
   return { groups, total };
 }
 
-/** Error codes of this module that have their own translation (`worktrees.errors.*`). */
-export const LOCAL_ERROR_CODES = [
-  "vscode_not_found",
-  "terminal_not_found",
-] as const;
-
 export function isDirtyError(e: AppError): boolean {
   return e.code === "worktree_dirty";
 }

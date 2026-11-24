@@ -27,11 +27,11 @@
   <GroupedTable {data} showDisk>
     {#snippet head()}
       <tr>
-        <th>{t("reclaim.worktrees.columns.branch")}</th>
-        <th>{t("reclaim.worktrees.columns.age")}</th>
-        <th>{t("reclaim.worktrees.columns.size")}</th>
+        <th>{t("common.columns.branch")}</th>
+        <th>{t("common.columns.lastCommit")}</th>
+        <th>{t("common.columns.size")}</th>
         <th>{t("reclaim.worktrees.columns.state")}</th>
-        <th>{t("reclaim.worktrees.columns.actions")}</th>
+        <th>{t("common.columns.actions")}</th>
       </tr>
     {/snippet}
     {#snippet row(w: ForgottenWorktree)}
@@ -44,7 +44,7 @@
           {#if w.lastCommitAgeDays != null}
             {t("reclaim.worktrees.age", { count: w.lastCommitAgeDays })}
           {:else}
-            {t("reclaim.worktrees.noCommits")}
+            {t("common.worktree.noCommits")}
           {/if}
         </td>
         <td>
@@ -57,11 +57,11 @@
             <span class="badge {r}">{t(REASON_KEYS[r])}</span>
           {/each}
           {#if !w.worktree.exists}
-            <span class="badge warn">{t("reclaim.worktrees.missing")}</span>
+            <span class="badge warn">{t("common.worktree.missing")}</span>
           {/if}
           {#if w.worktree.dirtyCount > 0}
             <span class="badge warn">
-              {t("reclaim.worktrees.dirty", { count: w.worktree.dirtyCount })}
+              {t("common.worktree.dirty", { count: w.worktree.dirtyCount })}
             </span>
           {/if}
           {#if w.liveProcesses > 0}

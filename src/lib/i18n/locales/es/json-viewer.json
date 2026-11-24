@@ -13,7 +13,6 @@
   "status": {
     "indexing": "Indexando {name}…",
     "progress": "{done} de {total} ({percent})",
-    "cancel": "Cancelar",
     "cancelled": "Indexado cancelado"
   },
   "tree": {
@@ -64,12 +63,5 @@
     "cancelSave": "Cancelar guardado",
     "saveCancelled": "Guardado cancelado",
     "valueCut": "El valor supera el límite de copia ({max}); guárdalo en un archivo."
-  },
-  "errors": {
-    "valueTooLarge": "Este valor supera el límite de {maxBytes} para formatear; guárdalo en un archivo.",
-    "saveSameFile": "Elige otro archivo: el archivo abierto no se puede sobrescribir.",
-    "sessionNotFound": "El archivo ya no está abierto; ábrelo de nuevo.",
-    "nodeNotFound": "Ese nodo ya no existe en el archivo.",
-    "tooLarge": "Este archivo es demasiado grande para indexarlo."
   }
 }

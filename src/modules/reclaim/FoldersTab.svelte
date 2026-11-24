@@ -58,7 +58,7 @@
       <progress></progress>
     {/if}
     <button type="button" onclick={oncancel}>
-      {t("reclaim.folders.cancel")}
+      {t("common.buttons.cancel")}
     </button>
   </div>
 {/if}
@@ -72,9 +72,9 @@
       <tr>
         <th>{t("reclaim.folders.columns.path")}</th>
         <th>{t("reclaim.folders.columns.kind")}</th>
-        <th>{t("reclaim.folders.columns.size")}</th>
+        <th>{t("common.columns.size")}</th>
         <th>{t("reclaim.folders.columns.lastUsed")}</th>
-        <th>{t("reclaim.folders.columns.actions")}</th>
+        <th>{t("common.columns.actions")}</th>
       </tr>
     {/snippet}
     {#snippet row(f: HeavyFolder)}

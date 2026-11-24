@@ -129,10 +129,10 @@
           <th>{t("ports.columns.port")}</th>
           <th>{t("ports.columns.protocol")}</th>
           <th>{t("ports.columns.pid")}</th>
-          <th>{t("ports.columns.process")}</th>
+          <th>{t("common.columns.process")}</th>
           <th>{t("ports.columns.worktree")}</th>
           <th>{t("ports.columns.path")}</th>
-          <th>{t("ports.columns.actions")}</th>
+          <th>{t("common.columns.actions")}</th>
         </tr>
       {/snippet}
       {#snippet row(p: ListeningPort)}

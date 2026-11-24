@@ -2,18 +2,13 @@
   import { open } from "@tauri-apps/plugin-dialog";
   import { onDestroy } from "svelte";
   import { toAppError } from "../../lib/api";
+  import { errorMessage } from "../../lib/errors";
   import { formatBytes, formatPercent } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import NodeActions from "./NodeActions.svelte";
   import Search from "./Search.svelte";
   import Tree from "./Tree.svelte";
-  import {
-    jsonApi,
-    jsonErrorMessage,
-    runJob,
-    type JsonNode,
-    type SessionInfo,
-  } from "./jsonApi";
+  import { jsonApi, runJob, type JsonNode, type SessionInfo } from "./jsonApi";
 
   let innerHeight = $state(720);
   const treeHeight = $derived(Math.max(240, innerHeight - 360));
@@ -56,14 +51,14 @@
       });
       indexJob = job.ref.jobId;
       const done = await job.done;
-      if (done.error) error = jsonErrorMessage(done.error);
+      if (done.error) error = errorMessage(done.error);
       else if (done.cancelled) status = t("jsonViewer.status.cancelled");
       else if (done.session) {
         session = done.session;
         root = await jsonApi.root(done.session.sessionId);
       }
     } catch (e) {
-      error = jsonErrorMessage(toAppError(e));
+      error = errorMessage(toAppError(e));
     } finally {
       indexing = null;
       indexJob = null;
@@ -114,7 +109,7 @@
         })}
       </span>
       <button type="button" onclick={cancelIndexing}>
-        {t("jsonViewer.status.cancel")}
+        {t("common.buttons.cancel")}
       </button>
     </div>
   {/if}

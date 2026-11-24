@@ -1,14 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimal capabilities for the main window. No generic shell access.",
+  "description": "Minimal capabilities for the main window: only what the front end calls (dialogs, clipboard write). The store plugin is used from Rust only. No shell or opener access.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "dialog:allow-open",
     "dialog:allow-save",
-    "store:default",
-    "clipboard-manager:allow-write-text",
-    "opener:allow-open-path"
+    "clipboard-manager:allow-write-text"
   ]
 }

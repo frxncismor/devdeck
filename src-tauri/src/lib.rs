@@ -9,7 +9,6 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(state::AppState::default())
@@ -17,6 +16,12 @@ pub fn run() {
             let state = app.state::<state::AppState>();
             // A missing or unreadable store falls back to the default config.
             let _ = config::load(app.handle(), &state);
+            // Warm the project list so the scope selector is populated before any tab is opened.
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let state = handle.state::<state::AppState>();
+                project::known_projects(&state).await;
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

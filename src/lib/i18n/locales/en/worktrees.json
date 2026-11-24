@@ -18,26 +18,17 @@
     "dirtyOnly": "Only with changes"
   },
   "columns": {
-    "branch": "Branch",
     "status": "Status",
-    "sync": "Ahead / behind",
-    "lastCommit": "Last commit",
-    "actions": "Actions"
+    "sync": "Ahead / behind"
   },
   "badge": {
-    "dirty_one": "{count} change",
-    "dirty_other": "{count} changes",
     "clean": "Clean",
     "main": "Main",
-    "detached": "Detached",
-    "missing": "Missing folder"
+    "detached": "Detached"
   },
   "sync": {
     "noUpstream": "No upstream",
     "inSync": "In sync"
-  },
-  "lastCommit": {
-    "none": "No commits"
   },
   "actions": {
     "openVscode": "Open in VS Code",
@@ -45,15 +36,6 @@
     "remove": "Remove"
   },
   "remove": {
-    "title": "Remove worktree",
-    "message": "Remove the worktree at {path}? The folder will be deleted; the branch is kept.",
-    "forceTitle": "Discard uncommitted changes?",
-    "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
-    "forceConfirm": "Discard and remove",
-    "confirm": "Remove"
-  },
-  "errors": {
-    "vscode_not_found": "VS Code (the code command) was not found",
-    "terminal_not_found": "No terminal could be started"
+    "message": "Remove the worktree at {path}? The folder will be deleted; the branch is kept."
   }
 }

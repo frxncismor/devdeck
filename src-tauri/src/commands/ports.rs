@@ -1,11 +1,11 @@
 //! Ports commands (contracts/commands.md). System queries run on the blocking pool.
+use crate::commands::project::known_projects;
 use crate::error::{Error, ErrorKind, Result};
 use crate::state::AppState;
 use devdeck_core::ports::{self, ListeningPort, SystemPorts};
 use devdeck_core::process_info::{self, SysinfoSource};
 use devdeck_core::project::Project;
 use devdeck_core::scope::{Grouped, Scope};
-use devdeck_core::worktrees;
 use tauri::State;
 
 async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T> + Send + 'static) -> Result<T> {
@@ -24,17 +24,7 @@ pub async fn ports_list(
     query: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<Grouped<ListeningPort>> {
-    let mut projects: Vec<Project> = state.projects.lock().unwrap().clone();
-    if projects.is_empty() {
-        let (root, depth) = {
-            let c = state.config.lock().unwrap();
-            (c.root.clone(), c.scan_depth)
-        };
-        if let Some(root) = root {
-            projects = blocking(move || Ok(worktrees::projects_from_root(&root, depth))).await?;
-            *state.projects.lock().unwrap() = projects.clone();
-        }
-    }
+    let projects: Vec<Project> = known_projects(&state).await;
     blocking(move || {
         ports::list_grouped(
             &SystemPorts,

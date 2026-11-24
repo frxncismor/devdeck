@@ -1,1 +1,75 @@
-{}
+{
+  "title": "JSON Viewer",
+  "intro": "Open a large JSON file to browse it without loading it into memory.",
+  "open": {
+    "button": "Open JSON file…",
+    "dialogTitle": "Select a JSON file",
+    "close": "Close file"
+  },
+  "file": {
+    "containers_one": "{count} container",
+    "containers_other": "{count} containers"
+  },
+  "status": {
+    "indexing": "Indexing {name}…",
+    "progress": "{done} of {total} ({percent})",
+    "cancel": "Cancel",
+    "cancelled": "Indexing cancelled"
+  },
+  "tree": {
+    "label": "JSON tree",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "keys_one": "{count} key",
+    "keys_other": "{count} keys",
+    "items_one": "{count} item",
+    "items_other": "{count} items",
+    "empty": "empty",
+    "loadMore": "Load {count} more ({remaining} remaining)",
+    "loading": "Loading…"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Text to find",
+    "inKeys": "Keys",
+    "inValues": "Values",
+    "caseSensitive": "Match case",
+    "run": "Search",
+    "stop": "Stop",
+    "searching": "Searching… {count} found",
+    "results_one": "{count} result",
+    "results_other": "{count} results",
+    "truncated": "Showing the first {count} results; refine the search to see others.",
+    "none": "No results",
+    "hitKey": "key",
+    "hitValue": "value",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {pages}"
+  },
+  "actions": {
+    "title": "Selected node",
+    "none": "Select a node in the tree or a search result.",
+    "copyPath": "Copy path",
+    "copyValue": "Copy value",
+    "copyFormatted": "Copy formatted",
+    "preview": "Preview formatted",
+    "previewCut": "Preview cut at {count} characters; copy or save to get everything.",
+    "saveFormatted": "Save formatted…",
+    "saveWhole": "Save whole file formatted…",
+    "saveDialogTitle": "Save formatted JSON",
+    "copied": "Copied to the clipboard",
+    "saving": "Saving… {percent}",
+    "saved": "Saved {size}",
+    "cancelSave": "Cancel save",
+    "saveCancelled": "Save cancelled",
+    "valueCut": "The value is larger than the copy limit ({max}); save it to a file instead."
+  },
+  "errors": {
+    "valueTooLarge": "This value is larger than the {maxBytes} limit for formatting; save it to a file instead.",
+    "saveSameFile": "Choose a different file: the opened file cannot be overwritten.",
+    "sessionNotFound": "The file is no longer open; open it again.",
+    "nodeNotFound": "That node no longer exists in the file.",
+    "tooLarge": "This file is too large to index."
+  }
+}

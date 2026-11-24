@@ -1,0 +1,9 @@
+dist
+node_modules
+target
+src-tauri
+crates
+specs
+.specify
+pnpm-lock.yaml
+.tools

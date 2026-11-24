@@ -1,0 +1,66 @@
+{
+  "app": { "name": "DevDeck" },
+  "sidebar": {
+    "label": "Módulos",
+    "worktrees": "Worktrees",
+    "ports": "Puertos",
+    "jsonViewer": "Visor JSON",
+    "reclaim": "Recuperar"
+  },
+  "scope": {
+    "label": "Ámbito",
+    "global": "Global",
+    "project": "Proyecto",
+    "noProjects": "No se encontraron proyectos"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "es": "Español"
+  },
+  "noProject": "Sin proyecto",
+  "confirm": {
+    "title": "Confirma la acción",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
+  "buttons": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "browse": "Examinar…",
+    "copy": "Copiar",
+    "delete": "Eliminar",
+    "details": "Detalles"
+  },
+  "state": {
+    "loading": "Cargando…",
+    "empty": "Nada que mostrar",
+    "comingSoon": "Este módulo aún no está implementado"
+  },
+  "table": {
+    "items_one": "{count} elemento",
+    "items_other": "{count} elementos"
+  },
+  "errors": {
+    "unknown": "Algo salió mal",
+    "not_found": "No se encontró el elemento",
+    "not_allowed": "Esta acción no está permitida",
+    "folder_not_allowed": "Esta carpeta no se puede eliminar",
+    "worktree_main_not_removable": "El worktree principal no se puede eliminar",
+    "process_access_denied": "Se denegó el acceso al proceso",
+    "process_not_found": "El proceso ya no existe",
+    "process_name_mismatch": "El proceso cambió y no se tocó",
+    "git_not_found": "No se encontró Git en este sistema",
+    "git_failed": "Falló un comando de git",
+    "io_error": "Ocurrió un error del sistema de archivos",
+    "config_invalid": "La configuración guardada no es válida",
+    "json_invalid_at_offset": "JSON no válido en el byte {offset}",
+    "json_file_changed": "El archivo cambió en disco, ábrelo de nuevo",
+    "cancelled": "La operación se canceló",
+    "unsupported_platform": "No compatible con esta plataforma",
+    "not_implemented": "Aún no implementado"
+  }
+}

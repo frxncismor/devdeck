@@ -1,1 +1,59 @@
-{}
+{
+  "title": "Worktrees",
+  "root": {
+    "label": "Repositories root",
+    "none": "No root folder selected",
+    "choose": "Choose folder…",
+    "change": "Change…",
+    "pickerTitle": "Select the folder that contains your repositories"
+  },
+  "empty": {
+    "noRoot": "Choose the folder that contains your repositories to see their worktrees.",
+    "noResults": "No worktrees match the filters.",
+    "noWorktrees": "No git repositories were found under the root folder."
+  },
+  "filter": {
+    "search": "Search",
+    "searchPlaceholder": "Branch, path or commit",
+    "dirtyOnly": "Only with changes"
+  },
+  "columns": {
+    "branch": "Branch",
+    "status": "Status",
+    "sync": "Ahead / behind",
+    "lastCommit": "Last commit",
+    "actions": "Actions"
+  },
+  "badge": {
+    "dirty_one": "{count} change",
+    "dirty_other": "{count} changes",
+    "clean": "Clean",
+    "main": "Main",
+    "detached": "Detached",
+    "missing": "Missing folder"
+  },
+  "sync": {
+    "noUpstream": "No upstream",
+    "inSync": "In sync"
+  },
+  "lastCommit": {
+    "none": "No commits"
+  },
+  "actions": {
+    "openVscode": "Open in VS Code",
+    "openTerminal": "Open terminal",
+    "remove": "Remove"
+  },
+  "remove": {
+    "title": "Remove worktree",
+    "message": "Remove the worktree at {path}? The folder will be deleted; the branch is kept.",
+    "forceTitle": "Discard uncommitted changes?",
+    "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
+    "forceConfirm": "Discard and remove",
+    "confirm": "Remove"
+  },
+  "errors": {
+    "vscode_not_found": "VS Code (the code command) was not found",
+    "terminal_not_found": "No terminal could be started"
+  }
+}

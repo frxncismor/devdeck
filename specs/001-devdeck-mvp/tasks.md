@@ -114,7 +114,7 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [x] T083 Review errors and empty/loading states in the 4 modules (every error code has an `errors.*` translation) — `src/modules/*`
 - [x] T084 Performance pass (SC-001..SC-004) with real data — report
 - [x] T085 Security review: minimal capabilities, validated paths, no secrets — `src-tauri/capabilities/default.json`
-- [x] T086 CI green on the 3 platforms — `.github/workflows/ci.yml`
+- [ ] T086 CI green on the 3 platforms — `.github/workflows/ci.yml` (pending the first GitHub run after the push/PR; only Windows verified locally)
 - [x] T087 [US5] i18n review: no literal UI text left in components, Spanish copy reviewed, dedupe shared keys into `common.json`, switching language at runtime updates every view, dates/numbers/sizes follow the language (SC-008, SC-009) — `src/**`, `src/lib/i18n/locales/**`
 
 ## Phase 4 — Deliverables (US8)
@@ -125,7 +125,7 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [x] T094 English README (starts with the repository description from `plan.md`; what it is, install, usage, development, language support, security `setup:hooks`/`setup:gitleaks`, how to generate screenshots/GIF) — `README.md`
 - [ ] T095 Screenshots of the 4 modules (English and Spanish) and a GIF of the flow — `docs/img/*`
 - [ ] T096 Test the release on a throwaway tag (run by the main orchestrator with Paco's permission) — verification
-- [ ] T097 Final `/speckit.analyze` and close-out — `specs/001-devdeck-mvp/`
+- [x] T097 Final `/speckit.analyze` and close-out — `specs/001-devdeck-mvp/`
 - [ ] T098 Set the GitHub repository description (text in `plan.md`) — run by the main orchestrator with Paco's permission — verification
 
 ## Dependencies
@@ -186,6 +186,19 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 | FR-071 | T014, T086 |
 | FR-072 | T091, T096 |
 | FR-073 | T090, T092, T093, T094, T095, T098 |
+
+## Success criterion → tasks
+| SC | Tasks | Status |
+|---|---|---|
+| SC-001 | T031, T080, T084 | Met: 19 worktrees in 0.6–0.7 s |
+| SC-002 | T050, T055, T084 | Partial: measured up to 84 MB; the 500 MB test is `#[ignore]` (see `implementacion` report) |
+| SC-003 | T053, T055, T084 | Partial: as SC-002 |
+| SC-004 | T005, T080, T084 | Met |
+| SC-005 | T014, T086, T091, T096 | Pending: first GitHub CI run and test tag |
+| SC-006 | T007, T034, T045, T063, T068, T085 | Backend validation tested; front confirmation checked manually |
+| SC-007 | T016–T022b | Met |
+| SC-008 | T012d, T087 | Met |
+| SC-009 | T012c | Met |
 
 ## User story → tasks
 US1 T030–T039 · US2 T005, T006, T012, T036, T080 · US3 T041–T048, T081 · US4 T016–T022b · US5 T004, T010, T012a–T012d, T039, T048, T060a, T070, T087 · US6 T049–T060a · US7 T061–T070, T082 · US8 T090–T098.

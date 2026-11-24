@@ -1,9 +1,5 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { api } from "../../lib/api";
-import { errorMessage } from "../../lib/errors";
-import { formatBytes } from "../../lib/format";
-import { t } from "../../lib/i18n/i18n.svelte";
-import type { MessageKey } from "../../lib/i18n/keys";
 import type { AppError } from "../../lib/types";
 
 export type JsonKind =
@@ -153,22 +149,4 @@ export async function runJob<R extends { jobId: string }>(
   id = ref.jobId;
   buffered.splice(0).forEach((f) => f());
   return { ref, done };
-}
-
-const LOCAL_ERRORS: Record<string, MessageKey> = {
-  json_value_too_large: "jsonViewer.errors.valueTooLarge",
-  json_save_same_file: "jsonViewer.errors.saveSameFile",
-  json_session_not_found: "jsonViewer.errors.sessionNotFound",
-  json_node_not_found: "jsonViewer.errors.nodeNotFound",
-  json_too_large: "jsonViewer.errors.tooLarge",
-};
-
-/** Module-specific error copy first, then the shared `common.errors.*` catalogue. */
-export function jsonErrorMessage(e: AppError): string {
-  const key = LOCAL_ERRORS[e.code];
-  if (!key) return errorMessage(e);
-  const params = { ...e.params };
-  if (typeof params.maxBytes === "number")
-    params.maxBytes = formatBytes(params.maxBytes);
-  return t(key, params);
 }

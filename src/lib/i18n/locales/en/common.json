@@ -1,5 +1,7 @@
 {
-  "app": { "name": "DevDeck" },
+  "app": {
+    "name": "DevDeck"
+  },
   "sidebar": {
     "label": "Modules",
     "worktrees": "Worktrees",
@@ -61,6 +63,34 @@
     "json_file_changed": "The file changed on disk, reopen it",
     "cancelled": "The operation was cancelled",
     "unsupported_platform": "Not supported on this platform",
-    "not_implemented": "Not implemented yet"
+    "not_implemented": "Not implemented yet",
+    "worktree_dirty": "The worktree has uncommitted changes",
+    "vscode_not_found": "VS Code (the code command) was not found",
+    "terminal_not_found": "No terminal could be started",
+    "json_value_too_large": "This value is larger than the {maxBytes} limit for formatting; save it to a file instead.",
+    "json_save_same_file": "Choose a different file: the opened file cannot be overwritten.",
+    "json_session_not_found": "The file is no longer open; open it again.",
+    "json_node_not_found": "That node no longer exists in the file.",
+    "json_too_large": "This file is too large to index."
+  },
+  "columns": {
+    "actions": "Actions",
+    "process": "Process",
+    "branch": "Branch",
+    "lastCommit": "Last commit",
+    "size": "Size"
+  },
+  "worktree": {
+    "noCommits": "No commits",
+    "missing": "Missing folder",
+    "dirty_one": "{count} change",
+    "dirty_other": "{count} changes",
+    "remove": {
+      "title": "Remove worktree",
+      "confirm": "Remove",
+      "forceTitle": "Discard uncommitted changes?",
+      "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
+      "forceConfirm": "Discard and remove"
+    }
   }
 }

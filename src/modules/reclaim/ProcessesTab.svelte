@@ -23,12 +23,12 @@
   <GroupedTable {data} showRam>
     {#snippet head()}
       <tr>
-        <th>{t("reclaim.processes.columns.process")}</th>
+        <th>{t("common.columns.process")}</th>
         <th>{t("reclaim.processes.columns.ram")}</th>
         <th>{t("reclaim.processes.columns.cpu")}</th>
         <th>{t("reclaim.processes.columns.age")}</th>
         <th>{t("reclaim.processes.columns.folder")}</th>
-        <th>{t("reclaim.processes.columns.actions")}</th>
+        <th>{t("common.columns.actions")}</th>
       </tr>
     {/snippet}
     {#snippet row(p: DevProcess)}

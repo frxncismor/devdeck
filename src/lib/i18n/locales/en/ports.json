@@ -13,10 +13,8 @@
     "port": "Port",
     "protocol": "Protocol",
     "pid": "PID",
-    "process": "Process",
     "worktree": "Worktree",
-    "path": "Working folder",
-    "actions": "Actions"
+    "path": "Working folder"
   },
   "unknownPath": "Unknown",
   "unknownPathHint": "The folder is not readable (protected or elevated process).",

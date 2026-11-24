@@ -32,6 +32,11 @@ pub fn set_config(app: AppHandle, state: State<'_, AppState>, config: Config) ->
     let store = app.store(STORE_FILE).map_err(store_err)?;
     store.set(STORE_KEY, serde_json::to_value(&config).map_err(store_err)?);
     store.save().map_err(store_err)?;
-    *state.config.lock().unwrap() = config;
+    let mut current = state.config.lock().unwrap();
+    // A different root or scan depth invalidates the cached projects; they are rebuilt lazily.
+    if current.root != config.root || current.scan_depth != config.scan_depth {
+        state.projects.lock().unwrap().clear();
+    }
+    *current = config;
     Ok(())
 }

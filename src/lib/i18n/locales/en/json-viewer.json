@@ -13,7 +13,6 @@
   "status": {
     "indexing": "Indexing {name}…",
     "progress": "{done} of {total} ({percent})",
-    "cancel": "Cancel",
     "cancelled": "Indexing cancelled"
   },
   "tree": {
@@ -64,12 +63,5 @@
     "cancelSave": "Cancel save",
     "saveCancelled": "Save cancelled",
     "valueCut": "The value is larger than the copy limit ({max}); save it to a file instead."
-  },
-  "errors": {
-    "valueTooLarge": "This value is larger than the {maxBytes} limit for formatting; save it to a file instead.",
-    "saveSameFile": "Choose a different file: the opened file cannot be overwritten.",
-    "sessionNotFound": "The file is no longer open; open it again.",
-    "nodeNotFound": "That node no longer exists in the file.",
-    "tooLarge": "This file is too large to index."
   }
 }

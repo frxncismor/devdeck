@@ -2,14 +2,10 @@
   import { writeText } from "@tauri-apps/plugin-clipboard-manager";
   import { save } from "@tauri-apps/plugin-dialog";
   import { toAppError } from "../../lib/api";
+  import { errorMessage } from "../../lib/errors";
   import { formatBytes, formatPercent } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import {
-    jsonApi,
-    jsonErrorMessage,
-    runJob,
-    type SessionInfo,
-  } from "./jsonApi";
+  import { jsonApi, runJob, type SessionInfo } from "./jsonApi";
 
   interface Props {
     session: SessionInfo;
@@ -44,7 +40,7 @@
     try {
       await action();
     } catch (e) {
-      error = jsonErrorMessage(toAppError(e));
+      error = errorMessage(toAppError(e));
     }
   }
 
@@ -108,7 +104,7 @@
         );
         saveJob = job.ref.jobId;
         const done = await job.done;
-        if (done.error) error = jsonErrorMessage(done.error);
+        if (done.error) error = errorMessage(done.error);
         else if (done.cancelled)
           message = t("jsonViewer.actions.saveCancelled");
         else

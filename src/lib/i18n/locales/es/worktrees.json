@@ -18,26 +18,17 @@
     "dirtyOnly": "Solo con cambios"
   },
   "columns": {
-    "branch": "Rama",
     "status": "Estado",
-    "sync": "Adelante / atrás",
-    "lastCommit": "Último commit",
-    "actions": "Acciones"
+    "sync": "Adelante / atrás"
   },
   "badge": {
-    "dirty_one": "{count} cambio",
-    "dirty_other": "{count} cambios",
     "clean": "Limpio",
     "main": "Principal",
-    "detached": "Desacoplado",
-    "missing": "Carpeta ausente"
+    "detached": "Desacoplado"
   },
   "sync": {
     "noUpstream": "Sin upstream",
     "inSync": "Sincronizado"
-  },
-  "lastCommit": {
-    "none": "Sin commits"
   },
   "actions": {
     "openVscode": "Abrir en VS Code",
@@ -45,15 +36,6 @@
     "remove": "Eliminar"
   },
   "remove": {
-    "title": "Eliminar worktree",
-    "message": "¿Eliminar el worktree en {path}? Se borrará la carpeta; la rama se conserva.",
-    "forceTitle": "¿Descartar los cambios sin confirmar?",
-    "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
-    "forceConfirm": "Descartar y eliminar",
-    "confirm": "Eliminar"
-  },
-  "errors": {
-    "vscode_not_found": "No se encontró VS Code (el comando code)",
-    "terminal_not_found": "No se pudo iniciar ninguna terminal"
+    "message": "¿Eliminar el worktree en {path}? Se borrará la carpeta; la rama se conserva."
   }
 }

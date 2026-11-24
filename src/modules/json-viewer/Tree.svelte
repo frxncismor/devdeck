@@ -1,14 +1,10 @@
 <script lang="ts">
   import VirtualList from "../../components/VirtualList.svelte";
   import { toAppError } from "../../lib/api";
+  import { errorMessage } from "../../lib/errors";
   import { formatNumber } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import {
-    jsonApi,
-    jsonErrorMessage,
-    type JsonNode,
-    type SessionInfo,
-  } from "./jsonApi";
+  import { jsonApi, type JsonNode, type SessionInfo } from "./jsonApi";
   import { PAGE_SIZE, TreeModel, type Row } from "./tree";
 
   interface Props {
@@ -43,7 +39,7 @@
     try {
       await pending;
     } catch (e) {
-      error = jsonErrorMessage(toAppError(e));
+      error = errorMessage(toAppError(e));
     }
     version++;
   }

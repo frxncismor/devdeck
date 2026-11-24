@@ -82,11 +82,10 @@ pub fn list_with(git: &dyn GitRunner, repo: &Path) -> Result<Vec<Worktree>> {
     };
     let repo_path = native(&main.path);
     let project = project_ref(&repo_path);
-    let mut result = Vec::with_capacity(raw.len());
-    for (i, r) in raw.iter().enumerate() {
-        if r.bare {
-            continue;
-        }
+    let entries: Vec<(usize, &git::RawWorktree)> =
+        raw.iter().enumerate().filter(|(_, r)| !r.bare).collect();
+    // Status and last commit are independent git processes per worktree: run a few at a time.
+    Ok(par_map(&entries, GIT_PARALLELISM, |(i, r)| {
         let path = native(&r.path);
         let exists = path.is_dir();
         let mut w = Worktree {
@@ -95,7 +94,7 @@ pub fn list_with(git: &dyn GitRunner, repo: &Path) -> Result<Vec<Worktree>> {
             project: Some(project.clone()),
             branch: r.branch.clone(),
             detached: r.detached,
-            is_main: i == 0,
+            is_main: *i == 0,
             dirty_count: 0,
             ahead: None,
             behind: None,
@@ -113,9 +112,35 @@ pub fn list_with(git: &dyn GitRunner, repo: &Path) -> Result<Vec<Worktree>> {
             }
             w.last_commit = last_commit_with(git, &path);
         }
-        result.push(w);
+        w
+    }))
+}
+
+/// Maximum git processes per repository (and repositories) running at once.
+const GIT_PARALLELISM: usize = 4;
+
+/// `items.iter().map(f)` on up to `limit` threads, keeping the input order.
+fn par_map<T: Sync, R: Send>(items: &[T], limit: usize, f: impl Fn(&T) -> R + Sync) -> Vec<R> {
+    let n = items.len();
+    if n <= 1 || limit <= 1 {
+        return items.iter().map(f).collect();
     }
-    Ok(result)
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let slots: std::sync::Mutex<Vec<Option<R>>> =
+        std::sync::Mutex::new(std::iter::repeat_with(|| None).take(n).collect());
+    std::thread::scope(|s| {
+        for _ in 0..limit.min(n) {
+            s.spawn(|| loop {
+                let i = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                if i >= n {
+                    break;
+                }
+                let r = f(&items[i]);
+                slots.lock().unwrap()[i] = Some(r);
+            });
+        }
+    });
+    slots.into_inner().unwrap().into_iter().flatten().collect()
 }
 
 fn last_commit_with(git: &dyn GitRunner, dir: &Path) -> Option<LastCommit> {
@@ -129,9 +154,10 @@ fn last_commit_with(git: &dyn GitRunner, dir: &Path) -> Option<LastCommit> {
 
 /// Worktrees of every repository found under `root` (up to `depth`). A repo that fails to list is skipped.
 pub fn list_root(git: &dyn GitRunner, root: &Path, depth: u8) -> Vec<Worktree> {
-    scan(root, depth)
-        .iter()
-        .filter_map(|repo| list_with(git, repo).ok())
+    let repos = scan(root, depth);
+    par_map(&repos, GIT_PARALLELISM, |repo| list_with(git, repo).ok())
+        .into_iter()
+        .flatten()
         .flatten()
         .collect()
 }
@@ -469,6 +495,18 @@ mod tests {
         assert_eq!(v["isMain"], true);
         assert_eq!(v["lastCommit"]["timestamp"], 5);
         assert_eq!(v["dirtyCount"], 1);
+    }
+
+    #[test]
+    fn par_map_keeps_order_and_runs_everything() {
+        let items: Vec<u32> = (0..50).collect();
+        let out = par_map(&items, 4, |n| {
+            std::thread::sleep(std::time::Duration::from_millis(u64::from(50 - n) % 3));
+            n * 2
+        });
+        assert_eq!(out, items.iter().map(|n| n * 2).collect::<Vec<_>>());
+        assert_eq!(par_map(&[7u32], 4, |n| n + 1), vec![8]);
+        assert!(par_map::<u32, u32>(&[], 4, |n| *n).is_empty());
     }
 
     struct FakeGit(Vec<(&'static str, i32)>);

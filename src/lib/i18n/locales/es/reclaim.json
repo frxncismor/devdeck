@@ -24,7 +24,6 @@
   },
   "common": {
     "refresh": "Actualizar",
-    "size": "Tamaño",
     "unknown": "Desconocido",
     "none": "—"
   },
@@ -33,31 +32,21 @@
     "empty": "No se encontraron worktrees olvidados.",
     "noRoot": "Elige primero la carpeta de repositorios en la pestaña Worktrees.",
     "columns": {
-      "branch": "Rama",
-      "age": "Último commit",
-      "size": "Tamaño",
-      "state": "Estado",
-      "actions": "Acciones"
+      "state": "Estado"
     },
     "age_one": "hace {count} día",
     "age_other": "hace {count} días",
-    "noCommits": "Sin commits",
     "processes_one": "{count} proceso dentro",
-    "processes_other": "{count} procesos dentro",
-    "missing": "Carpeta inexistente",
-    "dirty_one": "{count} cambio",
-    "dirty_other": "{count} cambios"
+    "processes_other": "{count} procesos dentro"
   },
   "processes": {
     "description": "Procesos de desarrollo que pueden estar reteniendo memoria. Los procesos cuya carpeta de trabajo ya no existe se marcan como huérfanos.",
     "empty": "No se encontraron procesos de desarrollo.",
     "columns": {
-      "process": "Proceso",
       "ram": "RAM",
       "cpu": "CPU",
       "age": "En ejecución",
-      "folder": "Carpeta",
-      "actions": "Acciones"
+      "folder": "Carpeta"
     },
     "orphan": "Huérfano",
     "unknownFolder": "Carpeta desconocida"
@@ -70,14 +59,11 @@
     "found_one": "{count} carpeta encontrada",
     "found_other": "{count} carpetas encontradas",
     "measured": "Medidas {done} de {total}",
-    "cancel": "Cancelar",
     "cancelled": "Se canceló la búsqueda. Se muestran los resultados anteriores.",
     "columns": {
       "path": "Carpeta",
       "kind": "Tipo",
-      "size": "Tamaño",
-      "lastUsed": "Último uso",
-      "actions": "Acciones"
+      "lastUsed": "Último uso"
     }
   },
   "kind": {
@@ -114,13 +100,8 @@
     "deleteFolder": "Borrar"
   },
   "removeWorktree": {
-    "title": "Eliminar worktree",
     "message": "¿Eliminar el worktree en {path} ({size})? Se borrará la carpeta; la rama se conserva.",
-    "liveWarning": "Hay {count} proceso(s) en ejecución dentro y podrían interrumpirse.",
-    "confirm": "Eliminar",
-    "forceTitle": "¿Descartar los cambios sin confirmar?",
-    "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
-    "forceConfirm": "Descartar y eliminar"
+    "liveWarning": "Hay {count} proceso(s) en ejecución dentro y podrían interrumpirse."
   },
   "terminate": {
     "title": "Terminar proceso",

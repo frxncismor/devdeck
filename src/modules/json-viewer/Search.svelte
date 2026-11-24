@@ -1,14 +1,9 @@
 <script lang="ts">
   import { toAppError } from "../../lib/api";
+  import { errorMessage } from "../../lib/errors";
   import { formatNumber } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import {
-    jsonApi,
-    jsonErrorMessage,
-    runJob,
-    type SearchHit,
-    type SessionInfo,
-  } from "./jsonApi";
+  import { jsonApi, runJob, type SearchHit, type SessionInfo } from "./jsonApi";
 
   interface Props {
     session: SessionInfo;
@@ -59,11 +54,11 @@
       );
       jobId = job.ref.jobId;
       const done = await job.done;
-      if (done.error) error = jsonErrorMessage(done.error);
+      if (done.error) error = errorMessage(done.error);
       truncated = done.truncated ?? false;
       finished = !done.error;
     } catch (err) {
-      error = jsonErrorMessage(toAppError(err));
+      error = errorMessage(toAppError(err));
     } finally {
       searching = false;
       jobId = null;

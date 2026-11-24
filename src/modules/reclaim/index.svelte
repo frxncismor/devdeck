@@ -6,7 +6,7 @@
   import { errorMessage } from "../../lib/errors";
   import { formatBytes } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import { currentScope } from "../../lib/scope.svelte";
+  import { currentScope, refreshProjects } from "../../lib/scope.svelte";
   import type { AppError, Grouped } from "../../lib/types";
   import { isDirtyError } from "../worktrees/logic";
   import FoldersTab from "./FoldersTab.svelte";
@@ -140,6 +140,7 @@
         await reclaimApi.removeWorktree(p.item.worktree.path, p.force);
         pending = null;
         await loadWorktrees();
+        await refreshProjects();
       } else if (p.type === "process") {
         await reclaimApi.killProcess(p.item.pid, p.item.name);
         pending = null;
@@ -173,9 +174,9 @@
       const path = p.item.worktree.path;
       if (p.force) {
         return {
-          title: t("reclaim.removeWorktree.forceTitle"),
-          message: t("reclaim.removeWorktree.forceMessage", { path }),
-          confirm: t("reclaim.removeWorktree.forceConfirm"),
+          title: t("common.worktree.remove.forceTitle"),
+          message: t("common.worktree.remove.forceMessage", { path }),
+          confirm: t("common.worktree.remove.forceConfirm"),
         };
       }
       const w = removalWarnings(p.item);
@@ -190,9 +191,9 @@
         message += ` ${t("reclaim.removeWorktree.liveWarning", { count: w.live })}`;
       }
       return {
-        title: t("reclaim.removeWorktree.title"),
+        title: t("common.worktree.remove.title"),
         message,
-        confirm: t("reclaim.removeWorktree.confirm"),
+        confirm: t("common.worktree.remove.confirm"),
       };
     }
     if (p.type === "process") {

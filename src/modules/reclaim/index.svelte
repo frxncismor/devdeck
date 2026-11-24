@@ -174,7 +174,7 @@
         await loadWorktrees();
         await refreshProjects();
       } else if (p.type === "process") {
-        await reclaimApi.killProcess(p.item.pid, p.item.name);
+        await reclaimApi.killProcess(p.item.pid, p.item.name, p.item.startTime);
         pending = null;
         await loadProcesses();
       } else {

@@ -1,1 +1,59 @@
-{}
+{
+  "title": "Worktrees",
+  "root": {
+    "label": "Carpeta raíz de repositorios",
+    "none": "No hay carpeta raíz seleccionada",
+    "choose": "Elegir carpeta…",
+    "change": "Cambiar…",
+    "pickerTitle": "Selecciona la carpeta que contiene tus repositorios"
+  },
+  "empty": {
+    "noRoot": "Elige la carpeta que contiene tus repositorios para ver sus worktrees.",
+    "noResults": "Ningún worktree coincide con los filtros.",
+    "noWorktrees": "No se encontraron repositorios git bajo la carpeta raíz."
+  },
+  "filter": {
+    "search": "Buscar",
+    "searchPlaceholder": "Rama, ruta o commit",
+    "dirtyOnly": "Solo con cambios"
+  },
+  "columns": {
+    "branch": "Rama",
+    "status": "Estado",
+    "sync": "Adelante / atrás",
+    "lastCommit": "Último commit",
+    "actions": "Acciones"
+  },
+  "badge": {
+    "dirty_one": "{count} cambio",
+    "dirty_other": "{count} cambios",
+    "clean": "Limpio",
+    "main": "Principal",
+    "detached": "Desacoplado",
+    "missing": "Carpeta ausente"
+  },
+  "sync": {
+    "noUpstream": "Sin upstream",
+    "inSync": "Sincronizado"
+  },
+  "lastCommit": {
+    "none": "Sin commits"
+  },
+  "actions": {
+    "openVscode": "Abrir en VS Code",
+    "openTerminal": "Abrir terminal",
+    "remove": "Eliminar"
+  },
+  "remove": {
+    "title": "Eliminar worktree",
+    "message": "¿Eliminar el worktree en {path}? Se borrará la carpeta; la rama se conserva.",
+    "forceTitle": "¿Descartar los cambios sin confirmar?",
+    "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
+    "forceConfirm": "Descartar y eliminar",
+    "confirm": "Eliminar"
+  },
+  "errors": {
+    "vscode_not_found": "No se encontró VS Code (el comando code)",
+    "terminal_not_found": "No se pudo iniciar ninguna terminal"
+  }
+}

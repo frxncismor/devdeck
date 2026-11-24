@@ -54,7 +54,7 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [x] T020 [P] [US4] `.tools/` and `.gitleaks-report*` in `.gitignore` (line added after T015) — `.gitignore`
 - [x] T021 [US4] **Depends on the 1A `package.json` (T002)**: add `setup:hooks`, `setup:gitleaks`, `test:scripts` and `tsx` — `package.json`
 - [x] T022 [P] [US4] `secret-scan` workflow (PR and push, `fetch-depth: 0`, commit range, gitleaks 8.30.1 with checksum, `--redact`) — `.github/workflows/secret-scan.yml`
-- [ ] T022b [US4] On integration: run `pnpm setup:hooks` in the main repo and check `git config core.hooksPath` = `.githooks` and that a staged fake secret blocks the commit — verification (the secret is never committed)
+- [x] T022b [US4] On integration: run `pnpm setup:hooks` in the main repo and check `git config core.hooksPath` = `.githooks` and that a staged fake secret blocks the commit — verification (the secret is never committed)
 
 **Checkpoint**: 1A + 1B integrated; only then do the phase-2 blocks start.
 

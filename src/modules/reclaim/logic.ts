@@ -103,7 +103,7 @@ export interface FoldersDone {
 export type Pending =
   | { type: "worktree"; item: ForgottenWorktree; force: boolean }
   | { type: "process"; item: DevProcess }
-  | { type: "folder"; item: HeavyFolder };
+  | { type: "folders"; items: HeavyFolder[] };
 
 export const DEV_KIND_KEYS: Record<DevKind, MessageKey> = {
   node: "reclaim.kind.node",
@@ -201,4 +201,71 @@ export function folderRejectionKey(e: AppError): MessageKey | null {
     not_allowlisted: "reclaim.errors.reason.not_allowlisted",
   };
   return known[reason] ?? null;
+}
+
+/** One slice of the stacked bars of the summary cards. `key` is a project id or a worktree path. */
+export interface Slice {
+  key: string | null;
+  label: string;
+  value: number;
+}
+
+/** Per-project slices of `field`, biggest first, empty ones dropped ("No project" labelled by the caller). */
+export function projectSlices(
+  s: ReclaimSummary,
+  field: "ramBytes" | "diskBytes",
+  noProjectLabel: string,
+): Slice[] {
+  return s.byProject
+    .map((p) => ({
+      key: p.project?.id ?? null,
+      label: p.project?.name ?? noProjectLabel,
+      value: p[field],
+    }))
+    .filter((x) => x.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
+const norm = (p: string) =>
+  p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();
+
+/** The worktree root (longest match) that contains `path`, or null. */
+export function worktreeOf(
+  path: string | null | undefined,
+  roots: readonly string[],
+): string | null {
+  if (!path) return null;
+  const p = norm(path);
+  let best: string | null = null;
+  for (const r of roots) {
+    const n = norm(r);
+    if (
+      (p === n || p.startsWith(`${n}/`)) &&
+      (!best || n.length > norm(best).length)
+    )
+      best = r;
+  }
+  return best;
+}
+
+/** Sums `value` per worktree root; items outside every root are dropped. Biggest first. */
+export function worktreeSlices<T>(
+  items: readonly T[],
+  roots: readonly string[],
+  pathOf: (item: T) => string | null | undefined,
+  valueOf: (item: T) => number,
+): Slice[] {
+  const sums = new Map<string, number>();
+  for (const it of items) {
+    const root = worktreeOf(pathOf(it), roots);
+    if (root) sums.set(root, (sums.get(root) ?? 0) + valueOf(it));
+  }
+  return [...sums.entries()]
+    .filter(([, v]) => v > 0)
+    .map(([key, value]) => ({
+      key,
+      label: key.split(/[\\/]/).filter(Boolean).pop() ?? key,
+      value,
+    }))
+    .sort((a, b) => b.value - a.value);
 }

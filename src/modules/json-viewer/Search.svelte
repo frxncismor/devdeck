@@ -1,4 +1,9 @@
 <script lang="ts">
+  import ChevronDown from "@lucide/svelte/icons/chevron-down";
+  import ChevronUp from "@lucide/svelte/icons/chevron-up";
+  import SearchIcon from "@lucide/svelte/icons/search";
+  import X from "@lucide/svelte/icons/x";
+  import IconButton from "../../components/IconButton.svelte";
   import { toAppError } from "../../lib/api";
   import { errorMessage } from "../../lib/errors";
   import { formatNumber } from "../../lib/format";
@@ -11,7 +16,6 @@
   }
   let { session, onselect }: Props = $props();
 
-  const PAGE_SIZE = 50;
   const DEFAULT_LIMIT = 10_000;
 
   let query = $state("");
@@ -24,18 +28,16 @@
   let truncated = $state(false);
   let finished = $state(false);
   let error = $state<string | null>(null);
-  let page = $state(0);
+  let active = $state(-1);
 
-  const pages = $derived(Math.max(1, Math.ceil(hits.length / PAGE_SIZE)));
-  const visible = $derived(
-    hits.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-  );
+  const current = $derived(active >= 0 ? hits[active] : undefined);
+  const canSearch = $derived(query !== "" && (inKeys || inValues));
 
   async function run(e: Event) {
     e.preventDefault();
-    if (!query || searching || (!inKeys && !inValues)) return;
+    if (!canSearch || searching) return;
     hits = [];
-    page = 0;
+    active = -1;
     error = null;
     truncated = false;
     finished = false;
@@ -57,6 +59,7 @@
       if (done.error) error = errorMessage(done.error);
       truncated = done.truncated ?? false;
       finished = !done.error;
+      if (finished && hits.length > 0) go(0);
     } catch (err) {
       error = errorMessage(toAppError(err));
     } finally {
@@ -68,146 +71,257 @@
   function stop() {
     if (jobId) void jsonApi.cancel(jobId);
   }
+
+  function go(index: number) {
+    if (hits.length === 0) return;
+    active = (index + hits.length) % hits.length;
+    onselect(hits[active]);
+  }
+
+  function clear() {
+    query = "";
+    hits = [];
+    active = -1;
+    finished = false;
+    truncated = false;
+    error = null;
+  }
 </script>
 
-<section class="search">
-  <h3>{t("jsonViewer.search.title")}</h3>
+<div class="search">
   <form onsubmit={run}>
-    <input
-      type="search"
-      bind:value={query}
-      placeholder={t("jsonViewer.search.placeholder")}
-      aria-label={t("jsonViewer.search.placeholder")}
-    />
-    <label>
-      <input type="checkbox" bind:checked={inKeys} />
-      {t("jsonViewer.search.inKeys")}
-    </label>
-    <label>
-      <input type="checkbox" bind:checked={inValues} />
-      {t("jsonViewer.search.inValues")}
-    </label>
-    <label>
-      <input type="checkbox" bind:checked={caseSensitive} />
-      {t("jsonViewer.search.caseSensitive")}
+    <label class="field">
+      <SearchIcon size={14} />
+      <span class="sr-only">{t("jsonViewer.search.label")}</span>
+      <input
+        type="search"
+        bind:value={query}
+        placeholder={t("jsonViewer.search.placeholder")}
+      />
+      <span class="counter tabular" aria-live="polite">
+        {#if searching}
+          {t("jsonViewer.search.searching", {
+            count: formatNumber(hits.length),
+          })}
+        {:else if finished}
+          {hits.length === 0
+            ? t("jsonViewer.search.none")
+            : t("jsonViewer.search.counter", {
+                current: formatNumber(active + 1),
+                total: formatNumber(hits.length),
+              })}
+        {/if}
+      </span>
     </label>
     {#if searching}
-      <button type="button" onclick={stop}>
+      <button type="button" class="stop" onclick={stop}>
         {t("jsonViewer.search.stop")}
       </button>
     {:else}
-      <button type="submit" disabled={!query || (!inKeys && !inValues)}>
+      <button type="submit" class="run" disabled={!canSearch}>
         {t("jsonViewer.search.run")}
       </button>
     {/if}
+    <IconButton
+      label={t("jsonViewer.search.prev")}
+      icon={ChevronUp}
+      variant="secondary"
+      size={30}
+      disabled={hits.length === 0}
+      onclick={() => go(active - 1)}
+    />
+    <IconButton
+      label={t("jsonViewer.search.next")}
+      icon={ChevronDown}
+      variant="secondary"
+      size={30}
+      disabled={hits.length === 0}
+      onclick={() => go(active + 1)}
+    />
+    {#if query !== "" || hits.length > 0}
+      <IconButton
+        label={t("common.buttons.cancel")}
+        icon={X}
+        size={30}
+        onclick={clear}
+      />
+    {/if}
+    <div
+      class="toggles"
+      role="group"
+      aria-label={t("jsonViewer.search.options")}
+    >
+      <button
+        type="button"
+        class="toggle"
+        aria-pressed={caseSensitive}
+        title={t("jsonViewer.search.caseSensitive")}
+        aria-label={t("jsonViewer.search.caseSensitive")}
+        onclick={() => (caseSensitive = !caseSensitive)}
+      >
+        Aa
+      </button>
+      <button
+        type="button"
+        class="toggle"
+        aria-pressed={inKeys}
+        onclick={() => (inKeys = !inKeys)}
+      >
+        {t("jsonViewer.search.inKeys")}
+      </button>
+      <button
+        type="button"
+        class="toggle"
+        aria-pressed={inValues}
+        onclick={() => (inValues = !inValues)}
+      >
+        {t("jsonViewer.search.inValues")}
+      </button>
+    </div>
   </form>
 
   {#if error}
     <p class="error" role="alert">{error}</p>
   {/if}
-  {#if searching}
-    <p>
-      {t("jsonViewer.search.searching", { count: formatNumber(hits.length) })}
+  {#if truncated}
+    <p class="note subtle">
+      {t("jsonViewer.search.truncated", { count: formatNumber(hits.length) })}
     </p>
-  {:else if finished}
-    <p>
-      {hits.length === 0
-        ? t("jsonViewer.search.none")
-        : t("jsonViewer.search.results", { count: hits.length })}
+  {/if}
+  {#if current}
+    <p class="hit">
+      <span class="kind">
+        {current.kind === "key"
+          ? t("jsonViewer.search.hitKey")
+          : t("jsonViewer.search.hitValue")}
+      </span>
+      <span class="path" title={current.path}>{current.path}</span>
+      <span class="snippet subtle">{current.snippet}</span>
     </p>
-    {#if truncated}
-      <p>
-        {t("jsonViewer.search.truncated", { count: formatNumber(hits.length) })}
-      </p>
-    {/if}
   {/if}
-
-  {#if visible.length > 0}
-    <ul class="hits">
-      {#each visible as hit, i (page * PAGE_SIZE + i)}
-        <li>
-          <button type="button" onclick={() => onselect(hit)}>
-            <span class="badge">
-              {hit.kind === "key"
-                ? t("jsonViewer.search.hitKey")
-                : t("jsonViewer.search.hitValue")}
-            </span>
-            <code class="path">{hit.path}</code>
-            <span class="snippet">{hit.snippet}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-    {#if pages > 1}
-      <nav class="pager">
-        <button type="button" disabled={page === 0} onclick={() => page--}>
-          {t("jsonViewer.search.prev")}
-        </button>
-        <span>{t("jsonViewer.search.page", { page: page + 1, pages })}</span>
-        <button
-          type="button"
-          disabled={page >= pages - 1}
-          onclick={() => page++}
-        >
-          {t("jsonViewer.search.next")}
-        </button>
-      </nav>
-    {/if}
-  {/if}
-</section>
+</div>
 
 <style>
+  .search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   form {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
     align-items: center;
+    gap: 8px;
   }
-  form input[type="search"] {
-    flex: 1 1 12rem;
-  }
-  .hits {
-    list-style: none;
-    margin: 0.5rem 0;
-    padding: 0;
-    max-height: 18rem;
-    overflow: auto;
-  }
-  .hits button {
+  .field {
+    flex: 1;
     display: flex;
-    gap: 0.5rem;
-    width: 100%;
-    text-align: left;
-    border: 0;
+    align-items: center;
+    gap: 8px;
+    height: var(--control-h);
+    min-width: 0;
+    padding: 0 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--text-subtle);
+  }
+  .field:focus-within {
+    border-color: var(--accent);
+  }
+  .field input {
+    flex: 1;
+    min-width: 0;
     background: none;
-    padding: 0.2rem 0.25rem;
-    cursor: pointer;
-    color: inherit;
+    border: 0;
+    outline: none;
+    color: var(--text);
+    font-size: var(--text-base);
   }
-  .hits button:hover {
-    background: #8882;
+  .counter {
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--text-subtle);
   }
-  .badge {
+  .run,
+  .stop,
+  .toggle {
+    height: var(--control-h-sm);
+    padding: 0 9px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .run {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .run:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  .run:disabled {
+    opacity: 0.5;
+  }
+  .stop:hover {
+    background: var(--surface-hover);
+  }
+  .toggles {
+    display: flex;
+    gap: 2px;
+  }
+  .toggle {
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-muted);
+  }
+  .toggle:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .toggle[aria-pressed="true"] {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+  .hit {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .kind {
     flex: none;
-    font-size: 0.7rem;
+    font-size: 10.5px;
     text-transform: uppercase;
-    opacity: 0.7;
+    color: var(--accent-text);
   }
   .path {
     flex: none;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono);
   }
   .snippet {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    opacity: 0.75;
+    min-width: 0;
   }
-  .pager {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+  .note {
+    margin: 0;
+    font-size: 12px;
   }
   .error {
-    color: #c0392b;
+    margin: 0;
+    color: var(--danger);
+    font-size: 12px;
   }
 </style>

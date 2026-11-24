@@ -1,8 +1,12 @@
 <script lang="ts">
-  import GroupedTable from "../../components/GroupedTable.svelte";
+  import Button from "../../components/Button.svelte";
+  import Badge from "../../components/Badge.svelte";
+  import EmptyState from "../../components/EmptyState.svelte";
+  import type { Column } from "../../components/DataTable.svelte";
   import { formatBytes } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
+  import GroupedRows from "./GroupedRows.svelte";
   import { REASON_KEYS, type ForgottenWorktree } from "./logic";
 
   interface Props {
@@ -10,98 +14,117 @@
     loading: boolean;
     hasRoot: boolean;
     days: number;
+    grouped: boolean;
     onremove: (w: ForgottenWorktree) => void;
   }
-  let { data, loading, hasRoot, days, onremove }: Props = $props();
+  let { data, loading, hasRoot, days, grouped, onremove }: Props = $props();
+
+  const columns: Column<ForgottenWorktree>[] = $derived([
+    { key: "branch", header: t("common.columns.branch") },
+    { key: "age", header: t("common.columns.lastCommit"), width: "140px" },
+    {
+      key: "size",
+      header: t("common.columns.size"),
+      width: "100px",
+      align: "end",
+      kind: "numeric",
+    },
+    {
+      key: "state",
+      header: t("reclaim.worktrees.columns.state"),
+      width: "minmax(0, 1.3fr)",
+    },
+    { key: "actions", header: "", width: "auto", align: "end" },
+  ]);
 </script>
 
-<p class="desc">{t("reclaim.worktrees.description", { days })}</p>
+<p class="desc subtle">{t("reclaim.worktrees.description", { days })}</p>
 
 {#if !hasRoot}
-  <p>{t("reclaim.worktrees.noRoot")}</p>
+  <EmptyState title={t("reclaim.worktrees.noRoot")} />
 {:else if loading && !data}
-  <p>{t("common.state.loading")}</p>
+  <p class="subtle">{t("common.state.loading")}</p>
 {:else if data && data.total.count === 0}
-  <p>{t("reclaim.worktrees.empty")}</p>
+  <EmptyState title={t("reclaim.worktrees.empty")} />
 {:else if data}
-  <GroupedTable {data} showDisk>
-    {#snippet head()}
-      <tr>
-        <th>{t("common.columns.branch")}</th>
-        <th>{t("common.columns.lastCommit")}</th>
-        <th>{t("common.columns.size")}</th>
-        <th>{t("reclaim.worktrees.columns.state")}</th>
-        <th>{t("common.columns.actions")}</th>
-      </tr>
-    {/snippet}
-    {#snippet row(w: ForgottenWorktree)}
-      <tr>
-        <td title={w.worktree.path}>
-          {w.worktree.branch ?? "—"}
-          <small class="path">{w.worktree.path}</small>
-        </td>
-        <td>
-          {#if w.lastCommitAgeDays != null}
-            {t("reclaim.worktrees.age", { count: w.lastCommitAgeDays })}
-          {:else}
-            {t("common.worktree.noCommits")}
-          {/if}
-        </td>
-        <td>
-          {w.diskBytes != null
-            ? formatBytes(w.diskBytes)
-            : t("reclaim.common.unknown")}
-        </td>
-        <td>
+  <GroupedRows
+    {data}
+    {grouped}
+    {columns}
+    showDisk
+    ariaLabel={t("reclaim.tabs.worktrees")}
+    rowKey={(w) => w.worktree.path}
+  >
+    {#snippet cell(w, col)}
+      {#if col.key === "branch"}
+        <span class="stack">
+          <span class="strong">{w.worktree.branch ?? "—"}</span>
+          <span class="path subtle" title={w.worktree.path}>
+            {w.worktree.path}
+          </span>
+        </span>
+      {:else if col.key === "age"}
+        {#if w.lastCommitAgeDays != null}
+          {t("reclaim.worktrees.age", { count: w.lastCommitAgeDays })}
+        {:else}
+          {t("common.worktree.noCommits")}
+        {/if}
+      {:else if col.key === "size"}
+        {w.diskBytes != null
+          ? formatBytes(w.diskBytes)
+          : t("reclaim.common.unknown")}
+      {:else if col.key === "state"}
+        <span class="badges">
           {#each w.reasons as r (r)}
-            <span class="badge {r}">{t(REASON_KEYS[r])}</span>
+            <Badge
+              tone={r === "live_processes"
+                ? "warning"
+                : r === "stale"
+                  ? "neutral"
+                  : "success"}
+            >
+              {t(REASON_KEYS[r])}
+            </Badge>
           {/each}
           {#if !w.worktree.exists}
-            <span class="badge warn">{t("common.worktree.missing")}</span>
+            <Badge tone="warning">{t("common.worktree.missing")}</Badge>
           {/if}
           {#if w.worktree.dirtyCount > 0}
-            <span class="badge warn">
+            <Badge tone="warning">
               {t("common.worktree.dirty", { count: w.worktree.dirtyCount })}
-            </span>
+            </Badge>
           {/if}
-          {#if w.liveProcesses > 0}
-            <span class="badge warn">
+          {#if w.liveProcesses > 0 && !w.reasons.includes("live_processes")}
+            <Badge tone="warning">
               {t("reclaim.worktrees.processes", { count: w.liveProcesses })}
-            </span>
+            </Badge>
           {/if}
-        </td>
-        <td>
-          <button type="button" onclick={() => onremove(w)}>
-            {t("reclaim.actions.removeWorktree")}
-          </button>
-        </td>
-      </tr>
+        </span>
+      {:else}
+        <Button size="sm" variant="danger-ghost" onclick={() => onremove(w)}>
+          {t("reclaim.actions.removeWorktree")}
+        </Button>
+      {/if}
     {/snippet}
-  </GroupedTable>
+  </GroupedRows>
 {/if}
 
 <style>
   .desc {
-    opacity: 0.8;
+    margin: 0 0 4px;
+    font-size: 12.5px;
   }
-  .path {
-    display: block;
-    opacity: 0.6;
-    word-break: break-all;
+  .stack {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
-  .badge {
-    display: inline-block;
-    margin-right: 0.25rem;
-    padding: 0 0.4rem;
-    border-radius: 0.6rem;
-    font-size: 0.75rem;
-    background: #8882;
+  .strong {
+    font-weight: var(--weight-medium);
   }
-  .badge.clean {
-    background: #2e9e5b33;
-  }
-  .badge.warn,
-  .badge.live_processes {
-    background: #e0a40033;
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 </style>

@@ -1,24 +1,39 @@
 <script lang="ts">
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onDestroy, untrack } from "svelte";
+  import { SvelteMap, SvelteSet } from "svelte/reactivity";
+  import Banner from "../../components/Banner.svelte";
+  import Button from "../../components/Button.svelte";
   import ConfirmDialog from "../../components/ConfirmDialog.svelte";
+  import Tabs from "../../components/Tabs.svelte";
+  import TopBarContent from "../../components/TopBarContent.svelte";
   import { toAppError } from "../../lib/api";
   import { configState } from "../../lib/config.svelte";
   import { errorMessage } from "../../lib/errors";
-  import { formatBytes } from "../../lib/format";
+  import { formatBytes, formatDateTime } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import { currentScope, refreshProjects } from "../../lib/scope.svelte";
+  import {
+    currentScope,
+    refreshProjects,
+    scopeState,
+  } from "../../lib/scope.svelte";
+  import { toasts } from "../../lib/toasts.svelte";
   import type { AppError, Grouped } from "../../lib/types";
   import { isDirtyError } from "../worktrees/logic";
   import FoldersTab from "./FoldersTab.svelte";
   import {
     folderRejectionKey,
+    projectSlices,
     removalWarnings,
+    totalsOf,
+    worktreeSlices,
     type DevProcess,
     type ForgottenWorktree,
     type HeavyFolder,
     type JobProgress,
     type Pending,
     type ReclaimSummary,
+    type Slice,
   } from "./logic";
   import ProcessesTab from "./ProcessesTab.svelte";
   import { reclaimApi, startFolderScan } from "./reclaimApi";
@@ -26,7 +41,6 @@
   import WorktreesTab from "./WorktreesTab.svelte";
 
   type Tab = "worktrees" | "processes" | "folders";
-  const TABS: Tab[] = ["worktrees", "processes", "folders"];
 
   let tab = $state<Tab>("worktrees");
   let summary = $state<ReclaimSummary | null>(null);
@@ -40,13 +54,105 @@
   let cancelled = $state(false);
   let jobId = $state<string | null>(null);
   let error = $state<AppError | null>(null);
-  let notice = $state<string | null>(null);
+  let scannedAt = $state<Date | null>(null);
+  let selected = $state<ReadonlySet<string>>(new Set());
   let pending = $state<Pending | null>(null);
   let busy = $state(false);
 
   const root = $derived(configState.value.root);
   const scope = $derived(configState.value.scope);
   const measuring = $derived(loadingWorktrees || scanning);
+  const grouped = $derived(scope.kind === "global");
+
+  const tabDefs = $derived([
+    {
+      id: "worktrees",
+      label: t("reclaim.tabs.worktrees"),
+      count: totalsOf(worktrees).count,
+    },
+    {
+      id: "processes",
+      label: t("reclaim.tabs.processes"),
+      count: totalsOf(processes).count,
+    },
+    {
+      id: "folders",
+      label: t("reclaim.tabs.folders"),
+      count: totalsOf(folders).count,
+    },
+  ]);
+
+  const allFolders = $derived(
+    folders ? folders.groups.flatMap((g) => g.items) : [],
+  );
+  const selectedFolders = $derived(
+    allFolders.filter((f) => selected.has(f.path)),
+  );
+  const selectedBytes = $derived(
+    selectedFolders.reduce((n, f) => n + (f.diskBytes ?? 0), 0),
+  );
+
+  // Drop selections whose folder is no longer listed (after a rescan or a deletion).
+  $effect(() => {
+    const present = new SvelteSet(allFolders.map((f) => f.path));
+    const current = untrack(() => selected);
+    const kept = [...current].filter((p) => present.has(p));
+    if (kept.length !== current.size) selected = new Set(kept);
+  });
+
+  function toggleFolder(f: HeavyFolder): void {
+    selected = selected.has(f.path)
+      ? new Set([...selected].filter((p) => p !== f.path))
+      : new Set([...selected, f.path]);
+  }
+
+  // Project scope: the roots of the worktrees of that project (main checkout included).
+  const scopeRoots = $derived.by(() => {
+    if (scope.kind !== "project") return [];
+    const id = scope.id;
+    const p = scopeState.projects.find((x) => x.id === id);
+    return p ? [p.mainPath, ...p.worktreePaths] : [];
+  });
+
+  const ramSlices = $derived.by<Slice[]>(() => {
+    if (!summary) return [];
+    if (scope.kind === "global")
+      return projectSlices(summary, "ramBytes", t("common.noProject"));
+    return worktreeSlices(
+      processes ? processes.groups.flatMap((g) => g.items) : [],
+      scopeRoots,
+      (p) => p.worktreePath ?? p.cwd,
+      (p) => p.ramBytes,
+    );
+  });
+
+  const diskSlices = $derived.by<Slice[]>(() => {
+    if (!summary) return [];
+    if (scope.kind === "global")
+      return projectSlices(summary, "diskBytes", t("common.noProject"));
+    const wts = worktrees ? worktrees.groups.flatMap((g) => g.items) : [];
+    const parts = [
+      ...worktreeSlices(
+        wts,
+        scopeRoots,
+        (w) => w.worktree.path,
+        (w) => w.diskBytes ?? 0,
+      ),
+      ...worktreeSlices(
+        allFolders,
+        scopeRoots,
+        (f) => f.path,
+        (f) => f.diskBytes ?? 0,
+      ),
+    ];
+    const merged = new SvelteMap<string, Slice>();
+    for (const s of parts) {
+      const k = s.key ?? "";
+      const prev = merged.get(k);
+      merged.set(k, { ...s, value: (prev?.value ?? 0) + s.value });
+    }
+    return [...merged.values()].sort((a, b) => b.value - a.value);
+  });
 
   function fail(e: unknown): void {
     error = toAppError(e);
@@ -143,7 +249,7 @@
 
   function refreshAll(): void {
     error = null;
-    notice = null;
+    scannedAt = new Date();
     void loadProcesses();
     void loadWorktrees();
     void loadFolders();
@@ -161,29 +267,60 @@
     untrack(refreshAll);
   });
 
+  /** Deletes the folders one by one; a failure stops the loop and reports what was freed so far. */
+  async function deleteFolders(items: HeavyFolder[]): Promise<void> {
+    let freed = 0;
+    let done = 0;
+    try {
+      for (const f of items) {
+        freed += (await reclaimApi.deleteFolder(f.path)).freedBytes;
+        done++;
+      }
+      pending = null;
+      selected = new Set();
+      toasts.success(
+        t("reclaim.deleteFolder.done", { size: formatBytes(freed) }),
+      );
+    } catch (e) {
+      pending = null;
+      if (done > 0) {
+        toasts.warning(
+          t("reclaim.deleteFolder.partial", {
+            done,
+            total: items.length,
+            size: formatBytes(freed),
+          }),
+        );
+      }
+      error = toAppError(e);
+    }
+    await loadFolders();
+  }
+
   async function confirmPending(): Promise<void> {
     const p = pending;
     if (!p || busy) return;
     busy = true;
     error = null;
-    notice = null;
     try {
       if (p.type === "worktree") {
         await reclaimApi.removeWorktree(p.item.worktree.path, p.force);
         pending = null;
+        toasts.success(
+          t("reclaim.toast.worktreeRemoved"),
+          p.item.worktree.path,
+        );
         await loadWorktrees();
         await refreshProjects();
       } else if (p.type === "process") {
         await reclaimApi.killProcess(p.item.pid, p.item.name, p.item.startTime);
         pending = null;
+        toasts.success(
+          t("reclaim.toast.processTerminated", { name: p.item.name }),
+        );
         await loadProcesses();
       } else {
-        const freed = await reclaimApi.deleteFolder(p.item.path);
-        pending = null;
-        notice = t("reclaim.deleteFolder.done", {
-          size: formatBytes(freed.freedBytes),
-        });
-        await loadFolders();
+        await deleteFolders(p.items);
       }
     } catch (e) {
       const err = toAppError(e);
@@ -194,7 +331,7 @@
       }
       pending = null;
       error = err;
-      // A process that already vanished or a folder that is gone: refresh what is shown.
+      // A process that already vanished: refresh what is shown.
       if (p.type === "process") void loadProcesses();
     } finally {
       busy = false;
@@ -242,88 +379,96 @@
       };
     }
     return {
-      title: t("reclaim.deleteFolder.title"),
-      message: t("reclaim.deleteFolder.message", {
-        path: p.item.path,
-        size:
-          p.item.diskBytes != null
-            ? formatBytes(p.item.diskBytes)
-            : t("reclaim.common.unknown"),
+      title: t("reclaim.deleteFolder.title", { count: p.items.length }),
+      message: t("reclaim.deleteFolder.message"),
+      confirm: t("reclaim.deleteFolder.confirm", {
+        size: formatBytes(p.items.reduce((n, f) => n + (f.diskBytes ?? 0), 0)),
       }),
-      confirm: t("reclaim.deleteFolder.confirm"),
     };
   });
 </script>
 
-<section class="reclaim">
-  <h2>{t("reclaim.title")}</h2>
-  <p class="intro">{t("reclaim.intro")}</p>
-
-  <div class="toolbar">
-    <button type="button" onclick={refreshAll}>
-      {t("reclaim.common.refresh")}
-    </button>
-  </div>
-
-  {#if error}
-    <p class="error" role="alert">
-      {describe(error)}
-      {#if error.detail}<small>{error.detail}</small>{/if}
-    </p>
-  {/if}
-  {#if notice}<p class="notice" role="status">{notice}</p>{/if}
-
-  <Summary {summary} {measuring} showProjects={scope.kind === "global"} />
-
-  <div class="tabs" role="tablist" aria-label={t("reclaim.tabs.label")}>
-    {#each TABS as id (id)}
-      <button
-        type="button"
-        role="tab"
-        id={`reclaim-tab-${id}`}
-        aria-selected={tab === id}
-        aria-controls="reclaim-panel"
-        class:active={tab === id}
-        onclick={() => (tab = id)}
-      >
-        {t(`reclaim.tabs.${id}`)}
-      </button>
-    {/each}
-  </div>
-
-  <div
-    id="reclaim-panel"
-    role="tabpanel"
-    aria-labelledby={`reclaim-tab-${tab}`}
-  >
-    {#if tab === "worktrees"}
-      <WorktreesTab
-        data={worktrees}
-        loading={loadingWorktrees}
-        hasRoot={!!root}
-        days={configState.value.forgottenDays}
-        onremove={(item) =>
-          (pending = { type: "worktree", item, force: false })}
-      />
-    {:else if tab === "processes"}
-      <ProcessesTab
-        data={processes}
-        loading={loadingProcesses}
-        onterminate={(item) => (pending = { type: "process", item })}
-      />
-    {:else}
-      <FoldersTab
-        data={folders}
-        {scanning}
-        {progress}
-        {cancelled}
-        hasRoot={!!root}
-        oncancel={() => void cancelFolders()}
-        ondelete={(item) => (pending = { type: "folder", item })}
-      />
+<TopBarContent>
+  {#snippet meta()}
+    {#if scannedAt}
+      <span class="tabular">
+        {t("reclaim.scannedAt", { time: formatDateTime(scannedAt) })}
+      </span>
     {/if}
-  </div>
-</section>
+  {/snippet}
+  {#snippet actions()}
+    <Button icon={RefreshCw} kbd="F5" onclick={refreshAll}>
+      {t("reclaim.common.refresh")}
+    </Button>
+  {/snippet}
+</TopBarContent>
+
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === "F5") {
+      e.preventDefault();
+      refreshAll();
+    }
+  }}
+/>
+
+{#if error}
+  <Banner tone="danger">
+    {describe(error)}
+    {#if error.detail}<small class="detail">{error.detail}</small>{/if}
+  </Banner>
+{/if}
+<Banner tone="info">{t("reclaim.readOnly")}</Banner>
+
+<Summary {summary} {measuring} byProject={grouped} {ramSlices} {diskSlices} />
+
+<Tabs
+  tabs={tabDefs}
+  active={tab}
+  onchange={(id) => (tab = id as Tab)}
+  ariaLabel={t("reclaim.tabs.label")}
+  idPrefix="reclaim"
+/>
+
+<div
+  id={`reclaim-panel-${tab}`}
+  role="tabpanel"
+  aria-labelledby={`reclaim-tab-${tab}`}
+  class="panel"
+>
+  {#if tab === "worktrees"}
+    <WorktreesTab
+      data={worktrees}
+      loading={loadingWorktrees}
+      hasRoot={!!root}
+      days={configState.value.forgottenDays}
+      {grouped}
+      onremove={(item) => (pending = { type: "worktree", item, force: false })}
+    />
+  {:else if tab === "processes"}
+    <ProcessesTab
+      data={processes}
+      loading={loadingProcesses}
+      {grouped}
+      onterminate={(item) => (pending = { type: "process", item })}
+    />
+  {:else}
+    <FoldersTab
+      data={folders}
+      {scanning}
+      {progress}
+      {cancelled}
+      hasRoot={!!root}
+      {grouped}
+      {selected}
+      {selectedBytes}
+      ontoggle={toggleFolder}
+      onclear={() => (selected = new Set())}
+      oncancel={() => void cancelFolders()}
+      ondelete={() => (pending = { type: "folders", items: selectedFolders })}
+    />
+  {/if}
+</div>
 
 <ConfirmDialog
   open={pending !== null}
@@ -333,34 +478,46 @@
   {busy}
   onconfirm={() => void confirmPending()}
   oncancel={() => (pending = null)}
-/>
+>
+  {#snippet body()}
+    {#if pending?.type === "folders"}
+      <ul class="paths">
+        {#each pending.items as f (f.path)}
+          <li class="path" title={f.path}>{f.path}</li>
+        {/each}
+      </ul>
+      <p class="total">
+        {t("reclaim.deleteFolder.total")}:
+        <b class="mono">
+          {formatBytes(
+            pending.items.reduce((n, f) => n + (f.diskBytes ?? 0), 0),
+          )}
+        </b>
+      </p>
+    {/if}
+  {/snippet}
+</ConfirmDialog>
 
 <style>
-  .intro {
+  .detail {
+    display: block;
     opacity: 0.8;
   }
-  .toolbar {
-    margin-bottom: 0.75rem;
-  }
-  .tabs {
+  .panel {
     display: flex;
-    gap: 0.25rem;
-    margin: 1rem 0 0.75rem;
-    border-bottom: 1px solid #8884;
+    flex-direction: column;
+    gap: 12px;
   }
-  .tabs button {
-    border: none;
-    border-bottom: 2px solid transparent;
-    background: none;
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
+  .paths {
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+    max-height: 160px;
+    overflow: auto;
+    font-size: 12px;
   }
-  .tabs button.active {
-    border-bottom-color: currentColor;
-    font-weight: 600;
-  }
-  .error small {
-    display: block;
-    opacity: 0.7;
+  .total {
+    margin: 0;
+    font-size: 12.5px;
   }
 </style>

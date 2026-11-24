@@ -1,91 +1,96 @@
 <script lang="ts">
+  import HardDrive from "@lucide/svelte/icons/hard-drive";
+  import MemoryStick from "@lucide/svelte/icons/memory-stick";
+  import StatCard, { type StatSegment } from "../../components/StatCard.svelte";
   import { formatBytes } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
-  import {
-    hasRecoverable,
-    sortedByProject,
-    type ReclaimSummary,
-  } from "./logic";
+  import { PROJECT_COLORS, projectColor } from "../../lib/projectColor";
+  import { scopeState } from "../../lib/scope.svelte";
+  import { hasRecoverable, type ReclaimSummary, type Slice } from "./logic";
 
   interface Props {
     summary: ReclaimSummary | null;
     /** Folder/worktree sizes are still being measured. */
     measuring: boolean;
-    showProjects: boolean;
+    /** Global scope: stacked by project; project scope: by worktree. */
+    byProject: boolean;
+    ramSlices: Slice[];
+    diskSlices: Slice[];
   }
-  let { summary, measuring, showProjects }: Props = $props();
+  let { summary, measuring, byProject, ramSlices, diskSlices }: Props =
+    $props();
+
+  const ids = $derived(scopeState.projects.map((p) => p.id));
+
+  function segments(slices: Slice[]): StatSegment[] {
+    return slices.map((s, i) => ({
+      label: s.label,
+      value: s.value,
+      display: formatBytes(s.value),
+      color: byProject
+        ? projectColor(s.key, ids)
+        : `var(--project-${(i % PROJECT_COLORS) + 1})`,
+    }));
+  }
+
+  const counts = $derived(
+    summary
+      ? summary.byProject.reduce(
+          (a, p) => ({
+            processes: a.processes + p.processes,
+            worktrees: a.worktrees + p.worktrees,
+            folders: a.folders + p.folders,
+          }),
+          { processes: 0, worktrees: 0, folders: 0 },
+        )
+      : { processes: 0, worktrees: 0, folders: 0 },
+  );
+  const suffix = $derived(
+    byProject ? "" : ` · ${t("reclaim.summary.byWorktree")}`,
+  );
 </script>
 
-<section class="summary" aria-labelledby="reclaim-summary-title">
-  <h3 id="reclaim-summary-title">{t("reclaim.summary.title")}</h3>
+<section class="summary">
   {#if summary}
     <div class="cards">
-      <div class="card">
-        <span class="label">{t("reclaim.summary.ram")}</span>
-        <strong>{formatBytes(summary.recoverableRamBytes)}</strong>
-      </div>
-      <div class="card">
-        <span class="label">{t("reclaim.summary.disk")}</span>
-        <strong>{formatBytes(summary.recoverableDiskBytes)}</strong>
-      </div>
+      <StatCard
+        size="lg"
+        icon={MemoryStick}
+        label={t("reclaim.summary.ram")}
+        value={formatBytes(summary.recoverableRamBytes)}
+        hint={t("reclaim.summary.ramHint", { count: counts.processes }) +
+          suffix}
+        segments={segments(ramSlices)}
+      />
+      <StatCard
+        size="lg"
+        icon={HardDrive}
+        label={t("reclaim.summary.disk")}
+        value={formatBytes(summary.recoverableDiskBytes)}
+        hint={t("reclaim.summary.diskHint", {
+          worktrees: counts.worktrees,
+          folders: counts.folders,
+        }) + suffix}
+        segments={segments(diskSlices)}
+      />
     </div>
-    {#if measuring}<p class="hint">{t("reclaim.summary.sizing")}</p>{/if}
-    {#if !hasRecoverable(summary)}
-      <p>{t("reclaim.summary.nothing")}</p>
-    {:else if showProjects && summary.byProject.length > 0}
-      <h4>{t("reclaim.summary.byProject")}</h4>
-      <table>
-        <thead>
-          <tr>
-            <th>{t("reclaim.summary.columns.project")}</th>
-            <th>{t("reclaim.summary.columns.ram")}</th>
-            <th>{t("reclaim.summary.columns.disk")}</th>
-            <th>{t("reclaim.summary.columns.details")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each sortedByProject(summary) as row (row.project?.id ?? "")}
-            <tr>
-              <td>{row.project ? row.project.name : t("common.noProject")}</td>
-              <td>{formatBytes(row.ramBytes)}</td>
-              <td>{formatBytes(row.diskBytes)}</td>
-              <td>
-                {t("reclaim.summary.details", {
-                  processes: row.processes,
-                  worktrees: row.worktrees,
-                  folders: row.folders,
-                })}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+    {#if measuring}<p class="note subtle">{t("reclaim.summary.sizing")}</p>{/if}
+    {#if !hasRecoverable(summary) && !measuring}
+      <p class="note subtle">{t("reclaim.summary.nothing")}</p>
     {/if}
   {:else}
-    <p>{t("common.state.loading")}</p>
+    <p class="note subtle">{t("common.state.loading")}</p>
   {/if}
 </section>
 
 <style>
   .cards {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
-  .card {
-    display: flex;
-    flex-direction: column;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    background: #8881;
-    min-width: 8rem;
-  }
-  .card strong {
-    font-size: 1.5rem;
-  }
-  .label,
-  .hint {
-    opacity: 0.7;
-    font-size: 0.85rem;
+  .note {
+    margin: 8px 0 0;
+    font-size: 12px;
   }
 </style>

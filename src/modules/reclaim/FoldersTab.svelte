@@ -1,8 +1,13 @@
 <script lang="ts">
-  import GroupedTable from "../../components/GroupedTable.svelte";
+  import Banner from "../../components/Banner.svelte";
+  import Button from "../../components/Button.svelte";
+  import EmptyState from "../../components/EmptyState.svelte";
+  import Progress from "../../components/Progress.svelte";
+  import type { Column } from "../../components/DataTable.svelte";
   import { formatBytes, formatDate } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
+  import GroupedRows from "./GroupedRows.svelte";
   import {
     FOLDER_KIND_KEYS,
     progressRatio,
@@ -16,8 +21,15 @@
     progress: JobProgress | null;
     cancelled: boolean;
     hasRoot: boolean;
+    grouped: boolean;
+    /** Paths of the checked folders. */
+    selected: ReadonlySet<string>;
+    /** Total size of the checked folders (bytes). */
+    selectedBytes: number;
+    ontoggle: (f: HeavyFolder) => void;
+    onclear: () => void;
     oncancel: () => void;
-    ondelete: (f: HeavyFolder) => void;
+    ondelete: () => void;
   }
   let {
     data,
@@ -25,6 +37,11 @@
     progress,
     cancelled,
     hasRoot,
+    grouped,
+    selected,
+    selectedBytes,
+    ontoggle,
+    onclear,
     oncancel,
     ondelete,
   }: Props = $props();
@@ -32,16 +49,38 @@
   const ratio = $derived(
     progress ? progressRatio(progress.done, progress.total) : null,
   );
+
+  const columns: Column<HeavyFolder>[] = $derived([
+    { key: "select", header: "", width: "36px" },
+    {
+      key: "kind",
+      header: t("reclaim.folders.columns.kind"),
+      width: "150px",
+    },
+    { key: "path", header: t("reclaim.folders.columns.path"), kind: "path" },
+    {
+      key: "size",
+      header: t("common.columns.size"),
+      width: "100px",
+      align: "end",
+      kind: "numeric",
+    },
+    {
+      key: "lastUsed",
+      header: t("reclaim.folders.columns.lastUsed"),
+      width: "130px",
+    },
+  ]);
 </script>
 
-<p class="desc">{t("reclaim.folders.description")}</p>
-{#if !hasRoot}<p class="hint">{t("reclaim.folders.noRoot")}</p>{/if}
+<p class="desc subtle">{t("reclaim.folders.description")}</p>
+{#if !hasRoot}<p class="subtle">{t("reclaim.folders.noRoot")}</p>{/if}
 
 {#if scanning}
   <div class="scan" role="status">
     <span>{t("reclaim.folders.scanning")}</span>
     {#if progress}
-      <span>
+      <span class="subtle tabular">
         {#if progress.total}
           {t("reclaim.folders.measured", {
             done: progress.done,
@@ -52,67 +91,106 @@
         {/if}
       </span>
     {/if}
-    {#if ratio !== null}
-      <progress value={ratio} max="1"></progress>
-    {:else}
-      <progress></progress>
-    {/if}
-    <button type="button" onclick={oncancel}>
-      {t("common.buttons.cancel")}
-    </button>
+    <div class="bar">
+      <Progress
+        value={ratio ?? undefined}
+        label={t("reclaim.folders.scanning")}
+      />
+    </div>
+    <Button size="sm" onclick={oncancel}>{t("common.buttons.cancel")}</Button>
   </div>
 {/if}
-{#if cancelled}<p class="hint">{t("reclaim.folders.cancelled")}</p>{/if}
+{#if cancelled}
+  <Banner tone="info">{t("reclaim.folders.cancelled")}</Banner>
+{/if}
 
 {#if data && data.total.count === 0 && !scanning}
-  <p>{t("reclaim.folders.empty")}</p>
+  <EmptyState title={t("reclaim.folders.empty")} />
 {:else if data}
-  <GroupedTable {data} showDisk>
-    {#snippet head()}
-      <tr>
-        <th>{t("reclaim.folders.columns.path")}</th>
-        <th>{t("reclaim.folders.columns.kind")}</th>
-        <th>{t("common.columns.size")}</th>
-        <th>{t("reclaim.folders.columns.lastUsed")}</th>
-        <th>{t("common.columns.actions")}</th>
-      </tr>
-    {/snippet}
-    {#snippet row(f: HeavyFolder)}
-      <tr>
-        <td class="path" title={f.path}>{f.path}</td>
-        <td>{t(FOLDER_KIND_KEYS[f.kind])}</td>
-        <td>
-          {f.diskBytes != null
-            ? formatBytes(f.diskBytes)
-            : t("reclaim.common.unknown")}
-        </td>
-        <td>
+  <GroupedRows
+    {data}
+    {grouped}
+    {columns}
+    showDisk
+    ariaLabel={t("reclaim.tabs.folders")}
+    rowKey={(f) => f.path}
+    rowClass={(f) => (selected.has(f.path) ? "selected" : undefined)}
+  >
+    {#snippet cell(f, col)}
+      {#if col.key === "select"}
+        <input
+          type="checkbox"
+          checked={selected.has(f.path)}
+          aria-label={t("reclaim.folders.select", { name: f.path })}
+          onchange={() => ontoggle(f)}
+        />
+      {:else if col.key === "kind"}
+        <span class="mono">{t(FOLDER_KIND_KEYS[f.kind])}</span>
+      {:else if col.key === "path"}
+        <span class="path" title={f.path}>{f.path}</span>
+      {:else if col.key === "size"}
+        {f.diskBytes != null
+          ? formatBytes(f.diskBytes)
+          : t("reclaim.common.unknown")}
+      {:else}
+        <span class="subtle">
           {f.lastUsedIso ? formatDate(f.lastUsedIso) : t("reclaim.common.none")}
-        </td>
-        <td>
-          <button type="button" onclick={() => ondelete(f)}>
-            {t("reclaim.actions.deleteFolder")}
-          </button>
-        </td>
-      </tr>
+        </span>
+      {/if}
     {/snippet}
-  </GroupedTable>
+  </GroupedRows>
+
+  {#if selected.size > 0}
+    <div class="footer" role="region" aria-live="polite">
+      <span class="count tabular">
+        <b>{t("reclaim.folders.selected", { count: selected.size })}</b>
+        <span class="subtle">·</span>
+        <span class="mono">{formatBytes(selectedBytes)}</span>
+      </span>
+      <span class="spacer"></span>
+      <Button size="sm" variant="ghost" onclick={onclear}>
+        {t("reclaim.folders.clear")}
+      </Button>
+      <Button size="sm" variant="danger" onclick={ondelete}>
+        {t("reclaim.folders.deleteSelected")}
+      </Button>
+    </div>
+  {/if}
 {/if}
 
 <style>
-  .desc,
-  .hint {
-    opacity: 0.8;
+  .desc {
+    margin: 0 0 4px;
+    font-size: 12.5px;
   }
   .scan {
     display: flex;
-    gap: 0.75rem;
+    gap: 12px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 0.5rem;
+    font-size: 12.5px;
   }
-  .path {
-    word-break: break-all;
-    max-width: 32rem;
+  .bar {
+    flex: 1 1 160px;
+    min-width: 120px;
+  }
+  .footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    font-size: 12.5px;
+  }
+  .spacer {
+    flex: 1;
+  }
+  input[type="checkbox"] {
+    margin: 0;
   }
 </style>

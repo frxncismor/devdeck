@@ -32,6 +32,11 @@ src/                          # Svelte
   lib/i18n/locales/{en,es}/{common,worktrees,ports,json-viewer,reclaim}.json   # one file per module and language
   modules/{worktrees,ports,json-viewer,reclaim}/  # one folder per module
   components/{Sidebar,ScopeSelector,LanguageSelector,ConfirmDialog,VirtualList,GroupedTable}.svelte
+  # after the redesign (T100–T103): see "UI design system" below
+  styles/{tokens,fonts}.css  app.css  lib/{theme.svelte.ts,toasts.svelte.ts,shell.svelte.ts,modules.ts,palette.ts,projectColor.ts}
+  components/{TitleBar,Sidebar,TopBar,TopBarContent,ScopeSelect,CommandPalette,Button,IconButton,Badge,Chip,StatCard,
+              Group,DataTable,Tabs,EmptyState,Banner,Spinner,Progress,ToastHost,ConfirmDialog,VirtualList,GroupedTable}.svelte
+docs/design/                  # Claude Design handoff (DEVDECK_HANDOFF.md, tokens.css, canvas/*.dc.html): reference only
 .githooks/pre-commit  .gitleaks.toml  scripts/{setup-gitleaks.mts,setup-gitleaks.test.mts}
 .github/workflows/{ci.yml,secret-scan.yml,release.yml}
 ```
@@ -146,7 +151,35 @@ under 64-bit ⇒ `None`. macOS/Linux: best effort.
 See [contracts/commands.md](contracts/commands.md). State: `AppState { config: Mutex<Config>, json: Mutex<Option<JsonSession>>, jobs: Mutex<HashMap<JobId, Arc<AtomicBool>>> }`.
 Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `store` (Rust only), `clipboard-manager`.
 Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`,
-`clipboard-manager:allow-write-text`; no `shell`, `opener` or `store` permission: `code`/`wt` launches and config storage happen in Rust.
+`clipboard-manager:allow-write-text` (plus the window permissions of the custom title bar, see "UI design system"); no `shell`, `opener` or `store` permission: `code`/`wt` launches and config storage happen in Rust.
+
+## UI design system (redesign, T100–T103)
+Source of truth: Paco's Claude Design handoff, versioned in `docs/design/` (`DEVDECK_HANDOFF.md`, `tokens.css`, and the
+29 artboards in `canvas/*.dc.html`, 1280×800, kept as reference HTML only — their runtime is not used). Logic, commands and
+contracts are unchanged: the redesign is markup and CSS only (Svelte 5 + scoped plain CSS, no CSS framework).
+- **Tokens**: `src/styles/tokens.css` (colors, spacing, radii, type scale, `--project-1..4`/`--project-none`) as CSS
+  variables; components use `var(--token)` only. `app.css` is the base layer (reset, focus ring 2px `--accent` offset 2px,
+  scrollbars, `.mono .tabular .muted .subtle .path .sr-only`).
+- **Theme**: dark first + light. Root carries `dd dark|light`; `lib/theme.svelte.ts` stores it in `localStorage`
+  (`devdeck.theme`) and applies it before the config loads (no flash; an inline script is not allowed by the CSP).
+- **Fonts**: Inter (variable) and JetBrains Mono bundled with `@fontsource*` (latin woff2, no network). Monospace for
+  paths, PIDs, ports, sizes and JSON.
+- **Icons**: `@lucide/svelte`, stroke 1.75.
+- **Shell**: own title bar (`decorations: false`, 1280×800, min 960×600; drag region, minimize/maximize/close), collapsible
+  sidebar (232/56 px, Ctrl B, `aria-current`), top bar (60 px) with module title, scope select (Ctrl P) and per-module
+  `TopBarContent` (meta + actions), command palette (Ctrl K: modules and scope), toasts (`aria-live`, 5 s, errors stay).
+- **Shared components** (`src/components/`): Button, IconButton, Badge, Chip (`projectColor`), StatCard (sm/lg with
+  stacked segments), Group (project header with count and RAM/disk totals), DataTable (grid columns, path cells truncated
+  from the start), Tabs (keyboard), EmptyState, Banner, Spinner, Progress, ConfirmDialog (danger by default, names the
+  action and size), GroupedTable on top of Group.
+- **Modules**: global scope = totals + one Group per project (+ "No project"); project scope = StatCards + one table.
+  Ports is a single table with an owner Chip (not grouped). JSON Viewer: drop zone + Open (Ctrl O), recent files, indexing
+  card (Esc cancels), file bar, search with counter and prev/next, 26 px tree rows with guides and type badges, side panel.
+  Reclaim: two large StatCards (RAM / disk stacked by project or, in project scope, by worktree), read-only notice, Tabs with
+  counts, multi-select regenerable folders with a single confirmation.
+- Window capabilities added to `capabilities/default.json` for the title bar: `core:window:allow-start-dragging`,
+  `allow-minimize`, `allow-toggle-maximize`, `allow-internal-toggle-maximize`, `allow-close`.
+- Design gaps (shown by the design, not provided by the backend) are left out or derived in the front; see `research.md`.
 
 ## Security (gitleaks 8.30.1)
 - `.githooks/pre-commit` adapted from `grim-dawn-builds` (POSIX sh, fail closed, exact version, rejects symlink, `--staged --redact`).

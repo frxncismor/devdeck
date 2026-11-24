@@ -128,13 +128,20 @@ sysinfo, serde, serde_json, thiserror, tempfile (dev), regex?`).
 - [x] T097 Final `/speckit.analyze` and close-out — `specs/001-devdeck-mvp/`
 - [ ] T098 Set the GitHub repository description (text in `plan.md`) — run by the main orchestrator with Paco's permission — verification
 
+## Phase 5 — UI redesign (Claude Design handoff; markup and CSS only, no logic or contract changes)
+Visual source of truth: `docs/design/` (see `plan.md`, "UI design system"). Decisions and design gaps: `research.md`.
+- [x] T100 Version the handoff, tokens as CSS variables, bundled fonts, Lucide icons, dark/light theme, custom title bar + window capabilities, collapsible sidebar, top bar, scope select, command palette, toasts and shared components (R0) — `docs/design/`, `src/styles/`, `src/app.css`, `src/lib/{theme,toasts,shell}.svelte.ts`, `src/components/*`, `src-tauri/{tauri.conf.json,capabilities/default.json}`
+- [x] T101 [P] [US1][US3] Restyle Worktrees and Ports (groups, stat cards, data tables, toasts, protocol toggle, 5 s auto refresh while focused) (R1-A) — `src/modules/{worktrees,ports}/**`, `locales/{en,es}/{worktrees,ports}.json`
+- [x] T102 [P] [US6][US7] Restyle JSON Viewer (drop zone, recent files, indexing card, file bar, search counter, tree rows, side panel) and Reclaim (stat cards, read-only notice, tabs, multi-select folders, confirmations naming size, toasts) (R1-B) — `src/modules/{json-viewer,reclaim}/**`, `locales/{en,es}/{json-viewer,reclaim}.json`
+- [ ] T103 Redesign verification: lint, svelte-check, vitest, cargo test, `pnpm tauri build`, test screenshots in both themes — verification
+
 ## Dependencies
-1A → (2A ‖ 2B ‖ 2C ‖ 2D) → 3 → 4. 1B is parallel to 1A except T021 (needs T002) and T020 (needs T015). Within 1A: T012a → T012b → T012c, T012d; T012 and T013 need T012a. Within 2: T033 depends on T030–T032; T042 on T041; T050 on T049; T064 on `worktrees::list` (contract T008); T065 on T061–T064; each module's locale task (T039, T048, T060a, T070) runs together with its UI tasks.
+1A → (2A ‖ 2B ‖ 2C ‖ 2D) → 3 → 4 → 5 (T100 → (T101 ‖ T102) → T103). 1B is parallel to 1A except T021 (needs T002) and T020 (needs T015). Within 1A: T012a → T012b → T012c, T012d; T012 and T013 need T012a. Within 2: T033 depends on T030–T032; T042 on T041; T050 on T049; T064 on `worktrees::list` (contract T008); T065 on T061–T064; each module's locale task (T039, T048, T060a, T070) runs together with its UI tasks.
 
 ## FR → tasks matrix
 | FR | Tasks |
 |---|---|
-| FR-001 | T013, T012c |
+| FR-001 | T013, T012c, T100 |
 | FR-002 | T010, T037 |
 | FR-003 | T005 |
 | FR-004 | T006 |

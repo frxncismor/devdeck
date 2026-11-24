@@ -1,66 +1,94 @@
 {
   "intro": "Abre un archivo JSON grande para explorarlo sin cargarlo en memoria.",
   "open": {
-    "button": "Abrir archivo JSON…",
+    "button": "Abrir archivo…",
     "dialogTitle": "Selecciona un archivo JSON",
     "close": "Cerrar archivo"
   },
+  "drop": {
+    "title": "Suelta aquí un archivo JSON",
+    "hint": "o usa Abrir archivo…: los archivos grandes se indexan, nunca se cargan en memoria.",
+    "active": "Suelta para abrir"
+  },
+  "recent": {
+    "title": "Archivos recientes",
+    "remove": "Quitar de recientes"
+  },
   "file": {
-    "containers_one": "{count} contenedor",
-    "containers_other": "{count} contenedores"
+    "size": "Tamaño",
+    "containers": "Contenedores",
+    "indexedIn": "Indexado en"
   },
   "status": {
-    "indexing": "Indexando {name}…",
-    "progress": "{done} de {total} ({percent})",
+    "indexing": "Indexando {name}",
+    "progress": "{done} de {total}",
+    "eta": "faltan unos {time}",
+    "note": "Pulsa Esc para cancelar; nada se guarda en memoria.",
     "cancelled": "Indexado cancelado"
   },
   "tree": {
     "label": "Árbol JSON",
-    "expand": "Expandir",
-    "collapse": "Contraer",
-    "keys_one": "{count} clave",
-    "keys_other": "{count} claves",
-    "items_one": "{count} elemento",
-    "items_other": "{count} elementos",
+    "path": "Ruta",
+    "expand": "Expandir {name}",
+    "collapse": "Contraer {name}",
+    "keys_one": "{ {count} clave }",
+    "keys_other": "{ {count} claves }",
+    "items_one": "[ {count} elemento ]",
+    "items_other": "[ {count} elementos ]",
     "empty": "vacío",
-    "loadMore": "Cargar {count} más ({remaining} restantes)",
-    "loading": "Cargando…"
+    "loadMore": "Mostrar los {count} siguientes · faltan {remaining}",
+    "loading": "Cargando…",
+    "virtualized": "Virtualizado · {rendered} de {total} filas renderizadas",
+    "kind": {
+      "object": "objeto",
+      "array": "array",
+      "string": "cadena",
+      "number": "número",
+      "bool": "bool",
+      "null": "null"
+    }
   },
   "search": {
-    "title": "Buscar",
-    "placeholder": "Texto a buscar",
-    "inKeys": "Claves",
-    "inValues": "Valores",
-    "caseSensitive": "Distinguir mayúsculas",
+    "label": "Buscar en el JSON",
+    "placeholder": "Buscar claves y valores",
     "run": "Buscar",
     "stop": "Detener",
     "searching": "Buscando… {count} encontrados",
-    "results_one": "{count} resultado",
-    "results_other": "{count} resultados",
-    "truncated": "Se muestran los primeros {count} resultados; afina la búsqueda para ver otros.",
+    "counter": "{current} de {total}",
     "none": "Sin resultados",
+    "truncated": "Se muestran los primeros {count} resultados; afina la búsqueda para ver otros.",
+    "options": "Opciones de búsqueda",
+    "caseSensitive": "Distinguir mayúsculas",
+    "inKeys": "Claves",
+    "inValues": "Valores",
+    "prev": "Coincidencia anterior",
+    "next": "Coincidencia siguiente",
     "hitKey": "clave",
-    "hitValue": "valor",
-    "prev": "Anterior",
-    "next": "Siguiente",
-    "page": "Página {page} de {pages}"
+    "hitValue": "valor"
   },
   "actions": {
     "title": "Nodo seleccionado",
     "none": "Selecciona un nodo del árbol o un resultado de búsqueda.",
+    "jsonPath": "JSONPath",
+    "type": "Tipo",
+    "children": "Hijos",
+    "depth": "Profundidad",
+    "unknown": "—",
     "copyPath": "Copiar ruta",
     "copyValue": "Copiar valor",
     "copyFormatted": "Copiar formateado",
-    "preview": "Vista previa formateada",
-    "previewCut": "Vista previa cortada en {count} caracteres; copia o guarda para obtener todo.",
+    "preview": "Vista previa",
+    "previewLoad": "Ver vista previa",
+    "previewCut": "Vista previa cortada a {count} caracteres; copia o guarda para obtenerlo todo.",
+    "prettyPrint": "Formatear subárbol",
     "saveFormatted": "Guardar formateado…",
-    "saveWhole": "Guardar todo el archivo formateado…",
     "saveDialogTitle": "Guardar JSON formateado",
     "copied": "Copiado al portapapeles",
     "saving": "Guardando… {percent}",
-    "saved": "Guardado: {size}",
+    "saved": "Guardado {size}",
     "cancelSave": "Cancelar guardado",
     "saveCancelled": "Guardado cancelado",
-    "valueCut": "El valor supera el límite de copia ({max}); guárdalo en un archivo."
+    "valueCut": "El valor supera el límite de copia ({max}); guárdalo en un archivo.",
+    "saveNode": "Guardar nodo formateado…"
   }
 }

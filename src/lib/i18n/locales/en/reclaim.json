@@ -1,20 +1,13 @@
 {
-  "title": "Reclaim",
-  "intro": "See what you can recover: RAM held by dev processes and disk used by forgotten worktrees and regenerable folders. Nothing is changed until you confirm an action.",
   "summary": {
-    "title": "Recoverable",
-    "ram": "RAM",
-    "disk": "Disk",
+    "ram": "Recoverable RAM",
+    "disk": "Recoverable disk",
     "nothing": "Nothing to reclaim right now.",
-    "byProject": "By project",
-    "columns": {
-      "project": "Project",
-      "ram": "RAM",
-      "disk": "Disk",
-      "details": "Details"
-    },
-    "details": "{processes} processes · {worktrees} worktrees · {folders} folders",
-    "sizing": "Disk figures are still being measured."
+    "sizing": "Disk figures are still being measured.",
+    "ramHint_one": "from {count} dev process",
+    "ramHint_other": "from {count} dev processes",
+    "diskHint": "{worktrees} worktrees · {folders} folders",
+    "byWorktree": "by worktree"
   },
   "tabs": {
     "label": "Reclaim sections",
@@ -23,7 +16,7 @@
     "folders": "Regenerable folders"
   },
   "common": {
-    "refresh": "Refresh",
+    "refresh": "Rescan",
     "unknown": "Unknown",
     "none": "—"
   },
@@ -48,8 +41,9 @@
       "age": "Running for",
       "folder": "Folder"
     },
-    "orphan": "Orphan",
-    "unknownFolder": "Unknown folder"
+    "orphan": "Deleted worktree",
+    "unknownFolder": "Unknown folder",
+    "orphanTitle": "Working directory no longer exists"
   },
   "folders": {
     "description": "Folders that can be regenerated (node_modules, target, .venv, dist and package-manager caches). Deleting them is permanent.",
@@ -61,10 +55,15 @@
     "measured": "Measured {done} of {total}",
     "cancelled": "The search was cancelled. Showing the previous results.",
     "columns": {
-      "path": "Folder",
-      "kind": "Type",
+      "path": "Path",
+      "kind": "Folder",
       "lastUsed": "Last used"
-    }
+    },
+    "select": "Select {name}",
+    "selected_one": "{count} selected",
+    "selected_other": "{count} selected",
+    "clear": "Clear",
+    "deleteSelected": "Delete permanently…"
   },
   "kind": {
     "node": "Node.js",
@@ -96,8 +95,7 @@
   },
   "actions": {
     "removeWorktree": "Remove",
-    "terminate": "Terminate",
-    "deleteFolder": "Delete"
+    "terminate": "Terminate"
   },
   "removeWorktree": {
     "message": "Remove the worktree at {path} ({size})? The folder will be deleted; the branch is kept.",
@@ -109,10 +107,13 @@
     "confirm": "Terminate"
   },
   "deleteFolder": {
-    "title": "Delete folder permanently",
-    "message": "Permanently delete {path} ({size})? It is not sent to the Recycle Bin. It can be regenerated, but this cannot be undone.",
-    "confirm": "Delete permanently",
-    "done": "Freed {size}."
+    "title_one": "Delete {count} folder permanently?",
+    "title_other": "Delete {count} folders permanently?",
+    "message": "Files skip the Recycle Bin and can't be restored. They can be regenerated, but this cannot be undone.",
+    "total": "Total",
+    "confirm": "Delete {size}",
+    "done": "Freed {size}.",
+    "partial": "Deleted {done} of {total} folders ({size} freed) before an error."
   },
   "errors": {
     "reason": {
@@ -124,5 +125,11 @@
       "outside_root": "It is outside the repositories folder and is not a known cache.",
       "not_allowlisted": "It is not a regenerable folder (node_modules, target, .venv, dist or a known cache)."
     }
+  },
+  "readOnly": "Read-only scan. Nothing is stopped or deleted until you confirm, and nothing runs automatically.",
+  "scannedAt": "Scanned at {time}",
+  "toast": {
+    "worktreeRemoved": "Worktree removed",
+    "processTerminated": "{name} terminated"
   }
 }

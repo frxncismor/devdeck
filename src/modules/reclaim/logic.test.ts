@@ -10,10 +10,13 @@ import {
   formatCpu,
   hasRecoverable,
   progressRatio,
+  projectSlices,
   REASON_KEYS,
   removalWarnings,
   sortedByProject,
   totalsOf,
+  worktreeOf,
+  worktreeSlices,
   type DevProcess,
   type ForgottenWorktree,
   type ProjectSummary,
@@ -199,5 +202,49 @@ describe("DevProcess shape", () => {
       ageSecs: 0,
     };
     expect(DEV_KIND_KEYS[p.kind]).toBe("reclaim.kind.rustAnalyzer");
+  });
+});
+
+describe("slices", () => {
+  it("projectSlices drops empty projects and sorts biggest first", () => {
+    const s = summary([
+      ps({ project: { id: "a", name: "A" }, ramBytes: 5 }),
+      ps({ project: { id: "b", name: "B" }, ramBytes: 0 }),
+      ps({ project: null, ramBytes: 9 }),
+    ]);
+    expect(projectSlices(s, "ramBytes", "None")).toEqual([
+      { key: null, label: "None", value: 9 },
+      { key: "a", label: "A", value: 5 },
+    ]);
+  });
+
+  it("worktreeOf picks the longest containing root (Windows paths too)", () => {
+    const roots = ["C:\\dev\\orbit", "C:\\dev\\orbit.wt\\feat"];
+    expect(worktreeOf("c:/dev/orbit.wt/feat/node_modules", roots)).toBe(
+      "C:\\dev\\orbit.wt\\feat",
+    );
+    expect(worktreeOf("C:\\dev\\orbit\\dist", roots)).toBe("C:\\dev\\orbit");
+    expect(worktreeOf("C:\\dev\\orbit2\\dist", roots)).toBeNull();
+    expect(worktreeOf(null, roots)).toBeNull();
+  });
+
+  it("worktreeSlices sums per worktree and labels by folder name", () => {
+    const items = [
+      { p: "/r/main/a", n: 3 },
+      { p: "/r/main/b", n: 4 },
+      { p: "/r/wt/x/c", n: 10 },
+      { p: "/elsewhere", n: 99 },
+    ];
+    expect(
+      worktreeSlices(
+        items,
+        ["/r/main", "/r/wt/x"],
+        (i) => i.p,
+        (i) => i.n,
+      ),
+    ).toEqual([
+      { key: "/r/wt/x", label: "x", value: 10 },
+      { key: "/r/main", label: "main", value: 7 },
+    ]);
   });
 });

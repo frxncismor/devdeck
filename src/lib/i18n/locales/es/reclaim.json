@@ -1,20 +1,13 @@
 {
-  "title": "Recuperar",
-  "intro": "Mira qué puedes recuperar: la RAM que ocupan los procesos de desarrollo y el disco que usan los worktrees olvidados y las carpetas regenerables. No se cambia nada hasta que confirmes una acción.",
   "summary": {
-    "title": "Recuperable",
-    "ram": "RAM",
-    "disk": "Disco",
+    "ram": "RAM recuperable",
+    "disk": "Disco recuperable",
     "nothing": "No hay nada que recuperar ahora mismo.",
-    "byProject": "Por proyecto",
-    "columns": {
-      "project": "Proyecto",
-      "ram": "RAM",
-      "disk": "Disco",
-      "details": "Detalle"
-    },
-    "details": "{processes} procesos · {worktrees} worktrees · {folders} carpetas",
-    "sizing": "Aún se están midiendo las cifras de disco."
+    "sizing": "Aún se están midiendo las cifras de disco.",
+    "ramHint_one": "de {count} proceso de desarrollo",
+    "ramHint_other": "de {count} procesos de desarrollo",
+    "diskHint": "{worktrees} worktrees · {folders} carpetas",
+    "byWorktree": "por worktree"
   },
   "tabs": {
     "label": "Secciones de Recuperar",
@@ -23,7 +16,7 @@
     "folders": "Carpetas regenerables"
   },
   "common": {
-    "refresh": "Actualizar",
+    "refresh": "Reescanear",
     "unknown": "Desconocido",
     "none": "—"
   },
@@ -48,8 +41,9 @@
       "age": "En ejecución",
       "folder": "Carpeta"
     },
-    "orphan": "Huérfano",
-    "unknownFolder": "Carpeta desconocida"
+    "orphan": "Worktree eliminado",
+    "unknownFolder": "Carpeta desconocida",
+    "orphanTitle": "La carpeta de trabajo ya no existe"
   },
   "folders": {
     "description": "Carpetas que se pueden regenerar (node_modules, target, .venv, dist y cachés de gestores de paquetes). Borrarlas es permanente.",
@@ -61,10 +55,15 @@
     "measured": "Medidas {done} de {total}",
     "cancelled": "Se canceló la búsqueda. Se muestran los resultados anteriores.",
     "columns": {
-      "path": "Carpeta",
-      "kind": "Tipo",
+      "path": "Ruta",
+      "kind": "Carpeta",
       "lastUsed": "Último uso"
-    }
+    },
+    "select": "Seleccionar {name}",
+    "selected_one": "{count} seleccionada",
+    "selected_other": "{count} seleccionadas",
+    "clear": "Limpiar",
+    "deleteSelected": "Eliminar definitivamente…"
   },
   "kind": {
     "node": "Node.js",
@@ -96,8 +95,7 @@
   },
   "actions": {
     "removeWorktree": "Eliminar",
-    "terminate": "Terminar",
-    "deleteFolder": "Borrar"
+    "terminate": "Terminar"
   },
   "removeWorktree": {
     "message": "¿Eliminar el worktree en {path} ({size})? Se borrará la carpeta; la rama se conserva.",
@@ -109,10 +107,13 @@
     "confirm": "Terminar"
   },
   "deleteFolder": {
-    "title": "Borrar carpeta de forma permanente",
-    "message": "¿Borrar de forma permanente {path} ({size})? No va a la Papelera de reciclaje. Se puede regenerar, pero no se puede deshacer.",
-    "confirm": "Borrar de forma permanente",
-    "done": "Se liberaron {size}."
+    "title_one": "¿Eliminar {count} carpeta definitivamente?",
+    "title_other": "¿Eliminar {count} carpetas definitivamente?",
+    "message": "Los archivos no pasan por la Papelera y no se pueden restaurar. Se pueden regenerar, pero no se puede deshacer.",
+    "total": "Total",
+    "confirm": "Eliminar {size}",
+    "done": "Liberados {size}.",
+    "partial": "Se eliminaron {done} de {total} carpetas ({size} liberados) antes de un error."
   },
   "errors": {
     "reason": {
@@ -124,5 +125,11 @@
       "outside_root": "Está fuera de la carpeta de repositorios y no es una caché conocida.",
       "not_allowlisted": "No es una carpeta regenerable (node_modules, target, .venv, dist o una caché conocida)."
     }
+  },
+  "readOnly": "Escaneo de solo lectura. Nada se detiene ni se borra hasta que lo confirmes, y nada se ejecuta automáticamente.",
+  "scannedAt": "Escaneado: {time}",
+  "toast": {
+    "worktreeRemoved": "Worktree eliminado",
+    "processTerminated": "{name} terminado"
   }
 }

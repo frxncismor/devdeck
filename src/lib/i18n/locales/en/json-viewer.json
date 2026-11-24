@@ -1,66 +1,94 @@
 {
   "intro": "Open a large JSON file to browse it without loading it into memory.",
   "open": {
-    "button": "Open JSON file…",
+    "button": "Open file…",
     "dialogTitle": "Select a JSON file",
     "close": "Close file"
   },
+  "drop": {
+    "title": "Drop a JSON file here",
+    "hint": "or use Open file… — large files are indexed, never loaded into memory.",
+    "active": "Release to open"
+  },
+  "recent": {
+    "title": "Recent files",
+    "remove": "Remove from recent files"
+  },
   "file": {
-    "containers_one": "{count} container",
-    "containers_other": "{count} containers"
+    "size": "Size",
+    "containers": "Containers",
+    "indexedIn": "Indexed in"
   },
   "status": {
-    "indexing": "Indexing {name}…",
-    "progress": "{done} of {total} ({percent})",
+    "indexing": "Indexing {name}",
+    "progress": "{done} of {total}",
+    "eta": "about {time} left",
+    "note": "Press Esc to cancel; nothing is kept in memory.",
     "cancelled": "Indexing cancelled"
   },
   "tree": {
     "label": "JSON tree",
-    "expand": "Expand",
-    "collapse": "Collapse",
-    "keys_one": "{count} key",
-    "keys_other": "{count} keys",
-    "items_one": "{count} item",
-    "items_other": "{count} items",
+    "path": "Path",
+    "expand": "Expand {name}",
+    "collapse": "Collapse {name}",
+    "keys_one": "{ {count} key }",
+    "keys_other": "{ {count} keys }",
+    "items_one": "[ {count} item ]",
+    "items_other": "[ {count} items ]",
     "empty": "empty",
-    "loadMore": "Load {count} more ({remaining} remaining)",
-    "loading": "Loading…"
+    "loadMore": "Show next {count} · {remaining} remaining",
+    "loading": "Loading…",
+    "virtualized": "Virtualized · {rendered} of {total} rows rendered",
+    "kind": {
+      "object": "object",
+      "array": "array",
+      "string": "string",
+      "number": "number",
+      "bool": "bool",
+      "null": "null"
+    }
   },
   "search": {
-    "title": "Search",
-    "placeholder": "Text to find",
-    "inKeys": "Keys",
-    "inValues": "Values",
-    "caseSensitive": "Match case",
+    "label": "Search JSON",
+    "placeholder": "Search keys and values",
     "run": "Search",
     "stop": "Stop",
     "searching": "Searching… {count} found",
-    "results_one": "{count} result",
-    "results_other": "{count} results",
-    "truncated": "Showing the first {count} results; refine the search to see others.",
+    "counter": "{current} of {total}",
     "none": "No results",
+    "truncated": "Showing the first {count} results; refine the search to see others.",
+    "options": "Search options",
+    "caseSensitive": "Match case",
+    "inKeys": "Keys",
+    "inValues": "Values",
+    "prev": "Previous match",
+    "next": "Next match",
     "hitKey": "key",
-    "hitValue": "value",
-    "prev": "Previous",
-    "next": "Next",
-    "page": "Page {page} of {pages}"
+    "hitValue": "value"
   },
   "actions": {
     "title": "Selected node",
     "none": "Select a node in the tree or a search result.",
+    "jsonPath": "JSONPath",
+    "type": "Type",
+    "children": "Children",
+    "depth": "Depth",
+    "unknown": "—",
     "copyPath": "Copy path",
     "copyValue": "Copy value",
     "copyFormatted": "Copy formatted",
-    "preview": "Preview formatted",
+    "preview": "Preview",
+    "previewLoad": "Show preview",
     "previewCut": "Preview cut at {count} characters; copy or save to get everything.",
+    "prettyPrint": "Pretty-print subtree",
     "saveFormatted": "Save formatted…",
-    "saveWhole": "Save whole file formatted…",
     "saveDialogTitle": "Save formatted JSON",
     "copied": "Copied to the clipboard",
     "saving": "Saving… {percent}",
     "saved": "Saved {size}",
     "cancelSave": "Cancel save",
     "saveCancelled": "Save cancelled",
-    "valueCut": "The value is larger than the copy limit ({max}); save it to a file instead."
+    "valueCut": "The value is larger than the copy limit ({max}); save it to a file instead.",
+    "saveNode": "Save node formatted…"
   }
 }

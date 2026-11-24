@@ -251,7 +251,12 @@ pub async fn reclaim_delete_folder(path: String, state: State<'_, AppState>) -> 
         })
         .await?
     };
-    CACHE.lock().unwrap().folders.retain(|f| f.path != target);
+    let gone = devdeck_core::scope::normalize(&target);
+    CACHE
+        .lock()
+        .unwrap()
+        .folders
+        .retain(|f| devdeck_core::scope::normalize(&f.path) != gone);
     Ok(Freed { freed_bytes: freed })
 }
 

@@ -204,12 +204,14 @@ pub fn last_commit_time(dir: &Path, rev: Option<&str>) -> Result<Option<i64>> {
 /// Removes the linked worktree at `path`.
 /// - The main worktree is never removable (`worktree_main_not_removable`).
 /// - A dirty worktree needs `force = true` (otherwise `worktree_dirty`, which the UI turns into a confirmation).
-pub fn remove(path: &Path, force: bool) -> Result<()> {
-    remove_with(&SystemGit, path, force)
+/// - `repo_path` is the project's main repository: git runs from there, so a worktree whose folder
+///   no longer exists is cleaned with `git worktree prune`.
+pub fn remove(repo_path: &Path, path: &Path, force: bool) -> Result<()> {
+    remove_with(&SystemGit, repo_path, path, force)
 }
 
-pub fn remove_with(git: &dyn GitRunner, path: &Path, force: bool) -> Result<()> {
-    let out = git::run_ok(git, path, &["worktree", "list", "--porcelain"])?;
+pub fn remove_with(git: &dyn GitRunner, repo_path: &Path, path: &Path, force: bool) -> Result<()> {
+    let out = git::run_ok(git, repo_path, &["worktree", "list", "--porcelain"])?;
     let raw = git::parse_worktree_list(&out);
     let main = raw
         .first()
@@ -223,12 +225,12 @@ pub fn remove_with(git: &dyn GitRunner, path: &Path, force: bool) -> Result<()> 
     if same_path(&target.path, &main) {
         return Err(Error::not_allowed("worktree_main_not_removable"));
     }
-    let dirty = if path.is_dir() {
-        let s = git::run_ok(git, path, &["status", "--porcelain=v2"])?;
-        git::parse_status(&s).dirty_count > 0
-    } else {
-        false
-    };
+    if !path.is_dir() {
+        git::run_ok(git, &native(&main), &["worktree", "prune"])?;
+        return Ok(());
+    }
+    let s = git::run_ok(git, path, &["status", "--porcelain=v2"])?;
+    let dirty = git::parse_status(&s).dirty_count > 0;
     if dirty && !force {
         return Err(Error::not_allowed("worktree_dirty"));
     }
@@ -397,16 +399,16 @@ mod tests {
             &["worktree", "add", "-b", "feat", feat.to_str().unwrap()],
         );
 
-        let e = remove(&repo, true).unwrap_err();
+        let e = remove(&repo, &repo, true).unwrap_err();
         assert_eq!(e.code, "worktree_main_not_removable");
         assert!(repo.is_dir());
 
         fs::write(feat.join("dirty.txt"), "x").unwrap();
-        let e = remove(&feat, false).unwrap_err();
+        let e = remove(&repo, &feat, false).unwrap_err();
         assert_eq!(e.code, "worktree_dirty");
         assert!(feat.is_dir());
 
-        remove(&feat, true).unwrap();
+        remove(&repo, &feat, true).unwrap();
         assert!(!feat.exists());
         assert_eq!(list(&repo).unwrap().len(), 1);
     }
@@ -422,9 +424,9 @@ mod tests {
             &repo,
             &["worktree", "add", "-b", "feat", feat.to_str().unwrap()],
         );
-        remove(&feat, false).unwrap();
+        remove(&repo, &feat, false).unwrap();
         assert!(!feat.exists());
-        let e = remove(&repo.join("nope"), false).unwrap_err();
+        let e = remove(&repo, &repo.join("nope"), false).unwrap_err();
         assert!(matches!(e.kind, ErrorKind::Git | ErrorKind::NotFound));
     }
 
@@ -524,6 +526,54 @@ mod tests {
                 stderr: "fatal".into(),
             })
         }
+    }
+
+    /// Records every git call; `worktree list` reports a main repo and a linked worktree.
+    struct RecordingGit {
+        list: String,
+        calls: std::sync::Mutex<Vec<String>>,
+    }
+    impl GitRunner for RecordingGit {
+        fn run(&self, _cwd: &Path, args: &[&str]) -> Result<git::GitOutput> {
+            self.calls.lock().unwrap().push(args.join(" "));
+            let stdout = if args.starts_with(&["worktree", "list"]) {
+                self.list.clone()
+            } else {
+                String::new()
+            };
+            Ok(git::GitOutput {
+                code: 0,
+                stdout,
+                stderr: String::new(),
+            })
+        }
+    }
+
+    #[test]
+    fn remove_prunes_when_the_worktree_folder_is_gone() {
+        let t = tempfile::tempdir().unwrap();
+        let main = t.path().join("app");
+        let gone = t.path().join("app-gone");
+        let list = format!(
+            "worktree {}
+HEAD aaaa
+branch refs/heads/main
+
+worktree {}
+HEAD bbbb
+branch refs/heads/gone
+",
+            main.display(),
+            gone.display()
+        );
+        let git = RecordingGit {
+            list,
+            calls: Default::default(),
+        };
+        remove_with(&git, &main, &gone, false).unwrap();
+        let calls = git.calls.lock().unwrap();
+        assert!(calls.contains(&"worktree prune".to_string()));
+        assert!(!calls.iter().any(|c| c.starts_with("worktree remove")));
     }
 
     #[test]

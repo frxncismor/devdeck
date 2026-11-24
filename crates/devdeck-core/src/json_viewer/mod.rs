@@ -515,6 +515,13 @@ mod tests {
             .unwrap_err();
         assert_eq!(e.kind, crate::ErrorKind::Cancelled);
         assert!(!dest3.exists());
+
+        // A pre-existing destination is not deleted when the save fails.
+        std::fs::write(&dest3, "keep").unwrap();
+        let e = format::save_formatted(&d3, None, &dest3, &AtomicBool::new(true), &mut |_, _| {})
+            .unwrap_err();
+        assert_eq!(e.kind, crate::ErrorKind::Cancelled);
+        assert!(dest3.exists());
     }
 
     // ---- T055: fixtures + memory/time --------------------------------------------------------

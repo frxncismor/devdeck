@@ -1,5 +1,6 @@
 //! Persisted application configuration (stored by the Tauri `store` plugin as JSON).
 
+use crate::error::{Error, Result};
 use crate::scope::Scope;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -43,9 +44,57 @@ impl Default for Config {
     }
 }
 
+impl Config {
+    /// A configured `root` must be an absolute, existing directory and not a drive/filesystem root.
+    pub fn validate(&self) -> Result<()> {
+        let Some(root) = &self.root else {
+            return Ok(());
+        };
+        let reject =
+            |reason: &str| Error::not_allowed("folder_not_allowed").with_param("reason", reason);
+        if !root.is_absolute() {
+            return Err(reject("not_absolute"));
+        }
+        if !root.is_dir() {
+            return Err(reject("not_a_directory"));
+        }
+        if root.parent().is_none() {
+            return Err(reject("root_directory"));
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn with_root(root: &str) -> Config {
+        Config {
+            root: Some(root.into()),
+            ..Config::default()
+        }
+    }
+
+    #[test]
+    fn validate_accepts_no_root_and_an_existing_absolute_dir() {
+        assert!(Config::default().validate().is_ok());
+        let t = tempfile::tempdir().unwrap();
+        assert!(with_root(t.path().to_str().unwrap()).validate().is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_relative_missing_and_filesystem_roots() {
+        assert_eq!(
+            with_root("relative/dir").validate().unwrap_err().code,
+            "folder_not_allowed"
+        );
+        let t = tempfile::tempdir().unwrap();
+        let missing = t.path().join("nope");
+        assert!(with_root(missing.to_str().unwrap()).validate().is_err());
+        let fs_root = t.path().ancestors().last().unwrap().to_path_buf();
+        assert!(with_root(fs_root.to_str().unwrap()).validate().is_err());
+    }
 
     #[test]
     fn defaults_match_the_spec() {

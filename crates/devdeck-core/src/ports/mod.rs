@@ -21,6 +21,8 @@ pub struct ListeningPort {
     pub protocol: Protocol,
     pub pid: u32,
     pub process_name: String,
+    /// Process start time (Unix seconds); 0 when unknown. Guards `process_kill` against PID reuse.
+    pub start_time: u64,
     pub exe_path: Option<PathBuf>,
     /// `None` => unknown (elevated/protected process); never an error.
     pub cwd: Option<PathBuf>,
@@ -70,6 +72,7 @@ pub fn list(
                 protocol: raw.protocol,
                 pid: raw.pid,
                 process_name: info.map_or(raw.name, |i| i.name.clone()),
+                start_time: info.map_or(0, |i| i.start_time),
                 exe_path: info.and_then(|i| i.exe.clone()),
                 cwd: info.and_then(|i| i.cwd.clone()),
                 worktree_path: None,

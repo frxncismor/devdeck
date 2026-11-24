@@ -38,8 +38,14 @@ pub async fn ports_list(
     .await
 }
 
-/// Shared with Reclaim. Kills `pid` only if its current name still equals `expected_name`.
+/// Shared with Reclaim. Kills `pid` only if its current name (and start time, when given) still
+/// match what the user saw.
 #[tauri::command]
-pub async fn process_kill(pid: u32, expected_name: String) -> Result<()> {
-    blocking(move || process_info::kill(&SysinfoSource, pid, &expected_name)).await
+pub async fn process_kill(
+    pid: u32,
+    expected_name: String,
+    expected_start_time: Option<u64>,
+) -> Result<()> {
+    blocking(move || process_info::kill(&SysinfoSource, pid, &expected_name, expected_start_time))
+        .await
 }

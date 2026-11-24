@@ -76,6 +76,7 @@
       await api.call("process_kill", {
         pid: p.pid,
         expectedName: p.processName,
+        expectedStartTime: p.startTime,
       });
       error = null;
     } catch (e) {

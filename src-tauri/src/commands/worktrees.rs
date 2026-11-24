@@ -63,7 +63,14 @@ pub async fn worktree_open_terminal(path: String, state: State<'_, AppState>) ->
 #[tauri::command]
 pub async fn worktree_remove(path: String, force: bool, state: State<'_, AppState>) -> Result<()> {
     let path = ensure_known_worktree(&state, &path).await?;
-    blocking(move || worktrees::remove(&path, force)).await?;
+    let wanted = scope::normalize(&path);
+    let repo = known_projects(&state)
+        .await
+        .into_iter()
+        .find(|p| p.paths().any(|k| scope::normalize(k) == wanted))
+        .map(|p| p.main_path)
+        .ok_or_else(|| Error::not_allowed("not_allowed"))?;
+    blocking(move || worktrees::remove(&repo, &path, force)).await?;
     // The removed worktree no longer belongs to its project.
     state.projects.lock().unwrap().clear();
     Ok(())

@@ -28,3 +28,5 @@ Decisions already justified in `plan.md`. This lists what should be verified at 
 | 6 | Default language | English; no automatic detection of the OS language. |
 | 7 | i18n library | Own minimal i18n layer (no `svelte-i18n`). |
 | 8 | Name of module 4 | "Reclaim" (UI: en "Reclaim", es "Recuperar"); code identifiers use `reclaim` (`reclaim/`, `commands/reclaim.rs`, `modules/reclaim/`, `locales/{en,es}/reclaim.json`, `reclaim_*` commands). |
+
+GitHub Actions are pinned by tag, not by commit SHA (accepted for the MVP); the CI workflow runs with `permissions: contents: read`.

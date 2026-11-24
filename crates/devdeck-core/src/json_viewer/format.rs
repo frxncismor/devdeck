@@ -129,7 +129,7 @@ pub fn format_node(doc: &JsonDoc, id: u64, max_bytes: u64) -> Result<String> {
 
 /// Streams the formatted node (or the whole document) to `dest`. Returns the bytes written.
 /// Refuses to overwrite the source file (it is memory-mapped). A partial file is removed on
-/// error or cancellation. `progress(done, total)` is in source bytes.
+/// error or cancellation, but only when this call created it. `progress(done, total)` is in source bytes.
 pub fn save_formatted(
     doc: &JsonDoc,
     id: Option<u64>,
@@ -148,6 +148,7 @@ pub fn save_formatted(
         None => (0, doc.data().len()),
     };
     let total = (e - s) as u64;
+    let created = !dest.exists();
     let result = (|| -> Result<u64> {
         let file = File::create(dest)?;
         let mut w = BufWriter::with_capacity(1 << 20, file);
@@ -165,7 +166,7 @@ pub fn save_formatted(
         progress(total, total);
         Ok(written)
     })();
-    if result.is_err() {
+    if result.is_err() && created {
         let _ = std::fs::remove_file(dest);
     }
     result

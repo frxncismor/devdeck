@@ -6,6 +6,8 @@ export interface ListeningPort {
   protocol: "tcp" | "udp";
   pid: number;
   processName: string;
+  /** Process start time (Unix seconds); 0 when unknown. */
+  startTime?: number;
   exePath?: string | null;
   /** Absent when the process is protected/elevated: shown as unknown, not an error. */
   cwd?: string | null;

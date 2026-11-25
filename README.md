@@ -137,6 +137,10 @@ The images in `docs/img/` are captured from the release build (dark theme) again
 
 The scripts are kept with the development notes, not in this repository.
 
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md); report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). To get started, look for [good first issues](https://github.com/frxncismor/devdeck/issues?q=is%3Aopen+label%3A%22good+first+issue%22).
+
 ## License
 
 [MIT](LICENSE) - (c) 2026 Francisco J. Moreno

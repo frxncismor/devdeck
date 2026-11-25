@@ -11,11 +11,13 @@ A Tauri 2 + Rust desktop dashboard for developers: track git worktrees, see whic
 
 ## What it does
 
-DevDeck is a single window with four modules in a collapsible sidebar, a custom title bar with a command palette (**Ctrl K**), a **dark / light theme** switch, a **Global / project scope selector** and an **English / Spanish language selector**. Everything is read-only until you confirm an action; nothing runs on its own.
+DevDeck is a single window with four modules in a collapsible sidebar, a custom title bar with a command palette (**Ctrl K**), a **dark / light theme** switch, a **Global / project scope selector** and an **English / Spanish language selector**. Everything is read-only until you confirm an action; nothing runs on its own. Long actions (remove a worktree, terminate a process, delete folders, rescan) run in the background: the rest of the UI stays usable, the affected row or button shows a spinner (deleting several folders also shows per-folder progress, e.g. "Deleting 2 of 3 · 1.4 GB freed"), and a toast reports the result. The **?** button in the top bar of Worktrees, Reclaim and Ports opens the [Glossary](#glossary) inside the app.
+
+Keyboard shortcuts: **Ctrl K** command palette, **Ctrl B** collapse the sidebar, **Ctrl P** scope selector, **Ctrl O** open a JSON file (JSON Viewer), **F5** rescan or refresh (Worktrees, Reclaim).
 
 ### Worktrees
 
-Point DevDeck at a root folder and it finds every git repo and lists all of its worktrees: branch, clean/dirty state with file count, ahead/behind versus upstream, and the last commit. Open a worktree in VS Code or a terminal, or remove a linked worktree (with confirmation; dirty worktrees need a stronger one).
+Point DevDeck at a root folder and it finds every git repo and lists all of its worktrees: branch, whether it has uncommitted changes ("No uncommitted changes" or "N changed files"), how it compares with its remote branch (in sync, ahead, behind or diverged), and the last commit. Every status has a tooltip; see the [Glossary](#glossary). Open a worktree in VS Code or a terminal, or remove a linked worktree (with confirmation; dirty worktrees need a stronger one).
 
 ![Worktrees](docs/img/worktrees-en.png)
 
@@ -35,11 +37,48 @@ Opens JSON files of several hundred MB without loading them into the webview. Th
 
 Shows how much RAM and disk you can recover, in the current scope:
 
-- **Forgotten worktrees** - size, last-commit age, merged or unchanged branches, and live processes inside; removable with confirmation.
+- **Forgotten worktrees** - size, last-commit age, branches that are merged or have no uncommitted changes, and live processes inside; removable with confirmation.
 - **Dev processes** - node, vite, cargo, rust-analyzer, headless browsers, Docker and similar, with RAM, CPU and age. Processes whose working directory is in a deleted worktree are flagged as orphaned.
 - **Regenerable folders** - `node_modules`, `target`, `.venv`, `dist` and package-manager caches, with size and last use. The backend rejects any path that is not on the allow-list.
 
 ![Reclaim](docs/img/reclaim-en.png)
+
+## Glossary
+
+Every label DevDeck shows, with its exact English text. In the app, the **?** button in the top bar of Worktrees, Reclaim and Ports opens the same list. Counts in the examples are samples.
+
+### Worktrees
+
+| Term                   | Meaning                                                                                                              | What to do                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| No uncommitted changes | Every change in this worktree is already committed.                                                                  | Nothing to do. This worktree is safe to switch away from or remove.                  |
+| 3 changed files        | Files modified, added or deleted that are not committed yet. Commit or stash them before removing the worktree.      | Commit or stash the changes before removing the worktree; removing it discards them. |
+| Missing folder         | The folder of this worktree no longer exists on disk, but git still lists it. Run git worktree prune to clean it up. | Run `git worktree prune` in the repository to forget it.                             |
+| Main                   | The original checkout of the repository. It cannot be removed from here.                                             | Nothing: it is the repository itself. Remove extra worktrees instead.                |
+| Detached HEAD          | Not on any branch: commits made here can get lost. Switch to or create a branch to keep them.                        | Create or switch to a branch (`git switch -c name`) before committing more.          |
+| No remote branch       | This branch has no remote counterpart to compare with. Push it to publish it.                                        | Push the branch (`git push -u origin <branch>`) when you want to publish it.         |
+| In sync                | Up to date with its remote branch.                                                                                   | Nothing to do.                                                                       |
+| ↑ Ahead                | 2 commits not pushed yet. Push to share them.                                                                        | Push to share your commits.                                                          |
+| ↓ Behind               | 2 commits on the remote that you do not have yet. Pull to get them.                                                  | Pull (or fetch and merge) to get them.                                               |
+| ↑↓ Diverged            | Not pushed: 1 · To pull: 2. The local and remote branches have diverged.                                             | Pull or rebase first, then push.                                                     |
+
+### Reclaim
+
+| Term                   | Meaning                                                                                                                     | What to do                                                                               |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| No recent commits      | No commits for the configured number of days or more, so it is probably forgotten.                                          | Review it; remove the worktree if the work is finished.                                  |
+| Branch merged          | Its branch is already merged into the base branch, so removing the worktree loses no work.                                  | Safe to remove: the work is already in the base branch.                                  |
+| No uncommitted changes | Nothing is uncommitted: removing it will not discard any local edits.                                                       | Nothing would be lost by removing it.                                                    |
+| Processes running      | Processes are running inside this folder; removing it may interrupt them.                                                   | Terminate those processes in the Processes tab first, or accept they may be interrupted. |
+| Deleted worktree       | Working directory no longer exists.                                                                                         | Terminate it: it keeps memory for a folder that is gone.                                 |
+| Regenerable folders    | Folders that can be regenerated (node_modules, target, .venv, dist and package-manager caches). Deleting them is permanent. | Delete them to free disk; the tool recreates them when needed.                           |
+
+### Ports
+
+| Term       | Meaning                                                              | What to do                                                                           |
+| ---------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Unknown    | The folder is not readable (protected or elevated process).          | Run DevDeck as administrator to see its folder, or identify it by PID.               |
+| No project | The folder of this process is not inside any of your known projects. | Nothing: it is not part of your known projects. Check its folder before terminating. |
 
 ## Language support
 
@@ -68,7 +107,7 @@ flowchart LR
 ```
 
 - `crates/devdeck-core` holds all logic (worktrees, ports, JSON viewer, reclaim, project/scope attribution) with no Tauri dependency, so it is unit-tested directly. System access sits behind small traits and is simulated in tests.
-- `src-tauri` is a thin layer: Tauri commands, app state, a typed error type, and the `store`, `dialog` and `clipboard-manager` plugins.
+- `src-tauri` is a thin layer: Tauri commands, app state, a typed error type, and the `store`, `dialog`, `clipboard-manager` and `opener` plugins.
 - `src/` is the Svelte frontend, one folder per module under `src/modules/`, with translations in `src/lib/i18n/locales/{en,es}`.
 - The backend never sends UI text. Errors carry a stable `kind` and `code`, and the frontend translates them.
 - Large JSON files are indexed once by streaming; the frontend only ever receives paginated children and search batches.
@@ -77,8 +116,8 @@ flowchart LR
 
 Download the latest installer from [GitHub Releases](https://github.com/frxncismor/devdeck/releases):
 
-- `.msi` (Windows Installer), or
-- `-setup.exe` (NSIS)
+- `DevDeck_0.1.0_x64_en-US.msi` (Windows Installer), or
+- `DevDeck_0.1.0_x64-setup.exe` (NSIS)
 
 The installers are **not code-signed**, so Windows SmartScreen may show an "unknown publisher" warning. Choose **More info -> Run anyway** if you trust the download.
 
@@ -122,7 +161,7 @@ Build the installers with `pnpm tauri build` (bundles: MSI and NSIS).
 
 - A `pre-commit` hook runs a pinned gitleaks (8.30.1) on staged changes and fails closed if it is missing, has the wrong version, or the tool path is a symlink. The setup script verifies the download's SHA-256.
 - CI repeats the scan over the full commit range.
-- Tauri capabilities are minimal: only the dialog and clipboard-write permissions the frontend uses; no shell or opener access. A strict CSP is set.
+- Tauri capabilities are minimal: only the dialog and clipboard-write permissions the frontend uses, plus opening one URL (the author credit) in the system browser; no shell access. A strict CSP is set.
 - Destructive actions always require confirmation. The backend validates paths: worktree actions only accept known worktrees, the main worktree cannot be removed, and folder deletion only accepts allow-listed names.
 
 ## Screenshots

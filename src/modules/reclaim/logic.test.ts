@@ -3,17 +3,21 @@ import { applyLocale } from "../../lib/i18n/i18n.svelte";
 import { messages } from "../../lib/i18n";
 import type { Grouped } from "../../lib/types";
 import {
+  advanceDelete,
   countWhere,
+  currentFolderIndex,
   DEV_KIND_KEYS,
   FOLDER_KIND_KEYS,
   folderRejectionKey,
   formatCpu,
   hasRecoverable,
+  processKey,
   progressRatio,
   projectSlices,
   REASON_KEYS,
   removalWarnings,
   sortedByProject,
+  startDeleteProgress,
   totalsOf,
   worktreeOf,
   worktreeSlices,
@@ -246,5 +250,48 @@ describe("slices", () => {
       { key: "/r/wt/x", label: "x", value: 10 },
       { key: "/r/main", label: "main", value: 7 },
     ]);
+  });
+});
+
+describe("delete progress", () => {
+  it("starts empty", () => {
+    expect(startDeleteProgress(3)).toEqual({
+      total: 3,
+      done: 0,
+      freedBytes: 0,
+    });
+  });
+
+  it("accumulates the bytes freed by each folder", () => {
+    let p = startDeleteProgress(3);
+    p = advanceDelete(p, 1_000);
+    p = advanceDelete(p, 500);
+    expect(p).toEqual({ total: 3, done: 2, freedBytes: 1_500 });
+  });
+
+  it("does not mutate the previous state", () => {
+    const p = startDeleteProgress(2);
+    advanceDelete(p, 10);
+    expect(p.done).toBe(0);
+  });
+
+  it("points at the folder being deleted, never past the total", () => {
+    let p = startDeleteProgress(2);
+    expect(currentFolderIndex(p)).toBe(1);
+    p = advanceDelete(p, 1);
+    expect(currentFolderIndex(p)).toBe(2);
+    p = advanceDelete(p, 1);
+    expect(currentFolderIndex(p)).toBe(2);
+  });
+
+  it("ignores negative or non-finite freed sizes", () => {
+    const p = advanceDelete(startDeleteProgress(1), Number.NaN);
+    expect(p.freedBytes).toBe(0);
+  });
+});
+
+describe("busyKey helpers", () => {
+  it("builds stable keys for processes", () => {
+    expect(processKey({ pid: 7, startTime: 99 })).toBe("7:99");
   });
 });

@@ -16,19 +16,31 @@
   "filter": {
     "search": "Search",
     "searchPlaceholder": "Branch, path or commit",
-    "dirtyOnly": "Only with changes"
+    "dirtyOnly": "Only with uncommitted changes"
   },
   "columns": {
-    "status": "Status",
-    "sync": "Ahead / behind"
+    "status": "Changes",
+    "sync": "Vs. remote"
   },
   "badge": {
-    "clean": "Clean",
     "main": "Main",
-    "detached": "Detached"
+    "detached": "Detached HEAD",
+    "detachedHint": "Not on any branch: commits made here can get lost. Switch to or create a branch to keep them.",
+    "mainHint": "The original checkout of the repository. It cannot be removed from here."
   },
   "sync": {
-    "noUpstream": "No upstream"
+    "noUpstream": "No remote branch",
+    "noUpstreamHint": "This branch has no remote counterpart to compare with. Push it to publish it.",
+    "syncedHint": "Up to date with its remote branch.",
+    "aheadHint_one": "{count} commit not pushed yet. Push to share it.",
+    "aheadHint_other": "{count} commits not pushed yet. Push to share them.",
+    "behindHint_one": "{count} commit on the remote that you do not have yet. Pull to get it.",
+    "behindHint_other": "{count} commits on the remote that you do not have yet. Pull to get them.",
+    "divergedHint": "Not pushed: {ahead} · To pull: {behind}. The local and remote branches have diverged.",
+    "synced": "In sync",
+    "ahead": "↑ Ahead",
+    "behind": "↓ Behind",
+    "diverged": "↑↓ Diverged"
   },
   "actions": {
     "openVscode": "Open in VS Code",
@@ -46,14 +58,22 @@
   "retry": "Retry",
   "stats": {
     "worktrees": "Worktrees",
-    "modified": "With changes",
-    "ahead": "Ahead of upstream",
-    "behind": "Behind upstream",
-    "modifiedCount": "{count} with changes"
+    "modified": "With uncommitted changes",
+    "ahead": "With unpushed commits",
+    "behind": "Behind remote",
+    "modifiedCount": "{count} with uncommitted changes"
   },
   "toast": {
     "openedVscode": "Opened in VS Code",
     "openedTerminal": "Terminal opened",
     "removed": "Worktree removed"
+  },
+  "status": {
+    "clean": "No uncommitted changes",
+    "cleanHint": "Every change in this worktree is already committed.",
+    "dirty_one": "{count} changed file",
+    "dirty_other": "{count} changed files",
+    "dirtyHint": "Files modified, added or deleted that are not committed yet. Commit or stash them before removing the worktree.",
+    "missingHint": "The folder of this worktree no longer exists on disk, but git still lists it. Run git worktree prune to clean it up."
   }
 }

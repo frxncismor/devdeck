@@ -41,5 +41,6 @@
   "toast": {
     "killed": "Proceso terminado: {name}",
     "killedDetail": "PID {pid}, puerto {port}"
-  }
+  },
+  "noProjectHint": "La carpeta de este proceso no está dentro de ninguno de tus proyectos conocidos."
 }

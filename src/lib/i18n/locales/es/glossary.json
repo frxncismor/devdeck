@@ -1,0 +1,87 @@
+{
+  "title": "Glosario de estados",
+  "open": "¿Qué significan estas etiquetas?",
+  "close": "Cerrar",
+  "intro": "Todas las etiquetas que ves en este módulo, qué significan y qué puedes hacer al respecto.",
+  "term": "Etiqueta",
+  "meaning": "Qué significa",
+  "todo": "Qué hacer",
+  "example": "Ejemplo",
+  "moduleTitle": {
+    "worktrees": "Worktrees",
+    "reclaim": "Recuperar",
+    "ports": "Puertos"
+  },
+  "wt-clean": {
+    "todo": "Nada que hacer. Puedes cambiar de worktree o eliminarlo sin riesgo.",
+    "example": "La columna Cambios muestra «Sin cambios sin commitear» cuando lo has commiteado todo."
+  },
+  "wt-dirty": {
+    "todo": "Haz commit o stash antes de eliminar el worktree; al eliminarlo se descartan.",
+    "example": "3 archivos modificados: dos editados y uno nuevo."
+  },
+  "wt-missing": {
+    "todo": "Ejecuta git worktree prune en el repositorio para olvidarlo.",
+    "example": "Borraste la carpeta a mano en vez de usar git worktree remove."
+  },
+  "wt-main": {
+    "todo": "Nada: es el propio repositorio. Elimina los worktrees adicionales.",
+    "example": "La carpeta donde clonaste el repositorio."
+  },
+  "wt-detached": {
+    "todo": "Crea o cambia a una rama (git switch -c nombre) antes de seguir commiteando.",
+    "example": "Hiciste checkout de una etiqueta o de un hash de commit."
+  },
+  "wt-sync-none": {
+    "todo": "Sube la rama (git push -u origin <rama>) cuando quieras publicarla.",
+    "example": "Una rama local nueva que nunca se ha subido."
+  },
+  "wt-sync-synced": {
+    "todo": "Nada que hacer.",
+    "example": "Se muestra como una marca de verificación en la tabla."
+  },
+  "wt-sync-ahead": {
+    "todo": "Haz push para compartir tus commits.",
+    "example": "Flecha arriba 2: dos commits locales aún no están en el remoto."
+  },
+  "wt-sync-behind": {
+    "todo": "Haz pull (o fetch y merge) para traerlos.",
+    "example": "Flecha abajo 2: un compañero subió dos commits a la rama."
+  },
+  "wt-sync-diverged": {
+    "todo": "Haz pull o rebase primero y luego push.",
+    "example": "Arriba 1, abajo 2: commiteaste en local mientras el remoto también avanzaba."
+  },
+  "rc-stale": {
+    "todo": "Revísalo; elimina el worktree si el trabajo ha terminado.",
+    "example": "Una rama de funcionalidad que dejaste hace un mes."
+  },
+  "rc-merged": {
+    "todo": "Se puede eliminar sin riesgo: el trabajo ya está en la rama base.",
+    "example": "Un pull request que se fusionó la semana pasada."
+  },
+  "rc-clean": {
+    "todo": "Al eliminarlo no se perdería nada.",
+    "example": "Un worktree donde lo has commiteado todo."
+  },
+  "rc-live": {
+    "todo": "Termina esos procesos en la pestaña Procesos primero, o asume que pueden interrumpirse.",
+    "example": "Un servidor de desarrollo aún activo en un worktree antiguo."
+  },
+  "rc-orphan": {
+    "todo": "Termínalo: retiene memoria de una carpeta que ya no existe.",
+    "example": "Un proceso node que quedó de un worktree que borraste."
+  },
+  "rc-regenerable": {
+    "todo": "Elimínalas para liberar disco; la herramienta las recrea cuando hace falta.",
+    "example": "Carpetas node_modules o target y las cachés de npm o pnpm."
+  },
+  "pt-unknown": {
+    "todo": "Ejecuta DevDeck como administrador para ver su carpeta, o identifícalo por PID.",
+    "example": "Un servicio del sistema o elevado escuchando en un puerto."
+  },
+  "pt-noproject": {
+    "todo": "Nada: no forma parte de tus proyectos conocidos. Revisa su carpeta antes de terminarlo.",
+    "example": "Un servidor de base de datos iniciado desde otra carpeta."
+  }
+}

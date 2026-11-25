@@ -80,8 +80,8 @@
   "worktree": {
     "noCommits": "Sin commits",
     "missing": "Carpeta ausente",
-    "dirty_one": "{count} cambio",
-    "dirty_other": "{count} cambios",
+    "dirty_one": "{count} archivo modificado",
+    "dirty_other": "{count} archivos modificados",
     "remove": {
       "title": "Eliminar worktree",
       "confirm": "Eliminar",
@@ -114,5 +114,11 @@
   "units": {
     "ram": "RAM",
     "disk": "Disco"
+  },
+  "busy": {
+    "deleting": "Eliminando…",
+    "removing": "Eliminando…",
+    "terminating": "Terminando…",
+    "scanning": "Escaneando…"
   }
 }

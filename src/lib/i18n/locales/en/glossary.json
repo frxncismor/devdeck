@@ -1,0 +1,87 @@
+{
+  "title": "Status glossary",
+  "open": "What do these labels mean?",
+  "close": "Close",
+  "intro": "Every label you see in this module, what it means and what you can do about it.",
+  "term": "Label",
+  "meaning": "What it means",
+  "todo": "What to do",
+  "example": "Example",
+  "moduleTitle": {
+    "worktrees": "Worktrees",
+    "reclaim": "Reclaim",
+    "ports": "Ports"
+  },
+  "wt-clean": {
+    "todo": "Nothing to do. This worktree is safe to switch away from or remove.",
+    "example": "The Changes column shows \"No uncommitted changes\" once everything is committed."
+  },
+  "wt-dirty": {
+    "todo": "Commit or stash the changes before removing the worktree; removing it discards them.",
+    "example": "3 changed files: two edited and one new file."
+  },
+  "wt-missing": {
+    "todo": "Run git worktree prune in the repository to forget it.",
+    "example": "You deleted the folder by hand instead of using git worktree remove."
+  },
+  "wt-main": {
+    "todo": "Nothing: it is the repository itself. Remove extra worktrees instead.",
+    "example": "The folder where you cloned the repository."
+  },
+  "wt-detached": {
+    "todo": "Create or switch to a branch (git switch -c name) before committing more.",
+    "example": "You checked out a tag or a commit hash."
+  },
+  "wt-sync-none": {
+    "todo": "Push the branch (git push -u origin <branch>) when you want to publish it.",
+    "example": "A new local branch that was never pushed."
+  },
+  "wt-sync-synced": {
+    "todo": "Nothing to do.",
+    "example": "Shown as a check mark in the table."
+  },
+  "wt-sync-ahead": {
+    "todo": "Push to share your commits.",
+    "example": "Up arrow 2: two local commits are not on the remote yet."
+  },
+  "wt-sync-behind": {
+    "todo": "Pull (or fetch and merge) to get them.",
+    "example": "Down arrow 2: a teammate pushed two commits to the branch."
+  },
+  "wt-sync-diverged": {
+    "todo": "Pull or rebase first, then push.",
+    "example": "Up 1, down 2: you committed locally while the remote also moved on."
+  },
+  "rc-stale": {
+    "todo": "Review it; remove the worktree if the work is finished.",
+    "example": "A feature branch you stopped working on a month ago."
+  },
+  "rc-merged": {
+    "todo": "Safe to remove: the work is already in the base branch.",
+    "example": "A pull request that was merged last week."
+  },
+  "rc-clean": {
+    "todo": "Nothing would be lost by removing it.",
+    "example": "A worktree where you committed everything."
+  },
+  "rc-live": {
+    "todo": "Terminate those processes in the Processes tab first, or accept they may be interrupted.",
+    "example": "A dev server still running in an old worktree."
+  },
+  "rc-orphan": {
+    "todo": "Terminate it: it keeps memory for a folder that is gone.",
+    "example": "A node process left over from a worktree you deleted."
+  },
+  "rc-regenerable": {
+    "todo": "Delete them to free disk; the tool recreates them when needed.",
+    "example": "node_modules or target folders, and the npm or pnpm caches."
+  },
+  "pt-unknown": {
+    "todo": "Run DevDeck as administrator to see its folder, or identify it by PID.",
+    "example": "A system or elevated service listening on a port."
+  },
+  "pt-noproject": {
+    "todo": "Nothing: it is not part of your known projects. Check its folder before terminating.",
+    "example": "A database server started from another folder."
+  }
+}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
   import Lock from "@lucide/svelte/icons/lock";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import Search from "@lucide/svelte/icons/search";
@@ -7,6 +8,7 @@
   import X from "@lucide/svelte/icons/x";
   import Banner from "../../components/Banner.svelte";
   import Button from "../../components/Button.svelte";
+  import GlossaryButton from "../../components/GlossaryButton.svelte";
   import Chip from "../../components/Chip.svelte";
   import ConfirmDialog from "../../components/ConfirmDialog.svelte";
   import DataTable, { type Column } from "../../components/DataTable.svelte";
@@ -36,7 +38,8 @@
   let query = $state("");
   let protocol = $state<ProtocolFilter>("all");
   let pending = $state<ListeningPort | null>(null);
-  let killing = $state(false);
+  /** Row keys of the processes being terminated right now (spinner on the row, no double run). */
+  const killing = new SvelteSet<string>();
   /** Window focus / visibility: auto refresh only runs while the user can see the module. */
   let active = $state(
     typeof document === "undefined"
@@ -78,7 +81,7 @@
     {
       key: "actions",
       header: t("common.columns.actions"),
-      width: "104px",
+      width: "150px",
       align: "end",
     },
   ]);
@@ -145,25 +148,26 @@
 
   async function confirmKill(): Promise<void> {
     const p = pending;
-    if (!p || killing) return;
-    killing = true;
+    if (!p || killing.has(rowKey(p))) return;
+    const key = rowKey(p);
+    // Close the dialog and keep working in the background: the row shows the progress.
+    pending = null;
+    killing.add(key);
     try {
       await api.call("process_kill", {
         pid: p.pid,
         expectedName: p.processName,
         expectedStartTime: p.startTime,
       });
-      pending = null;
       toasts.success(
         t("ports.toast.killed", { name: p.processName }),
         t("ports.toast.killedDetail", { pid: p.pid, port: p.port }),
       );
     } catch (e) {
-      pending = null;
       const err = toAppError(e);
       toasts.error(errorMessage(err), err.detail ?? undefined);
     } finally {
-      killing = false;
+      killing.delete(key);
     }
     await load();
   }
@@ -183,14 +187,10 @@
     {/if}
   {/snippet}
   {#snippet actions()}
-    <Button
-      size="sm"
-      icon={RefreshCw}
-      disabled={loading}
-      onclick={() => void load()}
-    >
+    <Button size="sm" icon={RefreshCw} {loading} onclick={() => void load()}>
       {t("common.buttons.refresh")}
     </Button>
+    <GlossaryButton module="ports" />
   {/snippet}
 </TopBarContent>
 
@@ -305,9 +305,12 @@
           <Button
             size="sm"
             variant="danger-ghost"
+            loading={killing.has(rowKey(p))}
             onclick={() => (pending = p)}
           >
-            {t("ports.actions.kill")}
+            {killing.has(rowKey(p))
+              ? t("common.busy.terminating")
+              : t("ports.actions.kill")}
           </Button>
         {/if}
       {/snippet}
@@ -326,7 +329,6 @@
       })
     : ""}
   confirmLabel={t("ports.kill.confirm")}
-  busy={killing}
   onconfirm={() => void confirmKill()}
   oncancel={() => (pending = null)}
 />

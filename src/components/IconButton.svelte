@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Component } from "svelte";
   import type { HTMLButtonAttributes } from "svelte/elements";
+  import Spinner from "./Spinner.svelte";
 
   interface Props extends Omit<HTMLButtonAttributes, "children" | "title"> {
     /** Required: used for `aria-label` and `title`. */
@@ -11,6 +12,8 @@
     /** Button size in px (default 28). */
     size?: number;
     pressed?: boolean;
+    /** Long action running: spinner instead of the icon, disabled, `aria-busy`. Pass the busy text as `label`. */
+    loading?: boolean;
   }
   let {
     label,
@@ -18,6 +21,8 @@
     variant = "ghost",
     size = 28,
     pressed,
+    loading = false,
+    disabled,
     type = "button",
     ...rest
   }: Props = $props();
@@ -31,9 +36,15 @@
   aria-label={label}
   title={label}
   aria-pressed={pressed}
+  aria-busy={loading || undefined}
+  disabled={disabled || loading}
+  class:loading
   {...rest}
 >
-  <Icon size={15} aria-hidden="true" />
+  {#if loading}<Spinner size={14} />{:else}<Icon
+      size={15}
+      aria-hidden="true"
+    />{/if}
 </button>
 
 <style>
@@ -50,6 +61,10 @@
   }
   .ib:disabled {
     opacity: 0.45;
+  }
+  .ib.loading:disabled {
+    opacity: 0.8;
+    cursor: progress;
   }
   .ib:hover:not(:disabled),
   .ib[aria-pressed="true"] {

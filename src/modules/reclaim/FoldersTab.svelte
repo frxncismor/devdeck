@@ -3,13 +3,16 @@
   import Button from "../../components/Button.svelte";
   import EmptyState from "../../components/EmptyState.svelte";
   import Progress from "../../components/Progress.svelte";
+  import Spinner from "../../components/Spinner.svelte";
   import type { Column } from "../../components/DataTable.svelte";
   import { formatBytes, formatDate } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
   import GroupedRows from "./GroupedRows.svelte";
   import {
+    currentFolderIndex,
     FOLDER_KIND_KEYS,
+    type DeleteProgress,
     progressRatio,
     type HeavyFolder,
     type JobProgress,
@@ -26,6 +29,10 @@
     selected: ReadonlySet<string>;
     /** Total size of the checked folders (bytes). */
     selectedBytes: number;
+    /** Progress of a running deletion, or `null`. */
+    deleting: DeleteProgress | null;
+    /** Paths being deleted right now. */
+    busy: ReadonlySet<string>;
     ontoggle: (f: HeavyFolder) => void;
     onclear: () => void;
     oncancel: () => void;
@@ -40,6 +47,8 @@
     grouped,
     selected,
     selectedBytes,
+    deleting,
+    busy,
     ontoggle,
     onclear,
     oncancel,
@@ -100,6 +109,18 @@
     <Button size="sm" onclick={oncancel}>{t("common.buttons.cancel")}</Button>
   </div>
 {/if}
+{#if deleting}
+  <div class="scan" role="status">
+    <Spinner size={16} />
+    <span class="tabular">
+      {t("reclaim.deleteFolder.progress", {
+        current: currentFolderIndex(deleting),
+        total: deleting.total,
+        size: formatBytes(deleting.freedBytes),
+      })}
+    </span>
+  </div>
+{/if}
 {#if cancelled}
   <Banner tone="info">{t("reclaim.folders.cancelled")}</Banner>
 {/if}
@@ -118,12 +139,17 @@
   >
     {#snippet cell(f, col)}
       {#if col.key === "select"}
-        <input
-          type="checkbox"
-          checked={selected.has(f.path)}
-          aria-label={t("reclaim.folders.select", { name: f.path })}
-          onchange={() => ontoggle(f)}
-        />
+        {#if busy.has(f.path)}
+          <Spinner size={14} label={t("reclaim.deleteFolder.rowBusy")} />
+        {:else}
+          <input
+            type="checkbox"
+            checked={selected.has(f.path)}
+            disabled={!!deleting}
+            aria-label={t("reclaim.folders.select", { name: f.path })}
+            onchange={() => ontoggle(f)}
+          />
+        {/if}
       {:else if col.key === "kind"}
         <span class="mono">{t(FOLDER_KIND_KEYS[f.kind])}</span>
       {:else if col.key === "path"}
@@ -148,11 +174,18 @@
         <span class="mono">{formatBytes(selectedBytes)}</span>
       </span>
       <span class="spacer"></span>
-      <Button size="sm" variant="ghost" onclick={onclear}>
+      <Button size="sm" variant="ghost" disabled={!!deleting} onclick={onclear}>
         {t("reclaim.folders.clear")}
       </Button>
-      <Button size="sm" variant="danger" onclick={ondelete}>
-        {t("reclaim.folders.deleteSelected")}
+      <Button
+        size="sm"
+        variant="danger"
+        loading={!!deleting}
+        onclick={ondelete}
+      >
+        {deleting
+          ? t("common.busy.deleting")
+          : t("reclaim.folders.deleteSelected")}
       </Button>
     </div>
   {/if}

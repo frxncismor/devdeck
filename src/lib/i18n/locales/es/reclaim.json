@@ -88,9 +88,9 @@
     "cargoGit": "Caché git de Cargo"
   },
   "reason": {
-    "stale": "Inactivo",
-    "merged": "Fusionado",
-    "clean": "Sin cambios",
+    "stale": "Sin commits recientes",
+    "merged": "Rama fusionada",
+    "clean": "Sin cambios sin commitear",
     "live_processes": "Procesos en ejecución"
   },
   "actions": {
@@ -113,7 +113,9 @@
     "total": "Total",
     "confirm": "Eliminar {size}",
     "done": "Liberados {size}.",
-    "partial": "Se eliminaron {done} de {total} carpetas ({size} liberados) antes de un error."
+    "partial": "Se eliminaron {done} de {total} carpetas ({size} liberados) antes de un error.",
+    "progress": "Eliminando {current} de {total} · {size} liberados",
+    "rowBusy": "Eliminando…"
   },
   "errors": {
     "reason": {
@@ -131,5 +133,11 @@
   "toast": {
     "worktreeRemoved": "Worktree eliminado",
     "processTerminated": "{name} terminado"
+  },
+  "reasonHint": {
+    "stale": "Sin commits desde hace {days} días o más, así que probablemente está olvidado.",
+    "merged": "Su rama ya está fusionada en la rama base, así que eliminar el worktree no pierde trabajo.",
+    "clean": "No hay nada sin commitear: eliminarlo no descartará ediciones locales.",
+    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; eliminarla puede interrumpirlos."
   }
 }

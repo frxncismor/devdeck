@@ -7,15 +7,22 @@
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
   import GroupedRows from "./GroupedRows.svelte";
-  import { DEV_KIND_KEYS, formatCpu, type DevProcess } from "./logic";
+  import {
+    DEV_KIND_KEYS,
+    formatCpu,
+    processKey,
+    type DevProcess,
+  } from "./logic";
 
   interface Props {
     data: Grouped<DevProcess> | null;
     loading: boolean;
     grouped: boolean;
+    /** Keys (pid:startTime) of the processes being terminated right now. */
+    busy: ReadonlySet<string>;
     onterminate: (p: DevProcess) => void;
   }
-  let { data, loading, grouped, onterminate }: Props = $props();
+  let { data, loading, grouped, busy, onterminate }: Props = $props();
 
   const columns: Column<DevProcess>[] = $derived([
     { key: "process", header: t("common.columns.process") },
@@ -86,8 +93,15 @@
           {p.cwd ?? t("reclaim.processes.unknownFolder")}
         </span>
       {:else}
-        <Button size="sm" variant="danger-ghost" onclick={() => onterminate(p)}>
-          {t("reclaim.actions.terminate")}
+        <Button
+          size="sm"
+          variant="danger-ghost"
+          loading={busy.has(processKey(p))}
+          onclick={() => onterminate(p)}
+        >
+          {busy.has(processKey(p))
+            ? t("common.busy.terminating")
+            : t("reclaim.actions.terminate")}
         </Button>
       {/if}
     {/snippet}

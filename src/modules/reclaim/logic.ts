@@ -269,3 +269,41 @@ export function worktreeSlices<T>(
     }))
     .sort((a, b) => b.value - a.value);
 }
+
+/** Progress of a multi-folder deletion, built only from what the front already knows. */
+export interface DeleteProgress {
+  total: number;
+  done: number;
+  freedBytes: number;
+}
+
+export function startDeleteProgress(total: number): DeleteProgress {
+  return { total, done: 0, freedBytes: 0 };
+}
+
+/** One more folder finished; `freed` is the size reported by `reclaim_delete_folder`. */
+export function advanceDelete(
+  p: DeleteProgress,
+  freed: number,
+): DeleteProgress {
+  const add = Number.isFinite(freed) && freed > 0 ? freed : 0;
+  return { ...p, done: p.done + 1, freedBytes: p.freedBytes + add };
+}
+
+/** 1-based index of the folder being deleted ("Deleting 2 of 3"), capped at the total. */
+export function currentFolderIndex(p: DeleteProgress): number {
+  return Math.min(p.done + 1, p.total);
+}
+
+/** Stable key of a process row (same as the table row key). */
+export function processKey(p: { pid: number; startTime: number }): string {
+  return `${p.pid}:${p.startTime}`;
+}
+
+/** Tooltip explaining each reason badge of a forgotten worktree. */
+export const REASON_HINT_KEYS: Record<ForgottenReason, MessageKey> = {
+  stale: "reclaim.reasonHint.stale",
+  merged: "reclaim.reasonHint.merged",
+  clean: "reclaim.reasonHint.clean",
+  live_processes: "reclaim.reasonHint.live_processes",
+};

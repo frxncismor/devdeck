@@ -1,3 +1,4 @@
+import type { MessageKey } from "../../lib/i18n/keys";
 import type { AppError, Grouped, Totals } from "../../lib/types";
 
 export interface LastCommit {
@@ -76,4 +77,65 @@ export function filterGrouped(
 
 export function isDirtyError(e: AppError): boolean {
   return e.code === "worktree_dirty";
+}
+
+export type StatusKind = "missing" | "dirty" | "clean";
+
+export interface WorktreeStatus {
+  kind: StatusKind;
+  tone: "success" | "warning";
+  /** Short label key; `dirty` takes a numeric `count` (plural). */
+  labelKey: MessageKey;
+  /** Tooltip / accessible description key. */
+  hintKey: MessageKey;
+  count?: number;
+}
+
+/** Plain-language state of a worktree: what to show and what its tooltip explains. */
+export function worktreeStatus(w: Worktree): WorktreeStatus {
+  if (!w.exists) {
+    return {
+      kind: "missing",
+      tone: "warning",
+      labelKey: "common.worktree.missing",
+      hintKey: "worktrees.status.missingHint",
+    };
+  }
+  if (w.dirtyCount > 0) {
+    return {
+      kind: "dirty",
+      tone: "warning",
+      labelKey: "worktrees.status.dirty",
+      hintKey: "worktrees.status.dirtyHint",
+      count: w.dirtyCount,
+    };
+  }
+  return {
+    kind: "clean",
+    tone: "success",
+    labelKey: "worktrees.status.clean",
+    hintKey: "worktrees.status.cleanHint",
+  };
+}
+
+export type SyncKind = "none" | "synced" | "ahead" | "behind" | "diverged";
+
+export interface SyncStatus {
+  kind: SyncKind;
+  ahead: number;
+  behind: number;
+}
+
+/** Relation to the upstream branch; `none` when git reports no upstream. */
+export function syncStatus(
+  ahead?: number | null,
+  behind?: number | null,
+): SyncStatus {
+  if (ahead == null && behind == null)
+    return { kind: "none", ahead: 0, behind: 0 };
+  const a = ahead ?? 0;
+  const b = behind ?? 0;
+  const kind: SyncKind =
+    a > 0 && b > 0 ? "diverged" : a > 0 ? "ahead" : b > 0 ? "behind" : "synced";
+  return { kind, ahead: a, behind: b };
 }

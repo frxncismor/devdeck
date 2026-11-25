@@ -5,6 +5,8 @@ import {
   filterGrouped,
   formatAheadBehind,
   isDirtyError,
+  syncStatus,
+  worktreeStatus,
   type Worktree,
 } from "./logic";
 
@@ -88,5 +90,53 @@ describe("isDirtyError", () => {
       true,
     );
     expect(isDirtyError({ kind: "Git", code: "git_failed" })).toBe(false);
+  });
+});
+
+describe("worktreeStatus", () => {
+  it("explains a clean worktree in plain words", () => {
+    expect(worktreeStatus(wt({}))).toEqual({
+      kind: "clean",
+      tone: "success",
+      labelKey: "worktrees.status.clean",
+      hintKey: "worktrees.status.cleanHint",
+    });
+  });
+
+  it("counts changed files when dirty", () => {
+    const s = worktreeStatus(wt({ dirtyCount: 3 }));
+    expect(s.kind).toBe("dirty");
+    expect(s.tone).toBe("warning");
+    expect(s.count).toBe(3);
+    expect(s.labelKey).toBe("worktrees.status.dirty");
+    expect(s.hintKey).toBe("worktrees.status.dirtyHint");
+  });
+
+  it("flags a missing folder before anything else", () => {
+    const s = worktreeStatus(wt({ exists: false, dirtyCount: 2 }));
+    expect(s.kind).toBe("missing");
+    expect(s.hintKey).toBe("worktrees.status.missingHint");
+  });
+});
+
+describe("syncStatus", () => {
+  it("has no upstream when both sides are unknown", () => {
+    expect(syncStatus(null, undefined).kind).toBe("none");
+  });
+  it("is synced when both counts are zero", () => {
+    expect(syncStatus(0, 0).kind).toBe("synced");
+  });
+  it("reports ahead only", () => {
+    expect(syncStatus(2, 0)).toMatchObject({ kind: "ahead", ahead: 2 });
+  });
+  it("reports behind only", () => {
+    expect(syncStatus(0, 4)).toMatchObject({ kind: "behind", behind: 4 });
+  });
+  it("reports diverged when both sides differ", () => {
+    expect(syncStatus(1, 5)).toMatchObject({
+      kind: "diverged",
+      ahead: 1,
+      behind: 5,
+    });
   });
 });

@@ -1,0 +1,399 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-24T05:58:52Z"
+ },
+ "title": "DevDeck",
+ "launch": {
+  "view": "canvas",
+  "page": "dark"
+ },
+ "pages": [
+  {
+   "id": "dark",
+   "name": "Dark theme"
+  },
+  {
+   "id": "light",
+   "name": "Light theme"
+  },
+  {
+   "id": "states",
+   "name": "States"
+  },
+  {
+   "id": "system",
+   "name": "Tokens & components"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Worktrees · Global · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "PortsGlobal.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Ports · Global · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "JsonGlobal.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "JSON Viewer · Global · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "ReclaimGlobal.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Reclaim · Global · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "WorktreesProject.dc.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Worktrees · Project · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "PortsProject.dc.html": {
+   "x": 1360,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Ports · Project · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "JsonProject.dc.html": {
+   "x": 2720,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "JSON Viewer · Project · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "ReclaimProject.dc.html": {
+   "x": 4080,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Reclaim · Project · Dark",
+   "page": "dark",
+   "radius": 8
+  },
+  "WorktreesGlobalLight.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Worktrees · Global · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "PortsGlobalLight.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Ports · Global · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "JsonGlobalLight.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "JSON Viewer · Global · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "ReclaimGlobalLight.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Reclaim · Global · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "WorktreesProjectLight.dc.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Worktrees · Project · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "PortsProjectLight.dc.html": {
+   "x": 1360,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Ports · Project · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "JsonProjectLight.dc.html": {
+   "x": 2720,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "JSON Viewer · Project · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "ReclaimProjectLight.dc.html": {
+   "x": 4080,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Reclaim · Project · Light",
+   "page": "light",
+   "radius": 8
+  },
+  "WorktreesEmpty.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Empty · no root folder",
+   "page": "states",
+   "radius": 8
+  },
+  "WorktreesScanning.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Loading · scanning repos",
+   "page": "states",
+   "radius": 8
+  },
+  "GitError.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Error · git not found + permission denied",
+   "page": "states",
+   "radius": 8
+  },
+  "PortsEmpty.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Empty · no ports",
+   "page": "states",
+   "radius": 8
+  },
+  "JsonIndexing.dc.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Loading · indexing a 412 MB file",
+   "page": "states",
+   "radius": 8
+  },
+  "ScopeOpen.dc.html": {
+   "x": 1360,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Scope selector open",
+   "page": "states",
+   "radius": 8
+  },
+  "Toasts.dc.html": {
+   "x": 2720,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Toasts after an action",
+   "page": "states",
+   "radius": 8
+  },
+  "ReclaimEs.dc.html": {
+   "x": 4080,
+   "y": 1240,
+   "w": 1280,
+   "h": 800,
+   "title": "Spanish · Recuperar / worktrees olvidados",
+   "page": "states",
+   "radius": 8
+  },
+  "DialogRemoveWorktree.dc.html": {
+   "x": 0,
+   "y": 2480,
+   "w": 1280,
+   "h": 800,
+   "title": "Confirm · remove worktree",
+   "page": "states",
+   "radius": 8
+  },
+  "DialogKillProcess.dc.html": {
+   "x": 1360,
+   "y": 2480,
+   "w": 1280,
+   "h": 800,
+   "title": "Confirm · kill process",
+   "page": "states",
+   "radius": 8
+  },
+  "DialogDeleteFolders.dc.html": {
+   "x": 2720,
+   "y": 2480,
+   "w": 1280,
+   "h": 800,
+   "title": "Confirm · delete folders",
+   "page": "states",
+   "radius": 8
+  },
+  "Tokens.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 3600,
+   "title": "Design tokens",
+   "page": "system",
+   "radius": 8
+  },
+  "Components.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 4200,
+   "title": "Component specs",
+   "page": "system",
+   "radius": 8
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "PortsGlobal.dc.html",
+  "JsonGlobal.dc.html",
+  "ReclaimGlobal.dc.html",
+  "WorktreesProject.dc.html",
+  "PortsProject.dc.html",
+  "JsonProject.dc.html",
+  "ReclaimProject.dc.html",
+  "WorktreesGlobalLight.dc.html",
+  "PortsGlobalLight.dc.html",
+  "JsonGlobalLight.dc.html",
+  "ReclaimGlobalLight.dc.html",
+  "WorktreesProjectLight.dc.html",
+  "PortsProjectLight.dc.html",
+  "JsonProjectLight.dc.html",
+  "ReclaimProjectLight.dc.html",
+  "WorktreesEmpty.dc.html",
+  "WorktreesScanning.dc.html",
+  "GitError.dc.html",
+  "PortsEmpty.dc.html",
+  "JsonIndexing.dc.html",
+  "ScopeOpen.dc.html",
+  "Toasts.dc.html",
+  "ReclaimEs.dc.html",
+  "DialogRemoveWorktree.dc.html",
+  "DialogKillProcess.dc.html",
+  "DialogDeleteFolders.dc.html",
+  "Tokens.dc.html",
+  "Components.dc.html"
+ ],
+ "notes": {
+  "dark-g": {
+   "x": 0,
+   "y": -260,
+   "text": "Global view · dark theme",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "dark"
+  },
+  "dark-p": {
+   "x": 0,
+   "y": 980,
+   "text": "Project view (orbit-web) · dark theme",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "dark"
+  },
+  "light-g": {
+   "x": 0,
+   "y": -260,
+   "text": "Global view · light theme",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "light"
+  },
+  "light-p": {
+   "x": 0,
+   "y": 980,
+   "text": "Project view (orbit-web) · light theme",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "light"
+  },
+  "st-0": {
+   "x": 0,
+   "y": -260,
+   "text": "Empty, loading and error states",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "states"
+  },
+  "st-1": {
+   "x": 0,
+   "y": 980,
+   "text": "Scope selector, toasts and Spanish strings",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "states"
+  },
+  "st-2": {
+   "x": 0,
+   "y": 2220,
+   "text": "Confirmation dialogs",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "states"
+  },
+  "sys": {
+   "x": 0,
+   "y": -260,
+   "text": "Tokens and component specs",
+   "kind": "title1",
+   "maxW": 2640,
+   "page": "system"
+  },
+  "sys-note": {
+   "x": 2720,
+   "y": 0,
+   "w": 360,
+   "page": "system",
+   "fill": "blue",
+   "text": "Every screen uses these exact tokens as CSS variables. Each artboard has a Theme tweak (dark / light), so any screen can be checked in both themes."
+  }
+ },
+ "designSystems": []
+}

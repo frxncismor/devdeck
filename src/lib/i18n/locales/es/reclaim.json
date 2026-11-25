@@ -1,0 +1,143 @@
+{
+  "summary": {
+    "ram": "RAM recuperable",
+    "disk": "Disco recuperable",
+    "nothing": "No hay nada que recuperar ahora mismo.",
+    "sizing": "Aún se están midiendo las cifras de disco.",
+    "ramHint_one": "de {count} proceso de desarrollo",
+    "ramHint_other": "de {count} procesos de desarrollo",
+    "diskHint": "{worktrees} worktrees · {folders} carpetas",
+    "byWorktree": "por worktree"
+  },
+  "tabs": {
+    "label": "Secciones de Recuperar",
+    "worktrees": "Worktrees olvidados",
+    "processes": "Procesos de desarrollo",
+    "folders": "Carpetas regenerables"
+  },
+  "common": {
+    "refresh": "Reescanear",
+    "unknown": "Desconocido",
+    "none": "—"
+  },
+  "worktrees": {
+    "description": "Worktrees sin commits desde hace {days} días o cuya rama ya está fusionada en la rama base. El worktree principal nunca aparece.",
+    "empty": "No se encontraron worktrees olvidados.",
+    "noRoot": "Elige primero la carpeta de repositorios en la pestaña Worktrees.",
+    "columns": {
+      "state": "Estado"
+    },
+    "age_one": "hace {count} día",
+    "age_other": "hace {count} días",
+    "processes_one": "{count} proceso dentro",
+    "processes_other": "{count} procesos dentro"
+  },
+  "processes": {
+    "description": "Procesos de desarrollo que pueden estar reteniendo memoria. Los procesos cuya carpeta de trabajo ya no existe se marcan como huérfanos.",
+    "empty": "No se encontraron procesos de desarrollo.",
+    "columns": {
+      "ram": "RAM",
+      "cpu": "CPU",
+      "age": "En ejecución",
+      "folder": "Carpeta"
+    },
+    "orphan": "Worktree eliminado",
+    "unknownFolder": "Carpeta desconocida",
+    "orphanTitle": "La carpeta de trabajo ya no existe"
+  },
+  "folders": {
+    "description": "Carpetas que se pueden regenerar (node_modules, target, .venv, dist y cachés de gestores de paquetes). Borrarlas es permanente.",
+    "empty": "No se encontraron carpetas regenerables.",
+    "noRoot": "Solo se buscan las cachés globales hasta que elijas una carpeta de repositorios en la pestaña Worktrees.",
+    "scanning": "Buscando y midiendo carpetas…",
+    "found_one": "{count} carpeta encontrada",
+    "found_other": "{count} carpetas encontradas",
+    "measured": "Medidas {done} de {total}",
+    "cancelled": "Se canceló la búsqueda. Se muestran los resultados anteriores.",
+    "columns": {
+      "path": "Ruta",
+      "kind": "Carpeta",
+      "lastUsed": "Último uso"
+    },
+    "select": "Seleccionar {name}",
+    "selected_one": "{count} seleccionada",
+    "selected_other": "{count} seleccionadas",
+    "clear": "Limpiar",
+    "deleteSelected": "Eliminar definitivamente…"
+  },
+  "kind": {
+    "node": "Node.js",
+    "esbuild": "esbuild",
+    "vite": "Vite",
+    "cargo": "Cargo",
+    "rustc": "rustc",
+    "rustAnalyzer": "rust-analyzer",
+    "chromium": "Chromium headless",
+    "playwright": "Playwright",
+    "docker": "Docker",
+    "wsl": "WSL"
+  },
+  "folderKind": {
+    "node_modules": "node_modules",
+    "target": "target de Cargo",
+    "venv": "venv de Python",
+    "dist": "dist",
+    "npmCache": "Caché de npm",
+    "pnpmStore": "Almacén de pnpm",
+    "cargoRegistry": "Registro de Cargo",
+    "cargoGit": "Caché git de Cargo"
+  },
+  "reason": {
+    "stale": "Sin commits recientes",
+    "merged": "Rama fusionada",
+    "clean": "Sin cambios sin commitear",
+    "live_processes": "Procesos en ejecución"
+  },
+  "actions": {
+    "removeWorktree": "Eliminar",
+    "terminate": "Terminar"
+  },
+  "removeWorktree": {
+    "message": "¿Eliminar el worktree en {path} ({size})? Se borrará la carpeta; la rama se conserva.",
+    "liveWarning": "Hay {count} proceso(s) en ejecución dentro y podrían interrumpirse."
+  },
+  "terminate": {
+    "title": "Terminar proceso",
+    "message": "¿Terminar {name} (PID {pid}, {ram} de RAM)? Se perderá el trabajo sin guardar que tenga.",
+    "confirm": "Terminar"
+  },
+  "deleteFolder": {
+    "title_one": "¿Eliminar {count} carpeta definitivamente?",
+    "title_other": "¿Eliminar {count} carpetas definitivamente?",
+    "message": "Los archivos no pasan por la Papelera y no se pueden restaurar. Se pueden regenerar, pero no se puede deshacer.",
+    "total": "Total",
+    "confirm": "Eliminar {size}",
+    "done": "Liberados {size}.",
+    "partial": "Se eliminaron {done} de {total} carpetas ({size} liberados) antes de un error.",
+    "progress": "Eliminando {current} de {total} · {size} liberados",
+    "rowBusy": "Eliminando…"
+  },
+  "errors": {
+    "reason": {
+      "link": "Es un enlace o una unión (junction), que nunca se borra.",
+      "not_a_directory": "No es una carpeta.",
+      "drive_root": "La raíz de una unidad nunca se puede borrar.",
+      "home": "La carpeta personal (o una que la contenga) nunca se puede borrar.",
+      "root": "La propia carpeta raíz de repositorios nunca se puede borrar.",
+      "outside_root": "Está fuera de la carpeta de repositorios y no es una caché conocida.",
+      "not_allowlisted": "No es una carpeta regenerable (node_modules, target, .venv, dist o una caché conocida)."
+    }
+  },
+  "readOnly": "Escaneo de solo lectura. Nada se detiene ni se borra hasta que lo confirmes, y nada se ejecuta automáticamente.",
+  "scannedAt": "Escaneado: {time}",
+  "toast": {
+    "worktreeRemoved": "Worktree eliminado",
+    "processTerminated": "{name} terminado"
+  },
+  "reasonHint": {
+    "stale": "Sin commits desde hace {days} días o más, así que probablemente está olvidado.",
+    "merged": "Su rama ya está fusionada en la rama base, así que eliminar el worktree no pierde trabajo.",
+    "clean": "No hay nada sin commitear: eliminarlo no descartará ediciones locales.",
+    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; eliminarla puede interrumpirlos."
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "intro": "Abre un archivo JSON grande para explorarlo sin cargarlo en memoria.",
+  "open": {
+    "button": "Abrir archivo…",
+    "dialogTitle": "Selecciona un archivo JSON",
+    "close": "Cerrar archivo"
+  },
+  "drop": {
+    "title": "Suelta aquí un archivo JSON",
+    "hint": "o usa Abrir archivo…: los archivos grandes se indexan, nunca se cargan en memoria.",
+    "active": "Suelta para abrir"
+  },
+  "recent": {
+    "title": "Archivos recientes",
+    "remove": "Quitar de recientes"
+  },
+  "file": {
+    "size": "Tamaño",
+    "containers": "Contenedores",
+    "indexedIn": "Indexado en"
+  },
+  "status": {
+    "indexing": "Indexando {name}",
+    "progress": "{done} de {total}",
+    "eta": "faltan unos {time}",
+    "note": "Pulsa Esc para cancelar; nada se guarda en memoria.",
+    "cancelled": "Indexado cancelado"
+  },
+  "tree": {
+    "label": "Árbol JSON",
+    "path": "Ruta",
+    "expand": "Expandir {name}",
+    "collapse": "Contraer {name}",
+    "keys_one": "{n} clave",
+    "keys_other": "{n} claves",
+    "items_one": "{n} elemento",
+    "items_other": "{n} elementos",
+    "empty": "vacío",
+    "loadMore": "Mostrar los {count} siguientes · faltan {remaining}",
+    "loading": "Cargando…",
+    "virtualized": "Virtualizado · {rendered} de {total} filas renderizadas",
+    "kind": {
+      "object": "objeto",
+      "array": "array",
+      "string": "cadena",
+      "number": "número",
+      "bool": "bool",
+      "null": "null"
+    }
+  },
+  "search": {
+    "label": "Buscar en el JSON",
+    "placeholder": "Buscar claves y valores",
+    "run": "Buscar",
+    "stop": "Detener",
+    "searching": "Buscando… {count} encontrados",
+    "counter": "{current} de {total}",
+    "none": "Sin resultados",
+    "truncated": "Se muestran los primeros {count} resultados; afina la búsqueda para ver otros.",
+    "options": "Opciones de búsqueda",
+    "caseSensitive": "Distinguir mayúsculas",
+    "inKeys": "Claves",
+    "inValues": "Valores",
+    "prev": "Coincidencia anterior",
+    "next": "Coincidencia siguiente",
+    "hitKey": "clave",
+    "hitValue": "valor"
+  },
+  "actions": {
+    "title": "Nodo seleccionado",
+    "none": "Selecciona un nodo del árbol o un resultado de búsqueda.",
+    "jsonPath": "JSONPath",
+    "type": "Tipo",
+    "children": "Hijos",
+    "depth": "Profundidad",
+    "unknown": "—",
+    "copyPath": "Copiar ruta",
+    "copyValue": "Copiar valor",
+    "copyFormatted": "Copiar formateado",
+    "preview": "Vista previa",
+    "previewLoad": "Ver vista previa",
+    "previewCut": "Vista previa cortada a {count} caracteres; copia o guarda para obtenerlo todo.",
+    "prettyPrint": "Formatear subárbol",
+    "saveFormatted": "Guardar formateado…",
+    "saveDialogTitle": "Guardar JSON formateado",
+    "copied": "Copiado al portapapeles",
+    "saving": "Guardando… {percent}",
+    "saved": "Guardado {size}",
+    "cancelSave": "Cancelar guardado",
+    "saveCancelled": "Guardado cancelado",
+    "valueCut": "El valor supera el límite de copia ({max}); guárdalo en un archivo.",
+    "saveNode": "Guardar nodo formateado…"
+  }
+}

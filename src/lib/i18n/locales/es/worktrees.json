@@ -1,0 +1,79 @@
+{
+  "root": {
+    "label": "Carpeta raíz de repositorios",
+    "none": "No hay carpeta raíz seleccionada",
+    "choose": "Elegir carpeta…",
+    "change": "Cambiar…",
+    "pickerTitle": "Selecciona la carpeta que contiene tus repositorios"
+  },
+  "empty": {
+    "noRoot": "Elige la carpeta que contiene tus repositorios para ver sus worktrees.",
+    "noResults": "Ningún worktree coincide con los filtros.",
+    "noWorktrees": "No se encontraron repositorios git bajo la carpeta raíz.",
+    "noRootTitle": "Elige la carpeta de tus repositorios",
+    "noWorktreesTitle": "No se encontraron repositorios"
+  },
+  "filter": {
+    "search": "Buscar",
+    "searchPlaceholder": "Rama, ruta o commit",
+    "dirtyOnly": "Solo con cambios sin commitear"
+  },
+  "columns": {
+    "status": "Cambios",
+    "sync": "Vs. remoto"
+  },
+  "badge": {
+    "main": "Principal",
+    "detached": "HEAD desacoplado",
+    "detachedHint": "No está en ninguna rama: los commits que hagas aquí se pueden perder. Cambia a una rama o crea una para conservarlos.",
+    "mainHint": "El checkout original del repositorio. No se puede eliminar desde aquí."
+  },
+  "sync": {
+    "noUpstream": "Sin rama remota",
+    "noUpstreamHint": "Esta rama no tiene equivalente remoto con el que comparar. Súbela (push) para publicarla.",
+    "syncedHint": "Al día con su rama remota.",
+    "aheadHint_one": "{count} commit sin subir todavía. Haz push para compartirlo.",
+    "aheadHint_other": "{count} commits sin subir todavía. Haz push para compartirlos.",
+    "behindHint_one": "{count} commit en el remoto que aún no tienes. Haz pull para traerlo.",
+    "behindHint_other": "{count} commits en el remoto que aún no tienes. Haz pull para traerlos.",
+    "divergedHint": "Sin subir: {ahead} · Por traer: {behind}. La rama local y la remota han divergido.",
+    "synced": "Al día",
+    "ahead": "↑ Por delante",
+    "behind": "↓ Por detrás",
+    "diverged": "↑↓ Divergida"
+  },
+  "actions": {
+    "openVscode": "Abrir en VS Code",
+    "openTerminal": "Abrir terminal",
+    "remove": "Eliminar",
+    "removeMain": "El worktree principal no se puede eliminar"
+  },
+  "remove": {
+    "message": "¿Eliminar el worktree en {path}? Se borrará la carpeta; la rama se conserva."
+  },
+  "scannedJustNow": "Escaneado ahora mismo",
+  "scannedAgo": "Escaneado {age}",
+  "scanning": "Escaneando repositorios…",
+  "rescan": "Reescanear",
+  "retry": "Reintentar",
+  "stats": {
+    "worktrees": "Worktrees",
+    "modified": "Con cambios sin commitear",
+    "ahead": "Con commits sin subir",
+    "behind": "Por detrás del remoto",
+    "modifiedCount": "{count} con cambios sin commitear"
+  },
+  "toast": {
+    "openedVscode": "Abierto en VS Code",
+    "openedTerminal": "Terminal abierta",
+    "removed": "Worktree eliminado"
+  },
+  "status": {
+    "clean": "Sin cambios sin commitear",
+    "cleanHint": "Todos los cambios de este worktree ya están en un commit.",
+    "dirty_one": "{count} archivo modificado",
+    "dirty_other": "{count} archivos modificados",
+    "dirtyHint": "Archivos modificados, añadidos o borrados que aún no están en un commit. Haz commit o guárdalos (stash) antes de eliminar el worktree.",
+    "missingHint": "La carpeta de este worktree ya no existe en disco, pero git aún lo lista. Ejecuta git worktree prune para limpiarlo."
+  }
+}

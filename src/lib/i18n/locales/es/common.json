@@ -1,0 +1,129 @@
+{
+  "app": {
+    "name": "DevDeck"
+  },
+  "sidebar": {
+    "label": "Módulos",
+    "worktrees": "Worktrees",
+    "ports": "Puertos",
+    "jsonViewer": "Visor JSON",
+    "reclaim": "Recuperar",
+    "sidebar": "Barra lateral",
+    "collapse": "Contraer barra lateral",
+    "expand": "Expandir barra lateral"
+  },
+  "credit": {
+    "madeBy": "Hecho por",
+    "handle": "@frxncismor",
+    "label": "Hecho por @frxncismor"
+  },
+  "scope": {
+    "label": "Ámbito",
+    "global": "Global",
+    "filter": "Filtrar proyectos…",
+    "noMatch": "Ningún proyecto coincide",
+    "projects_one": "{count} proyecto",
+    "projects_other": "Los {count} proyectos"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "es": "Español"
+  },
+  "noProject": "Sin proyecto",
+  "confirm": {
+    "title": "Confirma la acción",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
+  "buttons": {
+    "cancel": "Cancelar",
+    "refresh": "Actualizar"
+  },
+  "state": {
+    "loading": "Cargando…"
+  },
+  "table": {
+    "items_one": "{count} elemento",
+    "items_other": "{count} elementos",
+    "total": "Total"
+  },
+  "errors": {
+    "unknown": "Algo salió mal",
+    "not_found": "No se encontró el elemento",
+    "not_allowed": "Esta acción no está permitida",
+    "folder_not_allowed": "Esta carpeta no se puede eliminar",
+    "worktree_main_not_removable": "El worktree principal no se puede eliminar",
+    "process_access_denied": "Se denegó el acceso al proceso",
+    "process_not_found": "El proceso ya no existe",
+    "process_name_mismatch": "El proceso cambió y no se tocó",
+    "git_not_found": "No se encontró Git en este sistema",
+    "git_failed": "Falló un comando de git",
+    "io_error": "Ocurrió un error del sistema de archivos",
+    "config_invalid": "La configuración guardada no es válida",
+    "json_invalid_at_offset": "JSON no válido en el byte {offset}",
+    "json_file_changed": "El archivo cambió en disco, ábrelo de nuevo",
+    "cancelled": "La operación se canceló",
+    "unsupported_platform": "No compatible con esta plataforma",
+    "not_implemented": "Aún no implementado",
+    "worktree_dirty": "El worktree tiene cambios sin confirmar",
+    "vscode_not_found": "No se encontró VS Code (el comando code)",
+    "terminal_not_found": "No se pudo iniciar ninguna terminal",
+    "json_value_too_large": "Este valor supera el límite de {maxBytes} para formatear; guárdalo en un archivo.",
+    "json_save_same_file": "Elige otro archivo: el archivo abierto no se puede sobrescribir.",
+    "json_session_not_found": "El archivo ya no está abierto; ábrelo de nuevo.",
+    "json_node_not_found": "Ese nodo ya no existe en el archivo.",
+    "json_too_large": "Este archivo es demasiado grande para indexarlo."
+  },
+  "columns": {
+    "actions": "Acciones",
+    "process": "Proceso",
+    "branch": "Rama",
+    "lastCommit": "Último commit",
+    "size": "Tamaño"
+  },
+  "worktree": {
+    "noCommits": "Sin commits",
+    "missing": "Carpeta ausente",
+    "dirty_one": "{count} archivo modificado",
+    "dirty_other": "{count} archivos modificados",
+    "remove": {
+      "title": "Eliminar worktree",
+      "confirm": "Eliminar",
+      "forceTitle": "¿Descartar los cambios sin confirmar?",
+      "forceMessage": "El worktree en {path} tiene cambios sin confirmar. Al eliminarlo se descartarán de forma permanente.",
+      "forceConfirm": "Descartar y eliminar"
+    }
+  },
+  "theme": {
+    "toLight": "Cambiar a tema claro",
+    "toDark": "Cambiar a tema oscuro"
+  },
+  "titlebar": {
+    "search": "Buscar…",
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "restore": "Restaurar",
+    "close": "Cerrar"
+  },
+  "palette": {
+    "title": "Paleta de comandos",
+    "placeholder": "Ir a un módulo o cambiar de ámbito…",
+    "empty": "Sin resultados",
+    "goTo": "Ir a {name}",
+    "scopeTo": "Ámbito: {name}"
+  },
+  "toast": {
+    "dismiss": "Cerrar"
+  },
+  "units": {
+    "ram": "RAM",
+    "disk": "Disco"
+  },
+  "busy": {
+    "deleting": "Eliminando…",
+    "removing": "Eliminando…",
+    "terminating": "Terminando…",
+    "scanning": "Escaneando…"
+  }
+}

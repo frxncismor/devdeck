@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest an idea or improvement for DevDeck
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Please check existing issues first.
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - Worktrees
+        - Ports
+        - JSON Viewer
+        - Reclaim
+        - New module
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to work on this in a pull request.

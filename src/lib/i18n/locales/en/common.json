@@ -1,0 +1,129 @@
+{
+  "app": {
+    "name": "DevDeck"
+  },
+  "sidebar": {
+    "label": "Modules",
+    "worktrees": "Worktrees",
+    "ports": "Ports",
+    "jsonViewer": "JSON Viewer",
+    "reclaim": "Reclaim",
+    "sidebar": "Sidebar",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "credit": {
+    "madeBy": "Made by",
+    "handle": "@frxncismor",
+    "label": "Made by @frxncismor"
+  },
+  "scope": {
+    "label": "Scope",
+    "global": "Global",
+    "filter": "Filter projects…",
+    "noMatch": "No projects match",
+    "projects_one": "{count} project",
+    "projects_other": "All {count} projects"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español"
+  },
+  "noProject": "No project",
+  "confirm": {
+    "title": "Please confirm",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "refresh": "Refresh"
+  },
+  "state": {
+    "loading": "Loading…"
+  },
+  "table": {
+    "items_one": "{count} item",
+    "items_other": "{count} items",
+    "total": "Total"
+  },
+  "errors": {
+    "unknown": "Something went wrong",
+    "not_found": "The item was not found",
+    "not_allowed": "This action is not allowed",
+    "folder_not_allowed": "This folder cannot be deleted",
+    "worktree_main_not_removable": "The main worktree cannot be removed",
+    "process_access_denied": "Access to the process was denied",
+    "process_not_found": "The process no longer exists",
+    "process_name_mismatch": "The process changed and was left untouched",
+    "git_not_found": "Git was not found on this system",
+    "git_failed": "A git command failed",
+    "io_error": "A file system error occurred",
+    "config_invalid": "The saved configuration is invalid",
+    "json_invalid_at_offset": "Invalid JSON at byte {offset}",
+    "json_file_changed": "The file changed on disk, reopen it",
+    "cancelled": "The operation was cancelled",
+    "unsupported_platform": "Not supported on this platform",
+    "not_implemented": "Not implemented yet",
+    "worktree_dirty": "The worktree has uncommitted changes",
+    "vscode_not_found": "VS Code (the code command) was not found",
+    "terminal_not_found": "No terminal could be started",
+    "json_value_too_large": "This value is larger than the {maxBytes} limit for formatting; save it to a file instead.",
+    "json_save_same_file": "Choose a different file: the opened file cannot be overwritten.",
+    "json_session_not_found": "The file is no longer open; open it again.",
+    "json_node_not_found": "That node no longer exists in the file.",
+    "json_too_large": "This file is too large to index."
+  },
+  "columns": {
+    "actions": "Actions",
+    "process": "Process",
+    "branch": "Branch",
+    "lastCommit": "Last commit",
+    "size": "Size"
+  },
+  "worktree": {
+    "noCommits": "No commits",
+    "missing": "Missing folder",
+    "dirty_one": "{count} changed file",
+    "dirty_other": "{count} changed files",
+    "remove": {
+      "title": "Remove worktree",
+      "confirm": "Remove",
+      "forceTitle": "Discard uncommitted changes?",
+      "forceMessage": "The worktree at {path} has uncommitted changes. Removing it will discard them permanently.",
+      "forceConfirm": "Discard and remove"
+    }
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "titlebar": {
+    "search": "Search…",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Go to a module or switch scope…",
+    "empty": "No matches",
+    "goTo": "Go to {name}",
+    "scopeTo": "Scope: {name}"
+  },
+  "toast": {
+    "dismiss": "Dismiss"
+  },
+  "units": {
+    "ram": "RAM",
+    "disk": "Disk"
+  },
+  "busy": {
+    "deleting": "Deleting…",
+    "removing": "Removing…",
+    "terminating": "Terminating…",
+    "scanning": "Scanning…"
+  }
+}

@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/frxncismor/devdeck/security/advisories/new
+    about: Please report vulnerabilities privately here, not in a public issue.
+  # Discussions are not linked because they may not be enabled yet.
+  # If they are enabled, consider adding:
+  # - name: Questions and ideas
+  #   url: https://github.com/frxncismor/devdeck/discussions
+  #   about: Ask questions and share ideas.

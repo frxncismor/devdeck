@@ -7,7 +7,11 @@
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
   import GroupedRows from "./GroupedRows.svelte";
-  import { REASON_KEYS, type ForgottenWorktree } from "./logic";
+  import {
+    REASON_HINT_KEYS,
+    REASON_KEYS,
+    type ForgottenWorktree,
+  } from "./logic";
 
   interface Props {
     data: Grouped<ForgottenWorktree> | null;
@@ -15,9 +19,12 @@
     hasRoot: boolean;
     days: number;
     grouped: boolean;
+    /** Paths of the worktrees being removed right now. */
+    busy: ReadonlySet<string>;
     onremove: (w: ForgottenWorktree) => void;
   }
-  let { data, loading, hasRoot, days, grouped, onremove }: Props = $props();
+  let { data, loading, hasRoot, days, grouped, busy, onremove }: Props =
+    $props();
 
   const columns: Column<ForgottenWorktree>[] = $derived([
     { key: "branch", header: t("common.columns.branch") },
@@ -82,9 +89,11 @@
                 : r === "stale"
                   ? "neutral"
                   : "success"}
+              title={t(REASON_HINT_KEYS[r], { days })}
             >
               {t(REASON_KEYS[r])}
             </Badge>
+            <span class="sr-only">{t(REASON_HINT_KEYS[r], { days })}</span>
           {/each}
           {#if !w.worktree.exists}
             <Badge tone="warning">{t("common.worktree.missing")}</Badge>
@@ -95,14 +104,24 @@
             </Badge>
           {/if}
           {#if w.liveProcesses > 0 && !w.reasons.includes("live_processes")}
-            <Badge tone="warning">
+            <Badge
+              tone="warning"
+              title={t("reclaim.reasonHint.live_processes")}
+            >
               {t("reclaim.worktrees.processes", { count: w.liveProcesses })}
             </Badge>
           {/if}
         </span>
       {:else}
-        <Button size="sm" variant="danger-ghost" onclick={() => onremove(w)}>
-          {t("reclaim.actions.removeWorktree")}
+        <Button
+          size="sm"
+          variant="danger-ghost"
+          loading={busy.has(w.worktree.path)}
+          onclick={() => onremove(w)}
+        >
+          {busy.has(w.worktree.path)
+            ? t("common.busy.removing")
+            : t("reclaim.actions.removeWorktree")}
         </Button>
       {/if}
     {/snippet}

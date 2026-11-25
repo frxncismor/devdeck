@@ -9,8 +9,9 @@
 
 <span
   class="spinner"
-  role="status"
+  role={label ? "status" : undefined}
   aria-label={label}
+  aria-hidden={label ? undefined : true}
   style:width="{size}px"
   style:height="{size}px"
 ></span>
@@ -23,6 +24,14 @@
     border: 2px solid var(--border-strong);
     border-top-color: var(--accent);
     animation: spin 0.8s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* No rotation: the busy text next to it carries the state. */
+    .spinner {
+      animation: none;
+      border-top-color: var(--accent);
+      border-right-color: var(--accent);
+    }
   }
   @keyframes spin {
     to {

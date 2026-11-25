@@ -3,6 +3,7 @@
   import { onDestroy, untrack } from "svelte";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
   import Banner from "../../components/Banner.svelte";
+  import GlossaryButton from "../../components/GlossaryButton.svelte";
   import Button from "../../components/Button.svelte";
   import ConfirmDialog from "../../components/ConfirmDialog.svelte";
   import Tabs from "../../components/Tabs.svelte";
@@ -22,7 +23,11 @@
   import { isDirtyError } from "../worktrees/logic";
   import FoldersTab from "./FoldersTab.svelte";
   import {
+    advanceDelete,
     folderRejectionKey,
+    processKey,
+    startDeleteProgress,
+    type DeleteProgress,
     projectSlices,
     removalWarnings,
     totalsOf,
@@ -57,11 +62,17 @@
   let scannedAt = $state<Date | null>(null);
   let selected = $state<ReadonlySet<string>>(new Set());
   let pending = $state<Pending | null>(null);
-  let busy = $state(false);
+  /** Keys (worktree path, process key, folder path) of the items being removed right now. */
+  const busyKeys = new SvelteSet<string>();
+  /** "Deleting 2 of 3 · 1.4 GB freed" state while folders are being deleted. */
+  let deleting = $state<DeleteProgress | null>(null);
 
   const root = $derived(configState.value.root);
   const scope = $derived(configState.value.scope);
   const measuring = $derived(loadingWorktrees || scanning);
+  /** Any of the three scans running: the Rescan button shows a spinner and is disabled. */
+  const refreshing = $derived(measuring || loadingProcesses);
+  const forgottenDays = $derived(configState.value.forgottenDays);
   const grouped = $derived(scope.kind === "global");
 
   const tabDefs = $derived([
@@ -269,43 +280,57 @@
 
   /** Deletes the folders one by one; a failure stops the loop and reports what was freed so far. */
   async function deleteFolders(items: HeavyFolder[]): Promise<void> {
-    let freed = 0;
-    let done = 0;
+    let progress = startDeleteProgress(items.length);
+    deleting = progress;
+    for (const f of items) busyKeys.add(f.path);
     try {
       for (const f of items) {
-        freed += (await reclaimApi.deleteFolder(f.path)).freedBytes;
-        done++;
+        const result = await reclaimApi.deleteFolder(f.path);
+        progress = advanceDelete(progress, result.freedBytes);
+        deleting = progress;
       }
-      pending = null;
       selected = new Set();
       toasts.success(
-        t("reclaim.deleteFolder.done", { size: formatBytes(freed) }),
+        t("reclaim.deleteFolder.done", {
+          size: formatBytes(progress.freedBytes),
+        }),
       );
     } catch (e) {
-      pending = null;
-      if (done > 0) {
+      if (progress.done > 0) {
         toasts.warning(
           t("reclaim.deleteFolder.partial", {
-            done,
+            done: progress.done,
             total: items.length,
-            size: formatBytes(freed),
+            size: formatBytes(progress.freedBytes),
           }),
         );
       }
       error = toAppError(e);
+    } finally {
+      deleting = null;
+      for (const f of items) busyKeys.delete(f.path);
     }
     await loadFolders();
   }
 
+  function pendingKey(p: Pending): string | null {
+    if (p.type === "worktree") return p.item.worktree.path;
+    if (p.type === "process") return processKey(p.item);
+    return null;
+  }
+
   async function confirmPending(): Promise<void> {
     const p = pending;
-    if (!p || busy) return;
-    busy = true;
+    if (!p || deleting) return;
+    const key = pendingKey(p);
+    if (key && busyKeys.has(key)) return;
+    // Close the dialog and keep working in the background: rows and the progress strip show the state.
+    pending = null;
     error = null;
+    if (key) busyKeys.add(key);
     try {
       if (p.type === "worktree") {
         await reclaimApi.removeWorktree(p.item.worktree.path, p.force);
-        pending = null;
         toasts.success(
           t("reclaim.toast.worktreeRemoved"),
           p.item.worktree.path,
@@ -314,7 +339,6 @@
         await refreshProjects();
       } else if (p.type === "process") {
         await reclaimApi.killProcess(p.item.pid, p.item.name, p.item.startTime);
-        pending = null;
         toasts.success(
           t("reclaim.toast.processTerminated", { name: p.item.name }),
         );
@@ -329,12 +353,11 @@
         pending = { ...p, force: true };
         return;
       }
-      pending = null;
       error = err;
       // A process that already vanished: refresh what is shown.
       if (p.type === "process") void loadProcesses();
     } finally {
-      busy = false;
+      if (key) busyKeys.delete(key);
     }
   }
 
@@ -397,9 +420,10 @@
     {/if}
   {/snippet}
   {#snippet actions()}
-    <Button icon={RefreshCw} kbd="F5" onclick={refreshAll}>
+    <Button icon={RefreshCw} kbd="F5" loading={refreshing} onclick={refreshAll}>
       {t("reclaim.common.refresh")}
     </Button>
+    <GlossaryButton module="reclaim" params={{ days: forgottenDays }} />
   {/snippet}
 </TopBarContent>
 
@@ -407,7 +431,7 @@
   onkeydown={(e) => {
     if (e.key === "F5") {
       e.preventDefault();
-      refreshAll();
+      if (!refreshing) refreshAll();
     }
   }}
 />
@@ -443,6 +467,7 @@
       hasRoot={!!root}
       days={configState.value.forgottenDays}
       {grouped}
+      busy={busyKeys}
       onremove={(item) => (pending = { type: "worktree", item, force: false })}
     />
   {:else if tab === "processes"}
@@ -450,6 +475,7 @@
       data={processes}
       loading={loadingProcesses}
       {grouped}
+      busy={busyKeys}
       onterminate={(item) => (pending = { type: "process", item })}
     />
   {:else}
@@ -462,6 +488,8 @@
       {grouped}
       {selected}
       {selectedBytes}
+      {deleting}
+      busy={busyKeys}
       ontoggle={toggleFolder}
       onclear={() => (selected = new Set())}
       oncancel={() => void cancelFolders()}
@@ -475,7 +503,6 @@
   title={dialog.title}
   message={dialog.message}
   confirmLabel={dialog.confirm}
-  {busy}
   onconfirm={() => void confirmPending()}
   oncancel={() => (pending = null)}
 >

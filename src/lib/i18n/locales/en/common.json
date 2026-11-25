@@ -85,8 +85,8 @@
   "worktree": {
     "noCommits": "No commits",
     "missing": "Missing folder",
-    "dirty_one": "{count} change",
-    "dirty_other": "{count} changes",
+    "dirty_one": "{count} changed file",
+    "dirty_other": "{count} changed files",
     "remove": {
       "title": "Remove worktree",
       "confirm": "Remove",
@@ -119,5 +119,11 @@
   "units": {
     "ram": "RAM",
     "disk": "Disk"
+  },
+  "busy": {
+    "deleting": "Deleting…",
+    "removing": "Removing…",
+    "terminating": "Terminating…",
+    "scanning": "Scanning…"
   }
 }

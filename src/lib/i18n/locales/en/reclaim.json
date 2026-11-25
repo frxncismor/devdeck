@@ -88,9 +88,9 @@
     "cargoGit": "Cargo git cache"
   },
   "reason": {
-    "stale": "Inactive",
-    "merged": "Merged",
-    "clean": "No changes",
+    "stale": "No recent commits",
+    "merged": "Branch merged",
+    "clean": "No uncommitted changes",
     "live_processes": "Processes running"
   },
   "actions": {
@@ -113,7 +113,9 @@
     "total": "Total",
     "confirm": "Delete {size}",
     "done": "Freed {size}.",
-    "partial": "Deleted {done} of {total} folders ({size} freed) before an error."
+    "partial": "Deleted {done} of {total} folders ({size} freed) before an error.",
+    "progress": "Deleting {current} of {total} · {size} freed",
+    "rowBusy": "Deleting…"
   },
   "errors": {
     "reason": {
@@ -131,5 +133,11 @@
   "toast": {
     "worktreeRemoved": "Worktree removed",
     "processTerminated": "{name} terminated"
+  },
+  "reasonHint": {
+    "stale": "No commits for {days} days or more, so it is probably forgotten.",
+    "merged": "Its branch is already merged into the base branch, so removing the worktree loses no work.",
+    "clean": "Nothing is uncommitted: removing it will not discard any local edits.",
+    "live_processes": "Processes are running inside this folder; removing it may interrupt them."
   }
 }

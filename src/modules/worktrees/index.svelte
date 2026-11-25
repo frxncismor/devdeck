@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
   import { open } from "@tauri-apps/plugin-dialog";
   import ArrowDown from "@lucide/svelte/icons/arrow-down";
   import ArrowUp from "@lucide/svelte/icons/arrow-up";
@@ -12,6 +13,7 @@
   import GitBranch from "@lucide/svelte/icons/git-branch";
   import Badge from "../../components/Badge.svelte";
   import Banner from "../../components/Banner.svelte";
+  import GlossaryButton from "../../components/GlossaryButton.svelte";
   import Button from "../../components/Button.svelte";
   import ConfirmDialog from "../../components/ConfirmDialog.svelte";
   import DataTable, { type Column } from "../../components/DataTable.svelte";
@@ -37,8 +39,9 @@
   import {
     ageSecs,
     filterGrouped,
-    formatAheadBehind,
     isDirtyError,
+    syncStatus,
+    worktreeStatus,
     type Worktree,
   } from "./logic";
 
@@ -50,7 +53,8 @@
   /** Worktree pending removal and whether the second (discard changes) step is shown. */
   let pending = $state<Worktree | null>(null);
   let forcing = $state(false);
-  let busy = $state(false);
+  /** Paths of the worktrees being removed right now (spinner on their row, no double run). */
+  const removing = new SvelteSet<string>();
   /** Unix ms of the last successful scan and a coarse clock for "Scanned X ago". */
   let scannedAt = $state<number | null>(null);
   let now = $state(Date.now());
@@ -181,26 +185,27 @@
 
   async function confirmRemove(): Promise<void> {
     const w = pending;
-    if (!w || busy) return;
-    busy = true;
+    if (!w || removing.has(w.path)) return;
+    const force = forcing;
+    // Close the dialog and keep working in the background: the row shows the progress.
+    pending = null;
+    forcing = false;
+    removing.add(w.path);
     try {
-      await api.call("worktree_remove", { path: w.path, force: forcing });
-      pending = null;
-      forcing = false;
+      await api.call("worktree_remove", { path: w.path, force });
       toasts.success(t("worktrees.toast.removed"), w.branch ?? w.path);
       await scan();
     } catch (e) {
       const err = toAppError(e);
-      if (isDirtyError(err) && !forcing) {
+      if (isDirtyError(err) && !force) {
         // Second confirmation: discarding uncommitted changes.
+        pending = w;
         forcing = true;
         return;
       }
-      pending = null;
-      forcing = false;
       fail(err);
     } finally {
-      busy = false;
+      removing.delete(w.path);
     }
   }
 
@@ -232,11 +237,12 @@
         variant="primary"
         icon={RefreshCw}
         kbd="F5"
-        disabled={loading}
+        {loading}
         onclick={() => void scan()}
       >
         {t("worktrees.rescan")}
       </Button>
+      <GlossaryButton module="worktrees" />
     {/if}
   {/snippet}
 </TopBarContent>
@@ -248,44 +254,61 @@
       <span class="bname mono">
         {w.branch ?? (w.detached ? t("worktrees.badge.detached") : "—")}
       </span>
-      {#if w.isMain}<Badge tone="accent">
+      {#if w.isMain}<Badge tone="accent" title={t("worktrees.badge.mainHint")}>
           {t("worktrees.badge.main")}
-        </Badge>{/if}
-      {#if w.detached && w.branch}<Badge>
+        </Badge><span class="sr-only">
+          {t("worktrees.badge.mainHint")}
+        </span>{/if}
+      {#if w.detached && w.branch}<Badge
+          title={t("worktrees.badge.detachedHint")}
+        >
           {t("worktrees.badge.detached")}
-        </Badge>{/if}
+        </Badge><span class="sr-only">
+          {t("worktrees.badge.detachedHint")}
+        </span>{/if}
     </div>
     <span class="path subtle" title={w.path}>{w.path}</span>
   </div>
 {/snippet}
 
 {#snippet statusCell(w: Worktree)}
-  {#if !w.exists}
-    <Badge tone="warning">{t("common.worktree.missing")}</Badge>
-  {:else if w.dirtyCount > 0}
-    <Badge tone="warning">
-      {t("common.worktree.dirty", { count: w.dirtyCount })}
-    </Badge>
-  {:else}
-    <Badge tone="success">{t("worktrees.badge.clean")}</Badge>
-  {/if}
+  {@const st = worktreeStatus(w)}
+  {@const label = t(st.labelKey, { count: st.count ?? 0 })}
+  {@const hint = t(st.hintKey)}
+  <Badge tone={st.tone} title={hint}>{label}</Badge>
+  <span class="sr-only">{hint}</span>
 {/snippet}
 
 {#snippet syncCell(w: Worktree)}
-  {@const sync = formatAheadBehind(w.ahead, w.behind)}
-  {#if sync === null}
-    <span class="muted">{t("worktrees.sync.noUpstream")}</span>
-  {:else if sync === "✓"}
-    <span class="muted mono">✓</span>
+  {@const sync = syncStatus(w.ahead, w.behind)}
+  {#if sync.kind === "none"}
+    <span class="muted" title={t("worktrees.sync.noUpstreamHint")}>
+      {t("worktrees.sync.noUpstream")}
+    </span>
+    <span class="sr-only">{t("worktrees.sync.noUpstreamHint")}</span>
+  {:else if sync.kind === "synced"}
+    {@const hint = t("worktrees.sync.syncedHint")}
+    <span class="muted mono" title={hint} aria-hidden="true">✓</span>
+    <span class="sr-only">{t("worktrees.sync.synced")}. {hint}</span>
   {:else}
-    <span class="sync mono tabular">
-      {#if w.ahead}<span class="up">
-          <ArrowUp size={12} aria-hidden="true" />{w.ahead}
+    {@const hint =
+      sync.kind === "ahead"
+        ? t("worktrees.sync.aheadHint", { count: sync.ahead })
+        : sync.kind === "behind"
+          ? t("worktrees.sync.behindHint", { count: sync.behind })
+          : t("worktrees.sync.divergedHint", {
+              ahead: sync.ahead,
+              behind: sync.behind,
+            })}
+    <span class="sync mono tabular" title={hint}>
+      {#if sync.ahead}<span class="up">
+          <ArrowUp size={12} aria-hidden="true" />{sync.ahead}
         </span>{/if}
-      {#if w.behind}<span class="down">
-          <ArrowDown size={12} aria-hidden="true" />{w.behind}
+      {#if sync.behind}<span class="down">
+          <ArrowDown size={12} aria-hidden="true" />{sync.behind}
         </span>{/if}
     </span>
+    <span class="sr-only">{hint}</span>
   {/if}
 {/snippet}
 
@@ -310,21 +333,24 @@
     <IconButton
       label={t("worktrees.actions.openVscode")}
       icon={Code}
-      disabled={!w.exists}
+      disabled={!w.exists || removing.has(w.path)}
       onclick={() => void open_("worktree_open_vscode", w)}
     />
     <IconButton
       label={t("worktrees.actions.openTerminal")}
       icon={SquareTerminal}
-      disabled={!w.exists}
+      disabled={!w.exists || removing.has(w.path)}
       onclick={() => void open_("worktree_open_terminal", w)}
     />
     <IconButton
       variant="danger-ghost"
-      label={w.isMain
-        ? t("worktrees.actions.removeMain")
-        : t("worktrees.actions.remove")}
+      label={removing.has(w.path)
+        ? t("common.busy.removing")
+        : w.isMain
+          ? t("worktrees.actions.removeMain")
+          : t("worktrees.actions.remove")}
       icon={Trash2}
+      loading={removing.has(w.path)}
       disabled={w.isMain}
       onclick={() => (pending = w)}
     />
@@ -490,7 +516,6 @@
   confirmLabel={forcing
     ? t("common.worktree.remove.forceConfirm")
     : t("common.worktree.remove.confirm")}
-  {busy}
   onconfirm={() => void confirmRemove()}
   oncancel={cancelRemove}
 />

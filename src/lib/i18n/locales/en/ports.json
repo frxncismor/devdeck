@@ -41,5 +41,6 @@
   "toast": {
     "killed": "Process terminated: {name}",
     "killedDetail": "PID {pid}, port {port}"
-  }
+  },
+  "noProjectHint": "The folder of this process is not inside any of your known projects."
 }

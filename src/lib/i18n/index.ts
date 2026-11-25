@@ -3,6 +3,8 @@ import enWorktrees from "./locales/en/worktrees.json";
 import enPorts from "./locales/en/ports.json";
 import enJsonViewer from "./locales/en/json-viewer.json";
 import enReclaim from "./locales/en/reclaim.json";
+import enGlossary from "./locales/en/glossary.json";
+import esGlossary from "./locales/es/glossary.json";
 import esCommon from "./locales/es/common.json";
 import esWorktrees from "./locales/es/worktrees.json";
 import esPorts from "./locales/es/ports.json";
@@ -20,6 +22,7 @@ export const messages = {
     ports: enPorts,
     jsonViewer: enJsonViewer,
     reclaim: enReclaim,
+    glossary: enGlossary,
   },
   es: {
     common: esCommon,
@@ -27,6 +30,7 @@ export const messages = {
     ports: esPorts,
     jsonViewer: esJsonViewer,
     reclaim: esReclaim,
+    glossary: esGlossary,
   },
 } as const;
 

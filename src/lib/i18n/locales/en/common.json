@@ -12,6 +12,11 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
   },
+  "credit": {
+    "madeBy": "Made by",
+    "handle": "@frxncismor",
+    "label": "Made by @frxncismor"
+  },
   "scope": {
     "label": "Scope",
     "global": "Global",

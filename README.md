@@ -144,3 +144,5 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code
 ## License
 
 [MIT](LICENSE) - (c) 2026 Francisco J. Moreno
+
+Made by [@frxncismor](https://github.com/frxncismor)

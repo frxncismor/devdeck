@@ -8,6 +8,7 @@
   import SquareTerminal from "@lucide/svelte/icons/square-terminal";
   import { toAppError } from "../lib/api";
   import { configState, updateConfig } from "../lib/config.svelte";
+  import { AUTHOR_URL, openAuthor } from "../lib/author";
   import { errorMessage } from "../lib/errors";
   import { LOCALES, type Locale } from "../lib/i18n";
   import { locale, setLocale, t } from "../lib/i18n/i18n.svelte";
@@ -136,6 +137,17 @@
         <span class="lbl">{themeLabel}</span>
       </button>
     </div>
+    <p class="credit">
+      {t("common.credit.madeBy")}
+      <a
+        href={AUTHOR_URL}
+        rel="noreferrer"
+        title={t("common.credit.label")}
+        onclick={openAuthor}
+      >
+        {t("common.credit.handle")}
+      </a>
+    </p>
   {:else}
     <IconButton
       icon={Folder}
@@ -358,5 +370,23 @@
   }
   .foot {
     margin-top: 6px;
+  }
+  .credit {
+    margin: 8px 0 0;
+    padding: 0 4px;
+    font-size: var(--text-xs);
+    color: var(--text-subtle);
+  }
+  .credit a {
+    color: inherit;
+    border-radius: 3px;
+  }
+  .credit a:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
+  .credit a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 </style>

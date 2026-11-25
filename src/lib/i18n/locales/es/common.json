@@ -12,6 +12,11 @@
     "collapse": "Contraer barra lateral",
     "expand": "Expandir barra lateral"
   },
+  "credit": {
+    "madeBy": "Hecho por",
+    "handle": "@frxncismor",
+    "label": "Hecho por @frxncismor"
+  },
   "scope": {
     "label": "Ámbito",
     "global": "Global",

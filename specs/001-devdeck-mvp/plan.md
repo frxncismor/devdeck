@@ -116,7 +116,7 @@ compile-time-checked keys, which `svelte-i18n` does not by default.
 `git` invoked with `std::process::Command` behind a `GitRunner` trait (mockable). Scan: walk the root to depth N, a repo = a
 directory with `.git` (dir, or file ⇒ linked worktree, resolved to the main one with `git rev-parse --git-common-dir`). Per
 worktree 3 git calls in a bounded pool (4 threads). Open: `code <path>` and `wt -d <path>` (fallback `pwsh -NoExit
--WorkingDirectory`, then `cmd /K cd /d`) with `std::process::Command`; no shell, no `opener` plugin; only paths of known
+-WorkingDirectory`, then `cmd /K cd /d`) with `std::process::Command`; no shell; only paths of known
 projects are accepted. Remove: `git worktree remove [--force] <path>` run from the main repo; the backend rejects the main
 worktree; if the worktree folder no longer exists, `git worktree prune` runs from the main repo instead.
 
@@ -149,9 +149,9 @@ under 64-bit ⇒ `None`. macOS/Linux: best effort.
 
 ## Commands, state, events, plugins
 See [contracts/commands.md](contracts/commands.md). State: `AppState { config: Mutex<Config>, json: Mutex<Option<JsonSession>>, jobs: Mutex<HashMap<JobId, Arc<AtomicBool>>> }`.
-Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `store` (Rust only), `clipboard-manager`.
+Errors: `enum Error` with `thiserror` + `Serialize` as `{kind, code, params?, detail?}` (see Internationalization). Plugins: `dialog`, `store` (Rust only), `clipboard-manager`, `opener` (author link only).
 Capabilities (Tauri 2) in `capabilities/default.json`: `core:default`, `dialog:allow-open`, `dialog:allow-save`,
-`clipboard-manager:allow-write-text` (plus the window permissions of the custom title bar, see "UI design system"); no `shell`, `opener` or `store` permission: `code`/`wt` launches and config storage happen in Rust.
+`clipboard-manager:allow-write-text` (plus the window permissions of the custom title bar, see "UI design system"); `opener:allow-open-url` scoped to the author URL `https://github.com/frxncismor` only (no `opener:default`, no `shell`, no `store` permission): `code`/`wt` launches and config storage happen in Rust.
 
 ## UI design system (redesign, T100–T103)
 Source of truth: Paco's Claude Design handoff, versioned in `docs/design/` (`DEVDECK_HANDOFF.md`, `tokens.css`, and the

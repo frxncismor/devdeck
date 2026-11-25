@@ -140,3 +140,5 @@ The scripts are kept with the development notes, not in this repository.
 ## License
 
 [MIT](LICENSE) - (c) 2026 Francisco J. Moreno
+
+Made by [@frxncismor](https://github.com/frxncismor)

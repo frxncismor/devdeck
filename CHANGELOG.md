@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **UI:** author credit "Made by @frxncismor" in the sidebar footer; the link opens in the system browser through the Tauri opener plugin, scoped to that single URL.
 - **Docs:** real screenshots (Worktrees, Ports, Reclaim in English; Worktrees and Reclaim in Spanish) and a demo GIF in the README, captured from the redesigned UI with demo data.
 
 ### Changed

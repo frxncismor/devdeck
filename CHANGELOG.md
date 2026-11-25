@@ -8,13 +8,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **UI:** in-app status glossary: a "?" button in Worktrees, Reclaim and Ports lists every label, what it means and what to do. The README has the same Glossary.
 - **UI:** author credit "Made by @frxncismor" in the sidebar footer; the link opens in the system browser through the Tauri opener plugin, scoped to that single URL.
 - **Community:** CONTRIBUTING, Code of Conduct (Contributor Covenant 2.1), SECURITY policy, and issue and pull request templates.
 - **Docs:** real screenshots (Worktrees, Ports, Reclaim in English; Worktrees and Reclaim in Spanish) and a demo GIF in the README, captured from the redesigned UI with demo data.
 
 ### Changed
 
+- **UI:** plain-language status labels with tooltips in Worktrees and Reclaim ("No uncommitted changes", "N changed files", "No remote branch", "No recent commits", "Branch merged"); columns renamed "Changes" and "Vs. remote".
+- **UI:** long actions (remove worktree, terminate process, delete folders, rescan) run in the background with per-item progress, a spinner on the affected row or button, per-folder delete progress and a final toast with the result.
 - **UI redesign:** new design system with dark and light themes, a command palette (Ctrl K), a custom title bar, a collapsible sidebar, and restyled Worktrees, Ports, JSON Viewer and Reclaim modules.
+
+### Fixed
+
+- **JSON Viewer:** search results show the correct path, the side panel shows the values of search hits, the tree footer no longer covers the last row, and key/item counts no longer show a raw key.
 
 ## [0.1.0] - 2026-11-23
 

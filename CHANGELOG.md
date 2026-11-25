@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Community:** CONTRIBUTING, Code of Conduct (Contributor Covenant 2.1), SECURITY policy, and issue and pull request templates.
 - **Docs:** real screenshots (Worktrees, Ports, Reclaim in English; Worktrees and Reclaim in Spanish) and a demo GIF in the README, captured from the redesigned UI with demo data.
 
 ### Changed

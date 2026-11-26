@@ -159,7 +159,7 @@ mod tests {
             project: None,
             worktree_path: None,
             orphan: false,
-            age_secs: 0,
+            age_secs: Some(0),
         }
     }
 

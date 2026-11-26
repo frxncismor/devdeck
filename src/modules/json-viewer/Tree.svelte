@@ -1,6 +1,7 @@
 <script lang="ts">
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
+  import { tick } from "svelte";
   import Button from "../../components/Button.svelte";
   import VirtualList from "../../components/VirtualList.svelte";
   import { toAppError } from "../../lib/api";
@@ -8,7 +9,7 @@
   import { formatNumber } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import { jsonApi, type JsonNode, type SessionInfo } from "./jsonApi";
-  import { PAGE_SIZE, TreeModel, type Row } from "./tree";
+  import { PAGE_SIZE, REVEAL_LIMIT, TreeModel, type Row } from "./tree";
 
   interface Props {
     session: SessionInfo;
@@ -61,6 +62,26 @@
     version++;
   }
 
+  let list = $state<ReturnType<typeof VirtualList<Row>> | null>(null);
+  let tooFar = $state(false);
+  let revealSeq = 0;
+
+  /** Expands the tree down to a node (a search hit) and scrolls to its row. */
+  export async function reveal(path: string, nodeId: number) {
+    const seq = ++revealSeq;
+    const stale = () => seq !== revealSeq;
+    tooFar = false;
+    await run(async () => {
+      const r = await model.reveal(path, nodeId, { stale });
+      if (stale()) return;
+      tooFar = r.tooFar ?? false;
+      version++;
+      await tick(); // the list must have its new height before it can scroll there
+      const index = model.rowIndex(r.id);
+      if (index >= 0) list?.scrollToIndex(index);
+    });
+  }
+
   const toggle = (id: number) => run(() => model.toggle(id));
   const more = (id: number) => run(() => model.loadMore(id));
 
@@ -90,6 +111,11 @@
   {#if error}
     <p class="error" role="alert">{error}</p>
   {/if}
+  {#if tooFar}
+    <p class="note subtle" role="status">
+      {t("jsonViewer.tree.revealTooFar", { max: formatNumber(REVEAL_LIMIT) })}
+    </p>
+  {/if}
   <div
     role="tree"
     aria-label={t("jsonViewer.tree.label")}
@@ -97,7 +123,13 @@
     bind:clientHeight={viewport}
   >
     <div class="fill">
-      <VirtualList items={rows} rowHeight={ROW_HEIGHT} {height} row={rowView} />
+      <VirtualList
+        bind:this={list}
+        items={rows}
+        rowHeight={ROW_HEIGHT}
+        {height}
+        row={rowView}
+      />
     </div>
   </div>
   <p class="foot subtle">
@@ -312,6 +344,11 @@
     align-items: center;
     border-top: 1px solid var(--border);
     font-size: 11.5px;
+  }
+  .note {
+    margin: 0;
+    padding: 6px 12px;
+    font-size: 12px;
   }
   .error {
     margin: 0;

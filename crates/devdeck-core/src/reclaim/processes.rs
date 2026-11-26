@@ -36,7 +36,8 @@ pub struct DevProcess {
     pub worktree_path: Option<PathBuf>,
     /// The cwd is attributed to a worktree whose folder (or the cwd itself) no longer exists.
     pub orphan: bool,
-    pub age_secs: u64,
+    /// `None` when the OS would not tell when the process started.
+    pub age_secs: Option<u64>,
 }
 
 impl Attributable for DevProcess {
@@ -117,7 +118,7 @@ pub fn classify(
                 project: owner.map(|(_, pr)| pr.to_ref()),
                 worktree_path: owner.map(|(w, _)| w.to_path_buf()),
                 orphan,
-                age_secs: now_secs.saturating_sub(p.start_time),
+                age_secs: (p.start_time > 0).then(|| now_secs.saturating_sub(p.start_time)),
                 info: p.clone(),
             })
         })
@@ -239,7 +240,7 @@ mod tests {
             Some(Path::new("/w/app-feat"))
         );
         assert_eq!(l[1].worktree_path.as_deref(), Some(Path::new("/r/app")));
-        assert_eq!(l[0].age_secs, 600);
+        assert_eq!(l[0].age_secs, Some(600));
         assert!(l[2].project.is_none() && l[3].project.is_none());
         assert!(l.iter().all(|p| !p.orphan));
     }
@@ -275,7 +276,21 @@ mod tests {
         p.start_time = 9_999;
         let l = classify(&[p], &ps, 10, &all_exist);
         assert_eq!(l[0].project.as_ref().unwrap().name, "inner");
-        assert_eq!(l[0].age_secs, 0);
+        assert_eq!(l[0].age_secs, Some(0));
+    }
+
+    #[test]
+    fn unknown_start_time_means_unknown_age_not_the_unix_epoch() {
+        let mut p = proc(1, "node", 0, None);
+        p.start_time = 0;
+        let l = classify(&[p], &[], 1_795_000_000, &all_exist);
+        assert_eq!(l[0].age_secs, None);
+        let v = serde_json::to_value(&l[0]).unwrap();
+        assert!(v.get("ageSecs").is_some_and(|a| a.is_null()));
+        assert_eq!(
+            v["ramBytes"], 0,
+            "0 stays 0: no running process uses 0 bytes"
+        );
     }
 
     #[test]

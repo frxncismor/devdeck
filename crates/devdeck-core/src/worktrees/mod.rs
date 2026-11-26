@@ -6,7 +6,9 @@ pub mod open;
 pub mod scan;
 
 use crate::error::{Error, ErrorKind, Result};
+use crate::process_info::{ProcInfo, ProcSource, SysinfoSource};
 use crate::project::{build_projects, Project, ProjectId, ProjectRef};
+use crate::reclaim::is_within;
 use crate::scope::{self, Attributable};
 use git::{GitRunner, SystemGit};
 use serde::Serialize;
@@ -109,7 +111,21 @@ pub fn list_with(git: &dyn GitRunner, repo: &Path) -> Result<Vec<Worktree>> {
             last_commit: None,
             exists,
         };
-        if exists {
+        if !exists {
+            // The folder is gone, but the repository still knows its HEAD and branch: report those
+            // rather than "no commits" / "no remote branch".
+            if let Some(head) = r.head.as_deref() {
+                w.last_commit = last_commit_with(git, &repo_path, head);
+            }
+            if let Some((ahead, behind)) = r
+                .branch
+                .as_deref()
+                .and_then(|b| upstream_counts(git, &repo_path, b))
+            {
+                w.ahead = Some(ahead);
+                w.behind = Some(behind);
+            }
+        } else {
             if let Ok(s) = git.run(&path, &["status", "--porcelain=v2", "--branch"]) {
                 if s.success() {
                     let st = git::parse_status(&s.stdout);
@@ -118,7 +134,7 @@ pub fn list_with(git: &dyn GitRunner, repo: &Path) -> Result<Vec<Worktree>> {
                     w.behind = st.behind;
                 }
             }
-            w.last_commit = last_commit_with(git, &path);
+            w.last_commit = last_commit_with(git, &path, "HEAD");
         }
         w
     }))
@@ -151,8 +167,21 @@ fn par_map<T: Sync, R: Send>(items: &[T], limit: usize, f: impl Fn(&T) -> R + Sy
     slots.into_inner().unwrap().into_iter().flatten().collect()
 }
 
-fn last_commit_with(git: &dyn GitRunner, dir: &Path) -> Option<LastCommit> {
-    let out = git.run(dir, &["log", "-1", git::LOG_FORMAT]).ok()?;
+/// `(ahead, behind)` of a local branch against its upstream; `None` without one.
+fn upstream_counts(git: &dyn GitRunner, repo: &Path, branch: &str) -> Option<(u32, u32)> {
+    let range = format!("{branch}...{branch}@{{upstream}}");
+    let out = git
+        .run(repo, &["rev-list", "--left-right", "--count", &range, "--"])
+        .ok()
+        .filter(|o| o.success())?;
+    let mut it = out.stdout.split_whitespace().map(|n| n.parse().ok());
+    Some((it.next()??, it.next()??))
+}
+
+fn last_commit_with(git: &dyn GitRunner, dir: &Path, rev: &str) -> Option<LastCommit> {
+    let out = git
+        .run(dir, &["log", "-1", git::LOG_FORMAT, rev, "--"])
+        .ok()?;
     if out.success() {
         git::parse_log(&out.stdout)
     } else {
@@ -212,13 +241,37 @@ pub fn last_commit_time(dir: &Path, rev: Option<&str>) -> Result<Option<i64>> {
 /// Removes the linked worktree at `path`.
 /// - The main worktree is never removable (`worktree_main_not_removable`).
 /// - A dirty worktree needs `force = true` (otherwise `worktree_dirty`, which the UI turns into a confirmation).
-/// - `repo_path` is the project's main repository: git runs from there, so a worktree whose folder
-///   no longer exists is cleaned with `git worktree prune`.
+/// - A folder with processes running inside is left untouched (`worktree_in_use`, param `count`):
+///   git would delete its files and unregister it before failing on the folder itself.
+/// - `repo_path` is the project's main repository: git runs from there. A worktree whose folder no
+///   longer exists is forgotten on its own (never `prune`, which forgets every missing one).
 pub fn remove(repo_path: &Path, path: &Path, force: bool) -> Result<()> {
-    remove_with(&SystemGit, repo_path, path, force)
+    remove_with(&SystemGit, &SysinfoSource, repo_path, path, force)
 }
 
-pub fn remove_with(git: &dyn GitRunner, repo_path: &Path, path: &Path, force: bool) -> Result<()> {
+/// Processes whose cwd is the folder `root` or lives under it (an unreadable cwd cannot be counted).
+/// Compared as written and canonicalized, since a cwd may use 8.3 names or go through a link.
+fn processes_inside(root: &Path, procs: &[ProcInfo]) -> usize {
+    let real_root = crate::fsutil::real_path(root);
+    procs
+        .iter()
+        .filter_map(|p| p.cwd.as_deref())
+        .filter(|cwd| {
+            is_within(root, cwd)
+                || real_root.as_deref().is_some_and(|r| {
+                    crate::fsutil::real_path(cwd).is_some_and(|c| is_within(r, &c))
+                })
+        })
+        .count()
+}
+
+pub fn remove_with(
+    git: &dyn GitRunner,
+    procs: &dyn ProcSource,
+    repo_path: &Path,
+    path: &Path,
+    force: bool,
+) -> Result<()> {
     let out = git::run_ok(git, repo_path, &["worktree", "list", "--porcelain"])?;
     let raw = git::parse_worktree_list(&out);
     let main = raw
@@ -233,17 +286,22 @@ pub fn remove_with(git: &dyn GitRunner, repo_path: &Path, path: &Path, force: bo
     if same_path(&target.path, &main) {
         return Err(Error::not_allowed("worktree_main_not_removable"));
     }
+    let target_path = native(&target.path);
+    let target_str = target_path.to_string_lossy().into_owned();
     if !path.is_dir() {
-        git::run_ok(git, &native(&main), &["worktree", "prune"])?;
+        let args = ["worktree", "remove", "--", target_str.as_str()];
+        git::run_ok(git, &native(&main), &args)?;
         return Ok(());
+    }
+    let running = processes_inside(&target_path, &procs.snapshot());
+    if running > 0 {
+        return Err(Error::not_allowed("worktree_in_use").with_param("count", running));
     }
     let s = git::run_ok(git, path, &["status", "--porcelain=v2"])?;
     let dirty = git::parse_status(&s).dirty_count > 0;
     if dirty && !force {
         return Err(Error::not_allowed("worktree_dirty"));
     }
-    let target_path = native(&target.path);
-    let target_str = target_path.to_string_lossy().into_owned();
     let mut args = vec!["worktree", "remove"];
     if dirty {
         args.push("--force");
@@ -384,7 +442,83 @@ mod tests {
         let l = list(&repo).unwrap();
         assert_eq!(l.len(), 2);
         assert!(!l[1].exists);
-        assert!(l[1].last_commit.is_none());
+        assert_eq!(l[1].dirty_count, 0);
+    }
+
+    #[test]
+    fn a_missing_folder_keeps_the_last_commit_and_remote_state_of_its_branch() {
+        need_git!();
+        let t = tempfile::tempdir().unwrap();
+        let repo = t.path().join("app");
+        init_repo(&repo);
+        let remote = t.path().join("remote.git");
+        fs::create_dir_all(&remote).unwrap();
+        g(&remote, &["init", "--bare", "-b", "main"]);
+        g(
+            &repo,
+            &["remote", "add", "origin", remote.to_str().unwrap()],
+        );
+        let add = |branch: &str, dir: &Path| {
+            g(
+                &repo,
+                &["worktree", "add", "-b", branch, dir.to_str().unwrap()],
+            );
+            fs::write(dir.join(branch), branch).unwrap();
+            g(dir, &["add", "."]);
+            g(dir, &["commit", "-m", branch]);
+        };
+        let pushed = t.path().join("app-pushed");
+        add("pushed", &pushed);
+        g(&pushed, &["push", "-u", "origin", "pushed"]);
+        fs::write(pushed.join("more"), "more").unwrap();
+        g(&pushed, &["add", "."]);
+        g(&pushed, &["commit", "-m", "more"]);
+        let local = t.path().join("app-local");
+        add("local", &local);
+        let det = t.path().join("app-det");
+        g(
+            &repo,
+            &["worktree", "add", "--detach", det.to_str().unwrap()],
+        );
+        for d in [&pushed, &local, &det] {
+            fs::remove_dir_all(d).unwrap();
+        }
+
+        let l = list(&repo).unwrap();
+        let by_name = |n: &str| l.iter().find(|w| w.path.ends_with(n)).unwrap();
+        let subject = |n: &str| by_name(n).last_commit.as_ref().unwrap().subject.clone();
+        assert!(l.iter().skip(1).all(|w| !w.exists));
+        assert_eq!(subject("app-pushed"), "more");
+        assert_eq!(
+            (by_name("app-pushed").ahead, by_name("app-pushed").behind),
+            (Some(1), Some(0))
+        );
+        assert_eq!(subject("app-local"), "local");
+        assert_eq!(by_name("app-local").ahead, None);
+        assert_eq!(subject("app-det"), "first");
+    }
+
+    #[test]
+    fn removing_a_missing_worktree_forgets_only_that_one() {
+        need_git!();
+        let t = tempfile::tempdir().unwrap();
+        let repo = t.path().join("app");
+        init_repo(&repo);
+        let one = t.path().join("app-one");
+        let two = t.path().join("app-two");
+        for (branch, dir) in [("one", &one), ("two", &two)] {
+            g(
+                &repo,
+                &["worktree", "add", "-b", branch, dir.to_str().unwrap()],
+            );
+            fs::remove_dir_all(dir).unwrap();
+        }
+
+        remove(&repo, &one, false).unwrap();
+
+        let l = list(&repo).unwrap();
+        assert_eq!(l.len(), 2, "{l:?}");
+        assert!(l[1].path.ends_with("app-two"));
     }
 
     #[test]
@@ -558,7 +692,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_prunes_when_the_worktree_folder_is_gone() {
+    fn remove_never_prunes_when_the_worktree_folder_is_gone() {
         let t = tempfile::tempdir().unwrap();
         let main = t.path().join("app");
         let gone = t.path().join("app-gone");
@@ -578,10 +712,131 @@ branch refs/heads/gone
             list,
             calls: Default::default(),
         };
-        remove_with(&git, &main, &gone, false).unwrap();
+        remove_with(&git, &FakeProcs(vec![]), &main, &gone, false).unwrap();
         let calls = git.calls.lock().unwrap();
-        assert!(calls.contains(&"worktree prune".to_string()));
-        assert!(!calls.iter().any(|c| c.starts_with("worktree remove")));
+        assert!(calls.contains(&format!("worktree remove -- {}", gone.display())));
+        assert!(!calls.iter().any(|c| c.starts_with("worktree prune")));
+    }
+
+    struct FakeProcs(Vec<PathBuf>);
+    impl ProcSource for FakeProcs {
+        fn snapshot(&self) -> Vec<ProcInfo> {
+            self.0.iter().map(|cwd| proc_at(Some(cwd))).collect()
+        }
+        fn kill(&self, _pid: u32) -> bool {
+            false
+        }
+    }
+
+    fn proc_at(cwd: Option<&Path>) -> ProcInfo {
+        ProcInfo {
+            pid: 1,
+            name: "node.exe".into(),
+            exe: None,
+            cwd: cwd.map(Path::to_path_buf),
+            ram_bytes: 1,
+            cpu_percent: 0.0,
+            start_time: 0,
+            parent_pid: None,
+        }
+    }
+
+    fn inside(root: &str, cwds: &[&str]) -> usize {
+        let procs: Vec<ProcInfo> = cwds.iter().map(|c| proc_at(Some(Path::new(c)))).collect();
+        processes_inside(Path::new(root), &procs)
+    }
+
+    #[test]
+    fn processes_inside_counts_the_folder_and_below_but_not_siblings_sharing_a_prefix() {
+        let cwds = [
+            "/w/foo",
+            "/w/foo/",
+            "/w/foo/a/b",
+            "/w/foo-bar",
+            "/w/foobar/x",
+            "/w",
+        ];
+        assert_eq!(inside("/w/foo", &cwds), 3);
+        assert_eq!(inside("/w/foo/", &cwds), 3);
+        assert_eq!(processes_inside(Path::new("/w/foo"), &[proc_at(None)]), 0);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn processes_inside_ignores_separators_and_case_on_windows() {
+        let cwds = [
+            r"c:\w\FOO",
+            r"C:/W/foo/web",
+            r"\\?\C:\w\foo\x",
+            r"C:\w\Foo-bar",
+        ];
+        assert_eq!(inside(r"C:\w\foo", &cwds), 3);
+    }
+
+    #[test]
+    fn remove_refuses_while_processes_run_inside_and_touches_nothing() {
+        need_git!();
+        let t = tempfile::tempdir().unwrap();
+        let repo = t.path().join("app");
+        init_repo(&repo);
+        let feat = t.path().join("app-feat");
+        g(
+            &repo,
+            &["worktree", "add", "-b", "feat", feat.to_str().unwrap()],
+        );
+        fs::create_dir(feat.join("web")).unwrap();
+        fs::write(feat.join("web").join("dirty.txt"), "x").unwrap();
+        let procs = FakeProcs(vec![feat.clone(), feat.join("web")]);
+
+        // Reported before the dirty check, so the user is never asked to discard changes in vain.
+        for force in [false, true] {
+            let e = remove_with(&SystemGit, &procs, &repo, &feat, force).unwrap_err();
+            assert_eq!(e.code, "worktree_in_use");
+            assert_eq!(e.kind, ErrorKind::NotAllowed);
+            assert_eq!(e.params.unwrap()["count"], 2);
+        }
+        assert!(feat.join("a.txt").is_file());
+        assert!(feat.join("web").join("dirty.txt").is_file());
+        assert_eq!(list(&repo).unwrap().len(), 2);
+
+        remove_with(
+            &SystemGit,
+            &FakeProcs(vec![repo.clone()]),
+            &repo,
+            &feat,
+            true,
+        )
+        .unwrap();
+        assert!(!feat.exists());
+    }
+
+    #[test]
+    fn remove_sees_a_real_process_whose_cwd_is_inside_the_worktree() {
+        need_git!();
+        let t = tempfile::tempdir().unwrap();
+        let repo = t.path().join("app");
+        init_repo(&repo);
+        let feat = t.path().join("app-feat");
+        g(
+            &repo,
+            &["worktree", "add", "-b", "feat", feat.to_str().unwrap()],
+        );
+        // Stays alive until its stdin is closed.
+        let mut child = Command::new("git")
+            .args(["cat-file", "--batch"])
+            .current_dir(&feat)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+
+        let result = remove(&repo, &feat, false);
+        let untouched = feat.join("a.txt").is_file();
+        drop(child.stdin.take());
+        child.wait().unwrap();
+
+        assert_eq!(result.unwrap_err().code, "worktree_in_use");
+        assert!(untouched);
     }
 
     #[test]

@@ -80,8 +80,6 @@ Arnés y datos: [qa-fixtures.md](qa-fixtures.md). Se montó, se aplicó la confi
 
 Los estados "sin commits recientes" y "mergeada" se muestran en Reclaim, no en Worktrees (comportamiento documentado en el glosario).
 
-Capturas: [columnas solapadas](qa-v0.1.0/worktrees-columnas-solapadas.png), [quitar con proceso](qa-v0.1.0/worktree-quitar-con-proceso.png).
-
 ### 2. Puertos
 
 **Pasos:** abrir Puertos; comprobar dueño de 47010-47016; buscar por puerto, nombre, worktree y PID; filtrar TCP/UDP (release); terminar el proceso de 47015.
@@ -89,7 +87,7 @@ Capturas: [columnas solapadas](qa-v0.1.0/worktrees-columnas-solapadas.png), [qui
 - Los 7 procesos de prueba salen con su dueño: `webshop`, `limpio`, `olvidado`, `huerfano`, `api-b`, `auth` (UDP) y "No project". Pasa.
 - Búsqueda (dev): `47015`, `limpio`, `vite` y el PID devuelven una sola fila. Pasa.
 - Terminar: diálogo con nombre, PID y puerto; toast "Process terminated"; `Get-Process` y `Get-NetTCPConnection` confirman PID muerto y puerto libre. Pasa en ambas.
-- La columna "Working folder" muestra la ruta del ejecutable (B4). [Captura](qa-v0.1.0/puertos-ruta-exe-es-claro.png).
+- La columna "Working folder" muestra la ruta del ejecutable (B4).
 
 ### 3. Visor JSON
 
@@ -111,8 +109,6 @@ Capturas: [columnas solapadas](qa-v0.1.0/worktrees-columnas-solapadas.png), [qui
 
 La búsqueda sin distinguir mayúsculas funciona con no ASCII (`CANCIÓN` / `canción`) y "Match case" la respeta (dev). El panel lateral muestra ruta, tipo, hijos, profundidad y vista previa.
 
-Capturas: [árbol sin scroll](qa-v0.1.0/json-arbol-sin-scroll.png), [búsqueda sin desplegar](qa-v0.1.0/json-busqueda-no-despliega.png).
-
 ### 4. Reclaim
 
 **Pasos:** abrir Reclaim; revisar las tres pestañas; terminar el huérfano (y en release también `vite`); borrar `api-b\.venv`, `api-b\target` y `webshop\dist`; quitar worktrees.
@@ -125,8 +121,6 @@ Capturas: [árbol sin scroll](qa-v0.1.0/json-arbol-sin-scroll.png), [búsqueda s
 - Quitar `olvidado` con `vite` vivo (dev): el diálogo avisa de 1 proceso, pero el resultado es B2. En release, terminando antes `vite`, se quita limpio: pasa.
 - Quitar `legacy` (dev) y `olvidado-sucio` (release, doble confirmación): pasa, salvo que las carpetas de un worktree quitado siguen listadas (B6).
 - Resumen de lo recuperado: solo existe para carpetas ("Freed 17 MB."). Quitar un worktree o terminar un proceso no informa del tamaño recuperado.
-
-[Captura](qa-v0.1.0/reclaim-es-claro.png).
 
 ### 5. Selector Global / por proyecto
 
@@ -217,7 +211,7 @@ Listado de la 1ª vuelta, tal como se encontraron. Su estado actual está en [2�
 ### P3 (menor)
 
 - **B9.** Fila "Missing folder" muestra además "No remote branch" y "No commits", aunque la rama tiene commits (`worktrees/mod.rs`, `list_with`).
-- **B10.** Los toasts de error no caducan (es intencional) y tapan el botón "Delete permanently…" de la barra de selección hasta cerrarlos. [Captura](qa-v0.1.0/toasts-tapan-borrar.png). `src/components/ToastHost.svelte`.
+- **B10.** Los toasts de error no caducan (es intencional) y tapan el botón "Delete permanently…" de la barra de selección hasta cerrarlos. `src/components/ToastHost.svelte`.
 - **B11.** Textos y cifras de Reclaim: "1 worktrees · 1 folders" / "1 carpetas" (`reclaim.json`, `diskHint` sin plural); "0 days ago" / "hace 0 días" en lugar de "hoy"; la tarjeta y la pestaña de procesos pueden discrepar (p. ej. "from 14" frente a 12).
 - **B12.** "Indexed in 2.4 s" no se localiza (`src/modules/json-viewer/index.svelte:312`, `toFixed(1)`).
 - **B13.** No persisten la sidebar colapsada ni el módulo activo (`src/lib/shell.svelte.ts`). Puede ser decisión de diseño.
@@ -249,7 +243,7 @@ Fecha: 2026-11-26. Re-verificación de B1 a B14 en la app real, más una pasada 
 - `pnpm tauri build` completo: exit 0; `devdeck.exe` 11,9 MB, MSI 3,96 MiB, NSIS 2,69 MiB. Se probó el exe.
 - Dev: `qa-app.ps1 -Build dev`. Dev y release, de uno en uno, con los datos recién montados.
 - Solo se terminaron procesos del arnés (`pids.json`) y dos `node` auxiliares creados para la prueba dentro de worktrees de `%TEMP%\devdeck-qa`. Solo se borraron carpetas del arnés.
-- Capturas: carpeta de la corrida `capturas-qa-v0.1.0\2a-vuelta\`, fuera del repo.
+- Evidencia gráfica: las capturas de las dos vueltas no se versionan (decisión de Paco: muestran rutas locales del usuario); se conservan fuera del repo, en la carpeta de la corrida de QA.
 
 ### Bug por bug
 
@@ -295,21 +289,18 @@ Ninguno P1 ni P2.
 - Pasos: abrir `grande.json`, desplegar `$` y `orders`, buscar `aguja-al-final`.
 - Esperado: la fila `needle` queda visible. Real: queda justo debajo del área visible (fila en y 753 a 779; el árbol acaba en 755). La flecha "siguiente" o la rueda la muestran. Con el árbol colapsado se ve bien, y las filas intermedias quedan centradas.
 - Sospechosos: `reveal` en `src/modules/json-viewer/Tree.svelte` y `scrollToIndex` en `src/components/VirtualList.svelte`: parece que el desplazamiento se calcula antes de que el árbol encoja al aparecer la línea del resultado (inferido de la posición de scroll, no depurado).
-- Capturas: `rel-b7-aguja.png`, `dev-b7-aguja.png`.
 
 **N2 (P3). A partir del nivel 36 no se ve la clave ni el valor.** Dev y release (nivel medido en release).
 
 - Pasos: abrir `anidado.json` y buscar `fondo`.
 - Esperado: se lee el nodo. Real: el árbol llega a la fila y la resalta, pero solo se ven las guías de sangría; no hay scroll horizontal. El panel lateral sí muestra la ruta. Debería pasar igual al desplegar a mano.
 - Sospechosos: `.indent` en `Tree.svelte` (`depth * 18` px sin tope) y `overflow-x: hidden` en `VirtualList.svelte`.
-- Capturas: `rel-b7-anidado.png`, `dev-b7-anidado.png`.
 
 **N3 (P3). Reclaim sigue marcando "Processes running" después de terminar el proceso.** Dev y release.
 
 - Pasos: Reclaim > Dev processes, terminar `vite` (el de `olvidado`) y volver a "Forgotten worktrees".
 - Esperado: desaparece la insignia. Real: sigue, y el diálogo de quitar avisa de "1 process(es)" (hasta reescanear). Quitarlo funciona.
 - Sospechoso: `confirmPending` en `src/modules/reclaim/index.svelte`: tras terminar solo llama a `loadProcesses()`.
-- Captura: `dev-reclaim-badge-obsoleto.png`.
 
 **N4 (P3). Reclaim dice que los procesos "podrían interrumpirse", pero ahora quitar se rechaza.** Dev y release.
 

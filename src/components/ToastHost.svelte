@@ -14,7 +14,8 @@
   .host {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    /* Above the sticky selection bar of the module screens, so errors never cover it. */
+    bottom: 84px;
     z-index: 1000;
     display: flex;
     flex-direction: column;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Grouped } from "../../lib/types";
 import {
+  removeAndReload,
   ageSecs,
   filterGrouped,
   formatAheadBehind,
@@ -137,6 +138,48 @@ describe("syncStatus", () => {
       kind: "diverged",
       ahead: 1,
       behind: 5,
+    });
+  });
+});
+
+describe("removeAndReload", () => {
+  const run = async (fail: unknown, force = false) => {
+    const calls: string[] = [];
+    const outcome = await removeAndReload({
+      force,
+      remove: async () => {
+        calls.push("remove");
+        if (fail) throw fail;
+      },
+      onError: () => calls.push("error"),
+      reload: async () => {
+        calls.push("reload");
+      },
+    });
+    return { outcome, calls };
+  };
+  const dirty = { kind: "Git", code: "worktree_dirty" };
+  const inUse = { kind: "Git", code: "worktree_in_use" };
+
+  it("reloads after a successful removal", async () => {
+    expect(await run(null)).toEqual({
+      outcome: "removed",
+      calls: ["remove", "reload"],
+    });
+  });
+  it("reports the error and also reloads after a failure", async () => {
+    expect(await run(inUse)).toEqual({
+      outcome: "failed",
+      calls: ["remove", "error", "reload"],
+    });
+  });
+  it("asks for confirmation on a dirty worktree without reloading", async () => {
+    expect(await run(dirty)).toEqual({ outcome: "dirty", calls: ["remove"] });
+  });
+  it("treats a dirty error on a forced removal as a failure", async () => {
+    expect(await run(dirty, true)).toEqual({
+      outcome: "failed",
+      calls: ["remove", "error", "reload"],
     });
   });
 });

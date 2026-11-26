@@ -6,7 +6,10 @@
     "sizing": "Disk figures are still being measured.",
     "ramHint_one": "from {count} dev process",
     "ramHint_other": "from {count} dev processes",
-    "diskHint": "{worktrees} worktrees · {folders} folders",
+    "diskWorktrees_one": "{count} worktree",
+    "diskWorktrees_other": "{count} worktrees",
+    "diskFolders_one": "{count} folder",
+    "diskFolders_other": "{count} folders",
     "byWorktree": "by worktree"
   },
   "tabs": {
@@ -27,6 +30,7 @@
     "columns": {
       "state": "State"
     },
+    "ageToday": "today",
     "age_one": "{count} day ago",
     "age_other": "{count} days ago",
     "processes_one": "{count} process inside",
@@ -41,6 +45,8 @@
       "age": "Running for",
       "folder": "Folder"
     },
+    "unknownAge": "Unknown",
+    "unknownRam": "Unknown",
     "orphan": "Deleted worktree",
     "unknownFolder": "Unknown folder",
     "orphanTitle": "Working directory no longer exists"
@@ -103,6 +109,7 @@
   },
   "terminate": {
     "title": "Terminate process",
+    "messageUnknownRam": "Terminate {name} (PID {pid}, RAM unknown)? Unsaved work in it will be lost.",
     "message": "Terminate {name} (PID {pid}, {ram} of RAM)? Unsaved work in it will be lost.",
     "confirm": "Terminate"
   },

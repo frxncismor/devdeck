@@ -30,6 +30,7 @@
     rowKey,
     type ListeningPort,
     type ProtocolFilter,
+    workingFolder,
   } from "./logic";
 
   let data = $state<Grouped<ListeningPort> | null>(null);
@@ -68,7 +69,7 @@
       width: "76px",
       kind: "numeric",
     },
-    { key: "protocol", header: t("ports.columns.protocol"), width: "72px" },
+    { key: "protocol", header: t("ports.columns.protocol"), width: "80px" },
     {
       key: "pid",
       header: t("ports.columns.pid"),
@@ -279,9 +280,9 @@
         {:else if col.key === "process"}
           <span class="pname" title={p.processName}>{p.processName}</span>
         {:else if col.key === "path"}
-          {@const full = p.exePath ?? p.cwd}
-          {#if full}
-            <span class="path mono" title={full}>{full}</span>
+          {@const folder = workingFolder(p)}
+          {#if folder}
+            <span class="path mono" title={folder.title}>{folder.text}</span>
           {:else}
             <span class="muted">—</span>
           {/if}

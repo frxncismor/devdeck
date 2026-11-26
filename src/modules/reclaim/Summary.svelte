@@ -6,7 +6,12 @@
   import { t } from "../../lib/i18n/i18n.svelte";
   import { PROJECT_COLORS, projectColor } from "../../lib/projectColor";
   import { scopeState } from "../../lib/scope.svelte";
-  import { hasRecoverable, type ReclaimSummary, type Slice } from "./logic";
+  import {
+    diskHint,
+    hasRecoverable,
+    type ReclaimSummary,
+    type Slice,
+  } from "./logic";
 
   interface Props {
     summary: ReclaimSummary | null;
@@ -67,10 +72,7 @@
         icon={HardDrive}
         label={t("reclaim.summary.disk")}
         value={formatBytes(summary.recoverableDiskBytes)}
-        hint={t("reclaim.summary.diskHint", {
-          worktrees: counts.worktrees,
-          folders: counts.folders,
-        }) + suffix}
+        hint={diskHint(counts.worktrees, counts.folders) + suffix}
         segments={segments(diskSlices)}
       />
     </div>

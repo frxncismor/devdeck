@@ -47,3 +47,13 @@ export const DEFAULT_REFRESH_MS = 5000;
 export function effectiveRefreshMs(secs?: number | null): number | null {
   return secs == null ? DEFAULT_REFRESH_MS : autoRefreshMs(secs);
 }
+
+/** "Working folder" cell: the cwd; the executable is only the fallback and tooltip detail. */
+export function workingFolder(
+  p: Pick<ListeningPort, "cwd" | "exePath">,
+): { text: string; title: string } | null {
+  const text = p.cwd ?? p.exePath;
+  if (!text) return null;
+  const title = p.cwd && p.exePath ? `${p.cwd}\n${p.exePath}` : text;
+  return { text, title };
+}

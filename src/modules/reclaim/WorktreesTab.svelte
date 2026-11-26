@@ -8,6 +8,7 @@
   import type { Grouped } from "../../lib/types";
   import GroupedRows from "./GroupedRows.svelte";
   import {
+    commitAge,
     REASON_HINT_KEYS,
     REASON_KEYS,
     type ForgottenWorktree,
@@ -72,7 +73,7 @@
         </span>
       {:else if col.key === "age"}
         {#if w.lastCommitAgeDays != null}
-          {t("reclaim.worktrees.age", { count: w.lastCommitAgeDays })}
+          {commitAge(w.lastCommitAgeDays)}
         {:else}
           {t("common.worktree.noCommits")}
         {/if}

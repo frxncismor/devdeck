@@ -3,14 +3,15 @@
   import Button from "../../components/Button.svelte";
   import EmptyState from "../../components/EmptyState.svelte";
   import type { Column } from "../../components/DataTable.svelte";
-  import { formatBytes, formatRelativeAge } from "../../lib/format";
   import { t } from "../../lib/i18n/i18n.svelte";
   import type { Grouped } from "../../lib/types";
   import GroupedRows from "./GroupedRows.svelte";
   import {
     DEV_KIND_KEYS,
     formatCpu,
+    processAge,
     processKey,
+    processRam,
     type DevProcess,
   } from "./logic";
 
@@ -83,11 +84,11 @@
           </span>
         </span>
       {:else if col.key === "ram"}
-        {formatBytes(p.ramBytes)}
+        {processRam(p.ramBytes)}
       {:else if col.key === "cpu"}
         {formatCpu(p.cpuPercent)}
       {:else if col.key === "age"}
-        {formatRelativeAge(p.ageSecs)}
+        {processAge(p.ageSecs)}
       {:else if col.key === "folder"}
         <span class="path" title={p.cwd ?? undefined}>
           {p.cwd ?? t("reclaim.processes.unknownFolder")}

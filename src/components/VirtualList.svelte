@@ -20,11 +20,27 @@
       Math.ceil((scrollTop + height) / rowHeight) + overscan,
     ),
   );
+
+  let viewport: HTMLDivElement;
+
+  /** Brings row `index` into view (centred); does nothing if it is already visible. */
+  export function scrollToIndex(index: number) {
+    const top = index * rowHeight;
+    const shown =
+      top >= viewport.scrollTop &&
+      top + rowHeight <= viewport.scrollTop + height;
+    if (shown) return;
+    viewport.scrollTop = Math.max(0, top - (height - rowHeight) / 2);
+    scrollTop = viewport.scrollTop;
+  }
 </script>
 
 <div
+  bind:this={viewport}
   class="virtual"
   style:height="{height}px"
+  style:overflow-x="hidden"
+  style:overflow-y="auto"
   onscroll={(e) => (scrollTop = e.currentTarget.scrollTop)}
 >
   <div style:height="{items.length * rowHeight}px" style:position="relative">

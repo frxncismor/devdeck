@@ -6,7 +6,10 @@
     "sizing": "Aún se están midiendo las cifras de disco.",
     "ramHint_one": "de {count} proceso de desarrollo",
     "ramHint_other": "de {count} procesos de desarrollo",
-    "diskHint": "{worktrees} worktrees · {folders} carpetas",
+    "diskWorktrees_one": "{count} worktree",
+    "diskWorktrees_other": "{count} worktrees",
+    "diskFolders_one": "{count} carpeta",
+    "diskFolders_other": "{count} carpetas",
     "byWorktree": "por worktree"
   },
   "tabs": {
@@ -27,6 +30,7 @@
     "columns": {
       "state": "Estado"
     },
+    "ageToday": "hoy",
     "age_one": "hace {count} día",
     "age_other": "hace {count} días",
     "processes_one": "{count} proceso dentro",
@@ -41,6 +45,8 @@
       "age": "En ejecución",
       "folder": "Carpeta"
     },
+    "unknownAge": "Desconocida",
+    "unknownRam": "Desconocida",
     "orphan": "Worktree eliminado",
     "unknownFolder": "Carpeta desconocida",
     "orphanTitle": "La carpeta de trabajo ya no existe"
@@ -99,10 +105,12 @@
   },
   "removeWorktree": {
     "message": "¿Eliminar el worktree en {path} ({size})? Se borrará la carpeta; la rama se conserva.",
-    "liveWarning": "Hay {count} proceso(s) en ejecución dentro y podrían interrumpirse."
+    "liveWarning_one": "Hay {count} proceso en ejecución dentro: no se podrá eliminar hasta que lo termines.",
+    "liveWarning_other": "Hay {count} procesos en ejecución dentro: no se podrá eliminar hasta que los termines."
   },
   "terminate": {
     "title": "Terminar proceso",
+    "messageUnknownRam": "¿Terminar {name} (PID {pid}, RAM desconocida)? Se perderá el trabajo sin guardar que tenga.",
     "message": "¿Terminar {name} (PID {pid}, {ram} de RAM)? Se perderá el trabajo sin guardar que tenga.",
     "confirm": "Terminar"
   },
@@ -138,6 +146,6 @@
     "stale": "Sin commits desde hace {days} días o más, así que probablemente está olvidado.",
     "merged": "Su rama ya está fusionada en la rama base, así que eliminar el worktree no pierde trabajo.",
     "clean": "No hay nada sin commitear: eliminarlo no descartará ediciones locales.",
-    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; eliminarla puede interrumpirlos."
+    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; termínalos antes de eliminarla."
   }
 }

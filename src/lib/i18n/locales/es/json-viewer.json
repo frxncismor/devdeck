@@ -38,6 +38,7 @@
     "empty": "vacío",
     "loadMore": "Mostrar los {count} siguientes · faltan {remaining}",
     "loading": "Cargando…",
+    "revealTooFar": "El resultado está más allá de las primeras {max} entradas de su contenedor; el árbol se detiene ahí.",
     "virtualized": "Virtualizado · {rendered} de {total} filas renderizadas",
     "kind": {
       "object": "objeto",

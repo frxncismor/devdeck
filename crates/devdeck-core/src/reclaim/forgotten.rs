@@ -95,9 +95,11 @@ pub fn find_with(
 ) -> Vec<ForgottenWorktree> {
     let mut out = Vec::new();
     for w in worktrees.into_iter().filter(|w| !w.is_main) {
+        // A missing folder is not "stale": its age stays unknown, it is only listed when merged.
         let age_days = w
             .last_commit
             .as_ref()
+            .filter(|_| w.exists)
             .map(|c| (opts.now_secs - c.timestamp).max(0) as u64 / 86_400);
         let stale = age_days.is_some_and(|d| d > u64::from(opts.forgotten_days));
         let merged = merged_into_base(git, &w, &opts.base_branch);
@@ -349,7 +351,18 @@ mod tests {
         assert_eq!(l.len(), 1);
         assert!(!l[0].worktree.exists);
         assert_eq!(l[0].disk_bytes, None);
+        assert_eq!(l[0].last_commit_age_days, None);
         assert_eq!(sized, 0);
+    }
+
+    #[test]
+    fn a_missing_folder_is_never_stale() {
+        need_git!();
+        let r = repo();
+        let feat = add_worktree(&r, "gone");
+        commit_file(&feat, "f.txt");
+        fs::remove_dir_all(&feat).unwrap();
+        assert!(find_in(&r, &[], &opts(400)).is_empty());
     }
 
     #[test]

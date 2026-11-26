@@ -1,3 +1,4 @@
+import { toAppError } from "../../lib/api";
 import type { MessageKey } from "../../lib/i18n/keys";
 import type { AppError, Grouped, Totals } from "../../lib/types";
 
@@ -138,4 +139,29 @@ export function syncStatus(
   const kind: SyncKind =
     a > 0 && b > 0 ? "diverged" : a > 0 ? "ahead" : b > 0 ? "behind" : "synced";
   return { kind, ahead: a, behind: b };
+}
+
+export type RemovalOutcome = "removed" | "dirty" | "failed";
+
+/**
+ * Removes a worktree and reloads the lists, also after a failure: git may have deleted
+ * part of it already. `dirty` (first attempt) changed nothing and asks for confirmation.
+ */
+export async function removeAndReload(o: {
+  force: boolean;
+  remove: () => Promise<unknown>;
+  onError: (e: AppError) => void;
+  reload: () => Promise<unknown>;
+}): Promise<RemovalOutcome> {
+  let outcome: RemovalOutcome = "removed";
+  try {
+    await o.remove();
+  } catch (e) {
+    const err = toAppError(e);
+    if (isDirtyError(err) && !o.force) return "dirty";
+    o.onError(err);
+    outcome = "failed";
+  }
+  await o.reload();
+  return outcome;
 }

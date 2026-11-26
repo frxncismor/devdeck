@@ -1,8 +1,14 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { applyLocale } from "../../lib/i18n/i18n.svelte";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { applyLocale, t } from "../../lib/i18n/i18n.svelte";
 import { messages } from "../../lib/i18n";
 import type { Grouped } from "../../lib/types";
 import {
+  processAge,
+  processRam,
+  terminateMessage,
+  commitAge,
+  diskHint,
+  reloadAfterRemoval,
   advanceDelete,
   countWhere,
   currentFolderIndex,
@@ -293,5 +299,98 @@ describe("delete progress", () => {
 describe("busyKey helpers", () => {
   it("builds stable keys for processes", () => {
     expect(processKey({ pid: 7, startTime: 99 })).toBe("7:99");
+  });
+});
+
+describe("diskHint", () => {
+  afterEach(() => applyLocale("en"));
+  it("pluralizes each count on its own", () => {
+    applyLocale("en");
+    expect(diskHint(1, 1)).toBe("1 worktree · 1 folder");
+    expect(diskHint(0, 5)).toBe("0 worktrees · 5 folders");
+    applyLocale("es");
+    expect(diskHint(1, 1)).toBe("1 worktree · 1 carpeta");
+    expect(diskHint(2, 0)).toBe("2 worktrees · 0 carpetas");
+  });
+});
+
+describe("commitAge", () => {
+  afterEach(() => applyLocale("en"));
+  it("says today instead of 0 days ago", () => {
+    applyLocale("en");
+    expect(commitAge(0)).toBe("today");
+    expect(commitAge(1)).toBe("1 day ago");
+    applyLocale("es");
+    expect(commitAge(0)).toBe("hoy");
+    expect(commitAge(3)).toBe("hace 3 días");
+  });
+});
+
+describe("reloadAfterRemoval", () => {
+  it("rescans folders without waiting for the scan, then worktrees and projects", async () => {
+    const calls: string[] = [];
+    await reloadAfterRemoval({
+      folders: () => {
+        calls.push("folders");
+        return new Promise<void>(() => undefined);
+      },
+      worktrees: async () => {
+        calls.push("worktrees");
+      },
+      projects: async () => {
+        calls.push("projects");
+      },
+    });
+    expect(calls).toEqual(["folders", "worktrees", "projects"]);
+  });
+});
+
+describe("unknown process age and RAM", () => {
+  afterEach(() => applyLocale("en"));
+  it("shows Unknown instead of 0 minutes ago for a null age", () => {
+    applyLocale("en");
+    expect(processAge(null)).toBe("Unknown");
+    expect(processAge(3 * 86400)).toBe("3 days ago");
+    applyLocale("es");
+    expect(processAge(null)).toBe("Desconocida");
+  });
+  it("treats 0 bytes of RAM as unknown", () => {
+    applyLocale("en");
+    expect(processRam(0)).toBe("Unknown");
+    expect(processRam(1024)).toBe("1 KB");
+    applyLocale("es");
+    expect(processRam(0)).toBe("Desconocida");
+  });
+  it("says the RAM is unknown in the terminate dialog", () => {
+    applyLocale("en");
+    const p = { name: "node.exe", pid: 7, ramBytes: 0 };
+    expect(terminateMessage(p)).toContain("PID 7, RAM unknown");
+    expect(terminateMessage({ ...p, ramBytes: 1024 })).toContain("1 KB of RAM");
+    applyLocale("es");
+    expect(terminateMessage(p)).toContain("PID 7, RAM desconocida");
+  });
+});
+
+describe("removeWorktree.liveWarning", () => {
+  it("uses the singular and plural and says removal is refused (en)", () => {
+    const one = t("reclaim.removeWorktree.liveWarning", { count: 1 });
+    const many = t("reclaim.removeWorktree.liveWarning", { count: 3 });
+    expect(one).toBe(
+      "1 process is running inside it: removal will be refused until you terminate it.",
+    );
+    expect(many).toContain("3 processes are");
+    for (const s of [one, many]) {
+      expect(s).not.toMatch(/\(es\)|interrupt/);
+    }
+  });
+  it("uses the singular and plural in Spanish", () => {
+    applyLocale("es");
+    const one = t("reclaim.removeWorktree.liveWarning", { count: 1 });
+    const many = t("reclaim.removeWorktree.liveWarning", { count: 2 });
+    expect(one).toContain("Hay 1 proceso en");
+    expect(many).toContain("Hay 2 procesos en");
+    for (const s of [one, many]) {
+      expect(s).not.toMatch(/\(s\)|interrump/);
+    }
   });
 });

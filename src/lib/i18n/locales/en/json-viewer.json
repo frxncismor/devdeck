@@ -38,6 +38,7 @@
     "empty": "empty",
     "loadMore": "Show next {count} · {remaining} remaining",
     "loading": "Loading…",
+    "revealTooFar": "The result is past the first {max} entries of its container; the tree stops there.",
     "virtualized": "Virtualized · {rendered} of {total} rows rendered",
     "kind": {
       "object": "object",

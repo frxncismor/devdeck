@@ -66,6 +66,7 @@
     "cancelled": "La operación se canceló",
     "unsupported_platform": "No compatible con esta plataforma",
     "not_implemented": "Aún no implementado",
+    "worktree_in_use": "Hay procesos ejecutándose dentro del worktree ({count}). Ciérralos y vuelve a intentarlo; no se ha eliminado nada.",
     "worktree_dirty": "El worktree tiene cambios sin confirmar",
     "vscode_not_found": "No se encontró VS Code (el comando code)",
     "terminal_not_found": "No se pudo iniciar ninguna terminal",

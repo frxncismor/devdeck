@@ -6,7 +6,10 @@
     "sizing": "Disk figures are still being measured.",
     "ramHint_one": "from {count} dev process",
     "ramHint_other": "from {count} dev processes",
-    "diskHint": "{worktrees} worktrees · {folders} folders",
+    "diskWorktrees_one": "{count} worktree",
+    "diskWorktrees_other": "{count} worktrees",
+    "diskFolders_one": "{count} folder",
+    "diskFolders_other": "{count} folders",
     "byWorktree": "by worktree"
   },
   "tabs": {
@@ -27,6 +30,7 @@
     "columns": {
       "state": "State"
     },
+    "ageToday": "today",
     "age_one": "{count} day ago",
     "age_other": "{count} days ago",
     "processes_one": "{count} process inside",
@@ -41,6 +45,8 @@
       "age": "Running for",
       "folder": "Folder"
     },
+    "unknownAge": "Unknown",
+    "unknownRam": "Unknown",
     "orphan": "Deleted worktree",
     "unknownFolder": "Unknown folder",
     "orphanTitle": "Working directory no longer exists"
@@ -99,10 +105,12 @@
   },
   "removeWorktree": {
     "message": "Remove the worktree at {path} ({size})? The folder will be deleted; the branch is kept.",
-    "liveWarning": "{count} process(es) are running inside it and may be interrupted."
+    "liveWarning_one": "{count} process is running inside it: removal will be refused until you terminate it.",
+    "liveWarning_other": "{count} processes are running inside it: removal will be refused until you terminate them."
   },
   "terminate": {
     "title": "Terminate process",
+    "messageUnknownRam": "Terminate {name} (PID {pid}, RAM unknown)? Unsaved work in it will be lost.",
     "message": "Terminate {name} (PID {pid}, {ram} of RAM)? Unsaved work in it will be lost.",
     "confirm": "Terminate"
   },
@@ -138,6 +146,6 @@
     "stale": "No commits for {days} days or more, so it is probably forgotten.",
     "merged": "Its branch is already merged into the base branch, so removing the worktree loses no work.",
     "clean": "Nothing is uncommitted: removing it will not discard any local edits.",
-    "live_processes": "Processes are running inside this folder; removing it may interrupt them."
+    "live_processes": "Processes are running inside this folder; terminate them before removing it."
   }
 }

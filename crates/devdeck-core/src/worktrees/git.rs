@@ -79,6 +79,8 @@ pub fn git_available() -> bool {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawWorktree {
     pub path: PathBuf,
+    /// Commit checked out (`HEAD` line); absent for a bare repository.
+    pub head: Option<String>,
     pub branch: Option<String>,
     pub detached: bool,
     pub bare: bool,
@@ -100,12 +102,15 @@ pub fn parse_worktree_list(out: &str) -> Vec<RawWorktree> {
             }
             cur = Some(RawWorktree {
                 path: PathBuf::from(p),
+                head: None,
                 branch: None,
                 detached: false,
                 bare: false,
             });
         } else if let Some(w) = cur.as_mut() {
-            if let Some(b) = line.strip_prefix("branch ") {
+            if let Some(h) = line.strip_prefix("HEAD ") {
+                w.head = Some(h.to_owned());
+            } else if let Some(b) = line.strip_prefix("branch ") {
                 w.branch = Some(b.strip_prefix("refs/heads/").unwrap_or(b).to_owned());
             } else if line == "detached" {
                 w.detached = true;
@@ -188,6 +193,7 @@ mod tests {
         assert_eq!(l.len(), 4);
         assert_eq!(l[0].path, PathBuf::from("C:/r/app"));
         assert_eq!(l[0].branch.as_deref(), Some("main"));
+        assert_eq!(l[0].head.as_deref(), Some("aaa"));
         assert_eq!(l[1].branch.as_deref(), Some("feat/x"));
         assert!(l[2].detached && l[2].branch.is_none());
         assert_eq!(l[3].branch.as_deref(), Some("gone"));

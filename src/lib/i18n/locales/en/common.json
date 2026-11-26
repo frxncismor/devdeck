@@ -66,6 +66,7 @@
     "cancelled": "The operation was cancelled",
     "unsupported_platform": "Not supported on this platform",
     "not_implemented": "Not implemented yet",
+    "worktree_in_use": "Processes are running inside the worktree ({count}). Close them and try again; nothing was removed.",
     "worktree_dirty": "The worktree has uncommitted changes",
     "vscode_not_found": "VS Code (the code command) was not found",
     "terminal_not_found": "No terminal could be started",

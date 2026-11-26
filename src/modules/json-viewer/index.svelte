@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import { open } from "@tauri-apps/plugin-dialog";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import Braces from "@lucide/svelte/icons/braces";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import FileJson from "@lucide/svelte/icons/file-json";
@@ -17,6 +17,7 @@
   import { toAppError } from "../../lib/api";
   import { errorMessage } from "../../lib/errors";
   import { formatBytes, formatNumber, formatPercent } from "../../lib/format";
+  import { formatSeconds } from "../../lib/formatSeconds";
   import { t } from "../../lib/i18n/i18n.svelte";
   import { toasts } from "../../lib/toasts.svelte";
   import NodeActions from "./NodeActions.svelte";
@@ -41,6 +42,8 @@
   let indexedMs = $state<number | null>(null);
   let saving = $state(false);
   let nodeActions = $state<ReturnType<typeof NodeActions> | null>(null);
+  let tree = $state<ReturnType<typeof Tree> | null>(null);
+  let crumbsEl = $state<HTMLElement | null>(null);
   let bodyHeight = $state(400);
   const treeHeight = $derived(Math.max(120, bodyHeight - 34));
 
@@ -60,6 +63,13 @@
   const HIT_VALUE_BYTES = 64 * 1024;
 
   const crumbs = $derived(selectedPath ? parsePath(selectedPath) : []);
+  // A long path is cut on the left: keep the last segment (the selected node) in view.
+  $effect(() => {
+    void crumbs;
+    const el = crumbsEl;
+    if (el) void tick().then(() => (el.scrollLeft = el.scrollWidth));
+  });
+
   const eta = $derived.by(() => {
     const i = indexing;
     if (!i || i.total === 0 || i.done === 0) return null;
@@ -161,6 +171,7 @@
     const seq = pathSeq;
     const s = session;
     if (!s) return;
+    void tree?.reveal(h.path, h.nodeId);
     jsonApi
       .value(s.sessionId, h.nodeId, HIT_VALUE_BYTES)
       .then((text) => {
@@ -309,7 +320,7 @@
       {#if indexedMs !== null}
         <span class="stat">
           {t("jsonViewer.file.indexedIn")}
-          <b class="mono tabular">{(indexedMs / 1000).toFixed(1)} s</b>
+          <b class="mono tabular">{formatSeconds(indexedMs)}</b>
         </span>
       {/if}
       <span class="sep" aria-hidden="true"></span>
@@ -341,7 +352,12 @@
 
     <div class="main">
       <div class="treebox">
-        <nav class="crumbs" aria-label={t("jsonViewer.tree.path")}>
+        <nav
+          class="crumbs"
+          aria-label={t("jsonViewer.tree.path")}
+          title={selectedPath}
+          bind:this={crumbsEl}
+        >
           {#each crumbs as c, i (i)}
             {#if i > 0}<ChevronRight size={12} />{/if}
             <span class:last={i === crumbs.length - 1}>{c}</span>
@@ -351,6 +367,7 @@
         </nav>
         <div class="body" bind:clientHeight={bodyHeight}>
           <Tree
+            bind:this={tree}
             {session}
             {root}
             {selectedId}
@@ -498,7 +515,11 @@
     font-size: 12px;
     color: var(--text-muted);
   }
+  .crumbs :global(svg) {
+    flex: none;
+  }
   .crumbs span {
+    flex: none;
     padding: 2px 4px;
   }
   .crumbs .last {

@@ -65,7 +65,7 @@
     "example": "A worktree where you committed everything."
   },
   "rc-live": {
-    "todo": "Terminate those processes in the Processes tab first, or accept they may be interrupted.",
+    "todo": "Terminate those processes in the Processes tab first: removal is refused while they run.",
     "example": "A dev server still running in an old worktree."
   },
   "rc-orphan": {

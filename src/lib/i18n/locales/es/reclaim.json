@@ -105,7 +105,8 @@
   },
   "removeWorktree": {
     "message": "¿Eliminar el worktree en {path} ({size})? Se borrará la carpeta; la rama se conserva.",
-    "liveWarning": "Hay {count} proceso(s) en ejecución dentro y podrían interrumpirse."
+    "liveWarning_one": "Hay {count} proceso en ejecución dentro: no se podrá eliminar hasta que lo termines.",
+    "liveWarning_other": "Hay {count} procesos en ejecución dentro: no se podrá eliminar hasta que los termines."
   },
   "terminate": {
     "title": "Terminar proceso",
@@ -145,6 +146,6 @@
     "stale": "Sin commits desde hace {days} días o más, así que probablemente está olvidado.",
     "merged": "Su rama ya está fusionada en la rama base, así que eliminar el worktree no pierde trabajo.",
     "clean": "No hay nada sin commitear: eliminarlo no descartará ediciones locales.",
-    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; eliminarla puede interrumpirlos."
+    "live_processes": "Hay procesos en ejecución dentro de esta carpeta; termínalos antes de eliminarla."
   }
 }

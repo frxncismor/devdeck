@@ -49,6 +49,7 @@ First public release.
 - **Reclaim:** folders of a removed worktree stayed listed and inflated the total; they are now rescanned.
 - **Reclaim:** processes the system will not describe showed "0 B · 20,783 days ago"; their age and memory are now shown as unknown.
 - **Reclaim:** fixed "1 worktrees · 1 folders" plurals and "0 days ago", which now reads "today".
+- **Reclaim:** removing a worktree with processes inside warned they "may be interrupted" and said "process(es)"; the dialog, badge hint and glossary now say removal is refused until those processes are terminated, with proper plurals.
 - **Notifications:** error toasts covered the selection bar's delete button; they now sit above it.
 - **App:** the collapsed sidebar and the active module were lost on restart; both are now remembered.
 

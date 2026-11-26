@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyLocale } from "../../lib/i18n/i18n.svelte";
+import { applyLocale, t } from "../../lib/i18n/i18n.svelte";
 import { messages } from "../../lib/i18n";
 import type { Grouped } from "../../lib/types";
 import {
@@ -368,5 +368,29 @@ describe("unknown process age and RAM", () => {
     expect(terminateMessage({ ...p, ramBytes: 1024 })).toContain("1 KB of RAM");
     applyLocale("es");
     expect(terminateMessage(p)).toContain("PID 7, RAM desconocida");
+  });
+});
+
+describe("removeWorktree.liveWarning", () => {
+  it("uses the singular and plural and says removal is refused (en)", () => {
+    const one = t("reclaim.removeWorktree.liveWarning", { count: 1 });
+    const many = t("reclaim.removeWorktree.liveWarning", { count: 3 });
+    expect(one).toBe(
+      "1 process is running inside it: removal will be refused until you terminate it.",
+    );
+    expect(many).toContain("3 processes are");
+    for (const s of [one, many]) {
+      expect(s).not.toMatch(/\(es\)|interrupt/);
+    }
+  });
+  it("uses the singular and plural in Spanish", () => {
+    applyLocale("es");
+    const one = t("reclaim.removeWorktree.liveWarning", { count: 1 });
+    const many = t("reclaim.removeWorktree.liveWarning", { count: 2 });
+    expect(one).toContain("Hay 1 proceso en");
+    expect(many).toContain("Hay 2 procesos en");
+    for (const s of [one, many]) {
+      expect(s).not.toMatch(/\(s\)|interrump/);
+    }
   });
 });

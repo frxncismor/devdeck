@@ -65,7 +65,7 @@
     "example": "Un worktree donde lo has commiteado todo."
   },
   "rc-live": {
-    "todo": "Termina esos procesos en la pestaña Procesos primero, o asume que pueden interrumpirse.",
+    "todo": "Termina esos procesos en la pestaña Procesos primero: no se puede eliminar mientras sigan en marcha.",
     "example": "Un servidor de desarrollo aún activo en un worktree antiguo."
   },
   "rc-orphan": {

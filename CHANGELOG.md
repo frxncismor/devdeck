@@ -36,6 +36,21 @@ First public release.
 <!-- Pre-release fixes found during QA go here, one bullet per fix: "- **Module:** what was wrong and what happens now." -->
 
 - **JSON Viewer:** search results show the correct path, the side panel shows the values of search hits, the tree footer no longer covers the last row, and key/item counts no longer show a raw key.
+- **JSON Viewer:** the tree could not be scrolled, so rows and "Load more" below the first screen were unreachable; it now scrolls.
+- **JSON Viewer:** choosing a search result left the tree collapsed; the tree now expands to the node, selects it and scrolls to it, and the breadcrumb keeps the last segment visible.
+- **JSON Viewer:** the indexing time always used a decimal point; it now follows the app language ("2,4 s" in Spanish).
+- **Worktrees:** removing a worktree with processes running inside deleted its files and then reported a failure; it is now refused up front and nothing is touched.
+- **Worktrees:** a failed removal left a stale row; the error is now shown and the lists are rescanned.
+- **Worktrees:** removing a "Missing folder" worktree forgot every missing worktree of the repository; only the selected one is removed now.
+- **Worktrees:** "Missing folder" rows claimed "No commits" and "No remote branch"; they now show the branch's last commit and remote state.
+- **Worktrees:** the changes badge overlapped the "Vs. remote" column; the column now fits it.
+- **Ports:** "Working folder" showed the executable path; it now shows the process working directory.
+- **Ports:** the Spanish "Protocolo" header was truncated; the column is now wide enough.
+- **Reclaim:** folders of a removed worktree stayed listed and inflated the total; they are now rescanned.
+- **Reclaim:** processes the system will not describe showed "0 B · 20,783 days ago"; their age and memory are now shown as unknown.
+- **Reclaim:** fixed "1 worktrees · 1 folders" plurals and "0 days ago", which now reads "today".
+- **Notifications:** error toasts covered the selection bar's delete button; they now sit above it.
+- **App:** the collapsed sidebar and the active module were lost on restart; both are now remembered.
 
 [Unreleased]: https://github.com/frxncismor/devdeck/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/frxncismor/devdeck/releases/tag/v0.1.0

@@ -39,7 +39,7 @@
   import {
     ageSecs,
     filterGrouped,
-    isDirtyError,
+    removeAndReload,
     syncStatus,
     worktreeStatus,
     type Worktree,
@@ -85,7 +85,12 @@
 
   const columns = $derived<Column<Worktree>[]>([
     { key: "branch", header: t("common.columns.branch"), width: "1.3fr" },
-    { key: "status", header: t("worktrees.columns.status"), width: "130px" },
+    {
+      key: "status",
+      header: t("worktrees.columns.status"),
+      // Fits "Sin cambios sin commitear"; shrinks (with ellipsis) before overlapping.
+      width: "minmax(0, 184px)",
+    },
     { key: "sync", header: t("worktrees.columns.sync"), width: "120px" },
     {
       key: "commit",
@@ -192,18 +197,20 @@
     forcing = false;
     removing.add(w.path);
     try {
-      await api.call("worktree_remove", { path: w.path, force });
-      toasts.success(t("worktrees.toast.removed"), w.branch ?? w.path);
-      await scan();
-    } catch (e) {
-      const err = toAppError(e);
-      if (isDirtyError(err) && !force) {
+      const outcome = await removeAndReload({
+        force,
+        remove: async () => {
+          await api.call("worktree_remove", { path: w.path, force });
+          toasts.success(t("worktrees.toast.removed"), w.branch ?? w.path);
+        },
+        onError: fail,
+        reload: scan,
+      });
+      if (outcome === "dirty") {
         // Second confirmation: discarding uncommitted changes.
         pending = w;
         forcing = true;
-        return;
       }
-      fail(err);
     } finally {
       removing.delete(w.path);
     }
@@ -275,7 +282,11 @@
   {@const st = worktreeStatus(w)}
   {@const label = t(st.labelKey, { count: st.count ?? 0 })}
   {@const hint = t(st.hintKey)}
-  <Badge tone={st.tone} title={hint}>{label}</Badge>
+  <span class="status">
+    <Badge tone={st.tone} title="{label}. {hint}">
+      <span class="slabel">{label}</span>
+    </Badge>
+  </span>
   <span class="sr-only">{hint}</span>
 {/snippet}
 
@@ -618,6 +629,18 @@
   }
   .subject {
     font-size: var(--text-base);
+  }
+  .status {
+    display: flex;
+    min-width: 0;
+  }
+  .status :global(.badge) {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .slabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .sync {
     display: inline-flex;

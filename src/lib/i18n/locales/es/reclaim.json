@@ -6,7 +6,10 @@
     "sizing": "Aún se están midiendo las cifras de disco.",
     "ramHint_one": "de {count} proceso de desarrollo",
     "ramHint_other": "de {count} procesos de desarrollo",
-    "diskHint": "{worktrees} worktrees · {folders} carpetas",
+    "diskWorktrees_one": "{count} worktree",
+    "diskWorktrees_other": "{count} worktrees",
+    "diskFolders_one": "{count} carpeta",
+    "diskFolders_other": "{count} carpetas",
     "byWorktree": "por worktree"
   },
   "tabs": {
@@ -27,6 +30,7 @@
     "columns": {
       "state": "Estado"
     },
+    "ageToday": "hoy",
     "age_one": "hace {count} día",
     "age_other": "hace {count} días",
     "processes_one": "{count} proceso dentro",
@@ -41,6 +45,8 @@
       "age": "En ejecución",
       "folder": "Carpeta"
     },
+    "unknownAge": "Desconocida",
+    "unknownRam": "Desconocida",
     "orphan": "Worktree eliminado",
     "unknownFolder": "Carpeta desconocida",
     "orphanTitle": "La carpeta de trabajo ya no existe"
@@ -103,6 +109,7 @@
   },
   "terminate": {
     "title": "Terminar proceso",
+    "messageUnknownRam": "¿Terminar {name} (PID {pid}, RAM desconocida)? Se perderá el trabajo sin guardar que tenga.",
     "message": "¿Terminar {name} (PID {pid}, {ram} de RAM)? Se perderá el trabajo sin guardar que tenga.",
     "confirm": "Terminar"
   },

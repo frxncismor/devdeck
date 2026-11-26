@@ -1,4 +1,9 @@
-import { formatPercent } from "../../lib/format";
+import {
+  formatBytes,
+  formatPercent,
+  formatRelativeAge,
+} from "../../lib/format";
+import { t } from "../../lib/i18n/i18n.svelte";
 import type { MessageKey } from "../../lib/i18n/keys";
 import type { AppError, Grouped, ProjectRef, Totals } from "../../lib/types";
 
@@ -21,6 +26,7 @@ export interface DevProcess {
   name: string;
   exe?: string | null;
   cwd?: string | null;
+  /** 0 when unknown (unreadable process). */
   ramBytes: number;
   cpuPercent: number;
   startTime: number;
@@ -29,7 +35,8 @@ export interface DevProcess {
   project?: ProjectRef | null;
   worktreePath?: string | null;
   orphan: boolean;
-  ageSecs: number;
+  /** `null` when the start time is unknown. */
+  ageSecs: number | null;
 }
 
 export type ForgottenReason = "stale" | "merged" | "clean" | "live_processes";
@@ -307,3 +314,57 @@ export const REASON_HINT_KEYS: Record<ForgottenReason, MessageKey> = {
   clean: "reclaim.reasonHint.clean",
   live_processes: "reclaim.reasonHint.live_processes",
 };
+
+/** "Running for" cell. */
+export function processAge(ageSecs: number | null): string {
+  return ageSecs === null
+    ? t("reclaim.processes.unknownAge")
+    : formatRelativeAge(ageSecs);
+}
+
+/** RAM cell; 0 means the backend could not read it. */
+export function processRam(ramBytes: number): string {
+  return ramBytes > 0
+    ? formatBytes(ramBytes)
+    : t("reclaim.processes.unknownRam");
+}
+
+export function terminateMessage(
+  p: Pick<DevProcess, "name" | "pid" | "ramBytes">,
+): string {
+  const params = { name: p.name, pid: p.pid };
+  return p.ramBytes > 0
+    ? t("reclaim.terminate.message", {
+        ...params,
+        ram: formatBytes(p.ramBytes),
+      })
+    : t("reclaim.terminate.messageUnknownRam", params);
+}
+
+/** Disk card hint; each count has its own plural. */
+export function diskHint(worktrees: number, folders: number): string {
+  const w = t("reclaim.summary.diskWorktrees", { count: worktrees });
+  const f = t("reclaim.summary.diskFolders", { count: folders });
+  return `${w} · ${f}`;
+}
+
+/** Age of the last commit of a forgotten worktree; 0 days reads "today". */
+export function commitAge(days: number): string {
+  return days === 0
+    ? t("reclaim.worktrees.ageToday")
+    : t("reclaim.worktrees.age", { count: days });
+}
+
+/**
+ * What goes stale once a worktree removal was attempted. The folder scan is slow and
+ * shows its own progress, so it is started but not awaited.
+ */
+export async function reloadAfterRemoval(load: {
+  folders: () => Promise<unknown>;
+  worktrees: () => Promise<unknown>;
+  projects: () => Promise<unknown>;
+}): Promise<void> {
+  void load.folders();
+  await load.worktrees();
+  await load.projects();
+}

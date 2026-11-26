@@ -20,7 +20,7 @@
   } from "../../lib/scope.svelte";
   import { toasts } from "../../lib/toasts.svelte";
   import type { AppError, Grouped } from "../../lib/types";
-  import { isDirtyError } from "../worktrees/logic";
+  import { removeAndReload } from "../worktrees/logic";
   import FoldersTab from "./FoldersTab.svelte";
   import {
     advanceDelete,
@@ -29,7 +29,9 @@
     startDeleteProgress,
     type DeleteProgress,
     projectSlices,
+    reloadAfterRemoval,
     removalWarnings,
+    terminateMessage,
     totalsOf,
     worktreeSlices,
     type DevProcess,
@@ -330,13 +332,23 @@
     if (key) busyKeys.add(key);
     try {
       if (p.type === "worktree") {
-        await reclaimApi.removeWorktree(p.item.worktree.path, p.force);
-        toasts.success(
-          t("reclaim.toast.worktreeRemoved"),
-          p.item.worktree.path,
-        );
-        await loadWorktrees();
-        await refreshProjects();
+        const { path } = p.item.worktree;
+        const outcome = await removeAndReload({
+          force: p.force,
+          remove: async () => {
+            await reclaimApi.removeWorktree(path, p.force);
+            toasts.success(t("reclaim.toast.worktreeRemoved"), path);
+          },
+          onError: (err) => (error = err),
+          reload: () =>
+            reloadAfterRemoval({
+              folders: loadFolders,
+              worktrees: loadWorktrees,
+              projects: refreshProjects,
+            }),
+        });
+        // Second confirmation: removing discards the uncommitted changes.
+        if (outcome === "dirty") pending = { ...p, force: true };
       } else if (p.type === "process") {
         await reclaimApi.killProcess(p.item.pid, p.item.name, p.item.startTime);
         toasts.success(
@@ -347,13 +359,7 @@
         await deleteFolders(p.items);
       }
     } catch (e) {
-      const err = toAppError(e);
-      if (p.type === "worktree" && isDirtyError(err) && !p.force) {
-        // Second confirmation: removing discards the uncommitted changes.
-        pending = { ...p, force: true };
-        return;
-      }
-      error = err;
+      error = toAppError(e);
       // A process that already vanished: refresh what is shown.
       if (p.type === "process") void loadProcesses();
     } finally {
@@ -393,11 +399,7 @@
     if (p.type === "process") {
       return {
         title: t("reclaim.terminate.title"),
-        message: t("reclaim.terminate.message", {
-          name: p.item.name,
-          pid: p.item.pid,
-          ram: formatBytes(p.item.ramBytes),
-        }),
+        message: terminateMessage(p.item),
         confirm: t("reclaim.terminate.confirm"),
       };
     }

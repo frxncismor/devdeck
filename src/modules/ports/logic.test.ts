@@ -5,6 +5,7 @@ import {
   effectiveRefreshMs,
   filterProtocol,
   rowKey,
+  workingFolder,
   type ListeningPort,
 } from "./logic";
 
@@ -67,5 +68,27 @@ describe("effectiveRefreshMs", () => {
     expect(effectiveRefreshMs(null)).toBe(5000);
     expect(effectiveRefreshMs(0)).toBeNull();
     expect(effectiveRefreshMs(10)).toBe(10000);
+  });
+});
+
+describe("workingFolder", () => {
+  it("shows the cwd, not the executable, and keeps the exe in the tooltip", () => {
+    expect(workingFolder({ cwd: "/w/webshop", exePath: "/bin/node" })).toEqual({
+      text: "/w/webshop",
+      title: "/w/webshop\n/bin/node",
+    });
+  });
+  it("uses the cwd alone when the executable is unknown", () => {
+    expect(workingFolder({ cwd: "/w/webshop" })).toEqual({
+      text: "/w/webshop",
+      title: "/w/webshop",
+    });
+  });
+  it("falls back to the executable, then to nothing", () => {
+    expect(workingFolder({ exePath: "/bin/node" })).toEqual({
+      text: "/bin/node",
+      title: "/bin/node",
+    });
+    expect(workingFolder({ cwd: null, exePath: null })).toBeNull();
   });
 });
